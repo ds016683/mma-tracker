@@ -126,14 +126,6 @@ export function BaseballCardLayout() {
       {/* Board view */}
       {view === 'board' && (
         <>
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Spotlight" count={spotlight.length} color="text-red-600 bg-red-50" />
-            <StatCard label="Roster" count={roster.length} color="text-orange-600 bg-orange-50" />
-            <StatCard label="Archive" count={archive.length} color="text-gray-500 bg-gray-50" />
-            <StatCard label="Total" count={spotlight.length + roster.length + archive.length} color="text-blue-600 bg-blue-50" />
-          </div>
-
           {showCreateForm && (
             <CreateProjectForm
               onCreate={(fields) => { createProject(fields); setShowCreateForm(false); }}
@@ -194,11 +186,3 @@ function NavTab({ active, onClick, icon, label }: { active: boolean; onClick: ()
   );
 }
 
-function StatCard({ label, count, color }: { label: string; count: number; color: string }) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-      <div className="text-2xl font-bold text-gray-900">{count}</div>
-      <div className={`mt-0.5 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{label}</div>
-    </div>
-  );
-}
