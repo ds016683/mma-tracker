@@ -71,12 +71,12 @@ export function ProjectDetail({ project, onUpdate, onPin, onDelete, onBack }: Pr
                 onChange={e => setNameValue(e.target.value)}
                 onBlur={saveName}
                 onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setNameValue(project.name); setEditingName(false); } }}
-                className="border-b border-gray-300 bg-transparent text-xl font-bold text-gray-900 focus:border-gray-500 focus:outline-none"
+                className="border-b border-mma-blue bg-transparent text-xl font-bold text-mma-dark-blue focus:border-mma-dark-blue focus:outline-none"
               />
             ) : (
               <h1
                 onClick={() => setEditingName(true)}
-                className="cursor-pointer text-xl font-bold text-gray-900"
+                className="cursor-pointer text-xl font-bold text-mma-dark-blue"
               >
                 {project.name}
                 <Pencil className="ml-1.5 inline h-3.5 w-3.5 text-gray-300 opacity-0 group-hover/name:opacity-100" />
@@ -176,10 +176,10 @@ export function ProjectDetail({ project, onUpdate, onPin, onDelete, onBack }: Pr
       {/* RACI */}
       <Section icon={<Users className="h-4 w-4" />} title="RACI Assignments">
         <div className="grid grid-cols-2 gap-4">
-          <RACIRow label="Accountable" value={project.mma_accountable} color="text-red-600" />
-          <RACIRow label="Responsible" value={project.mma_responsible} color="text-blue-600" />
-          <RACIRow label="Contributor" value={project.mma_contributor} color="text-amber-600" />
-          <RACIRow label="Informed" value={project.mma_informed} color="text-green-600" />
+          <RACIRow label="Accountable" value={project.mma_accountable} color="text-mma-crimson" />
+          <RACIRow label="Responsible" value={project.mma_responsible} color="text-mma-blue" />
+          <RACIRow label="Contributor" value={project.mma_contributor} color="text-mma-orange" />
+          <RACIRow label="Informed" value={project.mma_informed} color="text-mma-turquoise" />
         </div>
       </Section>
 
@@ -352,7 +352,7 @@ function TasksSection({ tasks, onChange }: { tasks: Task[]; onChange: (t: Task[]
           <div key={task.id} className="group/task flex items-center gap-2">
             <button
               onClick={() => onChange(tasks.map(t => t.id === task.id ? { ...t, done: !t.done } : t))}
-              className={`h-4 w-4 shrink-0 rounded border ${task.done ? 'border-green-500 bg-green-500' : 'border-gray-300'}`}
+              className={`h-4 w-4 shrink-0 rounded border ${task.done ? 'border-mma-turquoise bg-mma-turquoise' : 'border-gray-300'}`}
               title={task.done ? 'Mark as incomplete' : 'Mark as complete'}
             />
             <span className={`flex-1 text-sm ${task.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
@@ -414,7 +414,7 @@ function LinksSection({ links, onChange }: { links: ProjectLink[]; onChange: (l:
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-mma-blue hover:underline"
               title={`Open ${link.url} in a new tab`}
             >
               {link.label}

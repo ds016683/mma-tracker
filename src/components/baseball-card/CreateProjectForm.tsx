@@ -114,7 +114,7 @@ export function CreateProjectForm({ onCreate, onCancel }: CreateProjectFormProps
         <button
           type="submit"
           disabled={!name.trim()}
-          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm text-white hover:bg-gray-700 disabled:opacity-40"
+          className="rounded-lg bg-mma-dark-blue px-4 py-1.5 text-sm text-white hover:bg-mma-blue disabled:opacity-40"
           title="Create this card and add it to your portfolio"
         >
           Add Card

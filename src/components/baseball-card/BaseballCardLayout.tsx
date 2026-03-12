@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers } from 'lucide-react';
+import mmaLogo from '../../assets/mma-logo.png';
 import { useBaseballCard } from '../../hooks/useBaseballCard';
 import { SpotlightGrid } from './SpotlightGrid';
 import { RosterList } from './RosterList';
@@ -51,9 +52,12 @@ export function BaseballCardLayout() {
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">MMA Master Tracker</h1>
-          <p className="text-sm text-gray-500">Production tasks as of March 9, 2026</p>
+        <div className="flex items-center gap-3">
+          <img src={mmaLogo} alt="Marsh McLennan Agency" className="h-8 w-auto" />
+          <div>
+            <h1 className="text-xl font-bold text-mma-dark-blue">MMA Master Tracker</h1>
+            <p className="text-sm text-mma-blue-gray">Production tasks as of March 9, 2026</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -83,7 +87,7 @@ export function BaseballCardLayout() {
           </button>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700 transition-colors"
+            className="rounded-md bg-mma-dark-blue px-3 py-1.5 text-sm text-white hover:bg-mma-blue transition-colors"
             title="Create a new task card"
           >
             <Plus className="h-4 w-4 inline -mt-0.5 mr-1" />
@@ -93,7 +97,7 @@ export function BaseballCardLayout() {
       </div>
 
       {/* Nav tabs */}
-      <nav className="flex gap-1 rounded-lg bg-gray-100 p-1">
+      <nav className="flex gap-1 rounded-lg bg-mma-dark-blue/5 p-1">
         <NavTab active={view === 'board'} onClick={() => setView('board')} icon={<LayoutGrid className="h-4 w-4" />} label="Task Board" />
         <NavTab active={view === 'schedule-e'} onClick={() => setView('schedule-e')} icon={<DollarSign className="h-4 w-4" />} label="Schedule E" />
         <NavTab active={view === 'schedule-f'} onClick={() => setView('schedule-f')} icon={<Layers className="h-4 w-4" />} label="Schedule F" />
@@ -107,7 +111,7 @@ export function BaseballCardLayout() {
           items={SCHEDULE_E_ITEMS}
           totalAllocated={SCHEDULE_E_TOTAL_ALLOCATED}
           poolStart={SCHEDULE_E_POOL_START}
-          accentHex="#7c3aed"
+          accentHex="#8246AF"
         />
       )}
 
@@ -119,7 +123,7 @@ export function BaseballCardLayout() {
           items={SCHEDULE_F_ITEMS}
           totalAllocated={SCHEDULE_F_TOTAL_ALLOCATED}
           poolStart={SCHEDULE_F_POOL_START}
-          accentHex="#0d9488"
+          accentHex="#00968F"
         />
       )}
 
@@ -135,9 +139,9 @@ export function BaseballCardLayout() {
 
           {/* Spotlight */}
           <div>
-            <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            <h2 className="mb-3 text-sm font-semibold text-mma-dark-blue">
               Spotlight
-              <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-600">{spotlight.length}</span>
+              <span className="ml-2 rounded-full bg-mma-blue/10 px-2 py-0.5 text-xs text-mma-blue">{spotlight.length}</span>
             </h2>
             <SpotlightGrid
               projects={spotlight}
@@ -151,9 +155,9 @@ export function BaseballCardLayout() {
           {/* Roster */}
           {roster.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-semibold text-gray-700">
+              <h2 className="mb-3 text-sm font-semibold text-mma-dark-blue">
                 Roster
-                <span className="ml-2 rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600">{roster.length}</span>
+                <span className="ml-2 rounded-full bg-mma-orange/10 px-2 py-0.5 text-xs text-mma-orange">{roster.length}</span>
               </h2>
               <RosterList
                 projects={roster}
@@ -177,7 +181,7 @@ function NavTab({ active, onClick, icon, label }: { active: boolean; onClick: ()
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-        active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+        active ? 'bg-white text-mma-dark-blue shadow-sm' : 'text-mma-blue-gray hover:text-mma-dark-blue'
       }`}
     >
       {icon}

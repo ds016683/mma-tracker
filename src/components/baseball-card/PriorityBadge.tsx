@@ -1,10 +1,10 @@
 import type { Priority } from '../../lib/baseball-card/types';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
-  low: 'bg-gray-100 text-gray-600 border-gray-200',
-  medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  high: 'bg-orange-50 text-orange-700 border-orange-200',
-  urgent: 'bg-red-50 text-red-700 border-red-200',
+  low: 'bg-mma-blue-gray/10 text-mma-blue-gray border-mma-blue-gray/20',
+  medium: 'bg-mma-yellow/10 text-mma-yellow border-mma-yellow/30',
+  high: 'bg-mma-orange/10 text-mma-orange border-mma-orange/20',
+  urgent: 'bg-mma-crimson/10 text-mma-crimson border-mma-crimson/20',
 };
 
 const PRIORITY_LABELS: Record<Priority, string> = {

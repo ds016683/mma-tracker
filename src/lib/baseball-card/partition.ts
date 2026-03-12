@@ -1,6 +1,6 @@
 import type { BaseballCardProject, FreshnessTier, PartitionedPortfolio } from './types';
 
-const SPOTLIGHT_CAP = 6;
+const SPOTLIGHT_DEFAULT = 8;
 
 export function getFreshnessTier(lastActivityAt: string | null): FreshnessTier {
   if (!lastActivityAt) return 'stale';
@@ -50,11 +50,14 @@ export function partitionProjects(projects: BaseballCardProject[]): PartitionedP
     });
 
   const onHold = active.filter(p => p.status === 'on_hold' && p.manual_rank == null);
-  const spotlightAuto = auto.slice(0, Math.max(0, SPOTLIGHT_CAP - manual.length));
-  const rosterAuto = auto.slice(Math.max(0, SPOTLIGHT_CAP - manual.length));
+
+  // Auto-fill pads to SPOTLIGHT_DEFAULT; manual promotions add on top with no cap
+  const spotlight = [...manual, ...auto.slice(0, SPOTLIGHT_DEFAULT)];
+  const spotlightIds = new Set(spotlight.map(p => p.id));
+  const rosterAuto = auto.filter(p => !spotlightIds.has(p.id));
 
   return {
-    spotlight: [...manual, ...spotlightAuto],
+    spotlight,
     roster: [...rosterAuto, ...onHold],
     archive: archived,
   };

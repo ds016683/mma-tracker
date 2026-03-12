@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  /* MMA Brand Colors — extracted from Marsh McLennan Agency slide template */
+  --color-mma-dark-blue: #002C77;
+  --color-mma-blue: #009DE0;
+  --color-mma-light-blue: #76D3FF;
+  --color-mma-dark-teal: #004C6C;
+  --color-mma-teal: #0077A0;
+  --color-mma-light-teal: #9CD9E4;
+  --color-mma-turquoise: #00968F;
+  --color-mma-orange: #FF8C00;
+  --color-mma-purple: #8246AF;
+  --color-mma-pink: #EE3C8E;
+  --color-mma-green: #00AC41;
+  --color-mma-crimson: #EF4E45;
+  --color-mma-yellow: #FFBE00;
+  --color-mma-text: #565656;
+  --color-mma-blue-gray: #8096B2;
+  --color-mma-light-bg: #F7F9FC;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
 }

@@ -5,9 +5,9 @@ interface FreshnessDotProps {
 }
 
 const TIER_CLASSES = {
-  fresh: 'bg-green-500',
-  warning: 'bg-amber-400',
-  stale: 'bg-gray-400',
+  fresh: 'bg-mma-green',
+  warning: 'bg-mma-orange',
+  stale: 'bg-mma-blue-gray',
 };
 
 const TIER_LABELS = {

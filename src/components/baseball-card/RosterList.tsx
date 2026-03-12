@@ -22,7 +22,7 @@ export function RosterList({ projects, onProjectUpdate, onPromote, onNavigate }:
           <FreshnessDot lastActivityAt={project.last_activity_at} />
           <div className="min-w-0 flex-1">
             <div className="mb-0.5 flex items-center gap-2">
-              <span className="truncate text-sm font-medium text-gray-900">{project.name}</span>
+              <span className="truncate text-sm font-medium text-mma-dark-blue">{project.name}</span>
               {project.status === 'on_hold' && (
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">On Hold</span>
               )}

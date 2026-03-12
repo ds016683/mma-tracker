@@ -29,7 +29,7 @@ export function BudgetView({ title, subtitle, items, totalAllocated, poolStart, 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+        <h2 className="text-lg font-bold text-mma-dark-blue">{title}</h2>
         <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>
       </div>
 
@@ -128,7 +128,7 @@ function SummaryCard({ label, value, icon }: { label: string; value: number; ico
         {icon}
         {label}
       </div>
-      <div className="text-lg font-bold text-gray-900">${value.toLocaleString()}</div>
+      <div className="text-lg font-bold text-mma-dark-blue">${value.toLocaleString()}</div>
     </div>
   );
 }

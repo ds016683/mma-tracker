@@ -92,7 +92,7 @@ function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${isPencilsDown ? 'opacity-50 grayscale' : ''}`}
+      className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-mma-blue/30 ${isPencilsDown ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="flex items-start gap-2">
         <button
@@ -113,7 +113,7 @@ function SortableCard({
                   *
                 </span>
               )}
-              <h3 className="text-sm font-semibold leading-tight text-gray-900">
+              <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue">
                 {project.name}
               </h3>
             </div>

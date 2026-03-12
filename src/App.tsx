@@ -2,7 +2,7 @@ import { BaseballCardLayout } from './components/baseball-card/BaseballCardLayou
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-mma-light-bg p-4 sm:p-6">
       <BaseballCardLayout />
     </div>
   );

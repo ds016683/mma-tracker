@@ -1,16 +1,16 @@
 import type { MMATaskStatus } from '../../lib/baseball-card/types';
 
 const STATUS_STYLES: Record<MMATaskStatus, string> = {
-  'In Production': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  'Set for Methods Sprint': 'bg-blue-50 text-blue-700 border-blue-200',
-  'Confirming Completion': 'bg-amber-50 text-amber-700 border-amber-200',
-  'Pre-Data Order': 'bg-purple-50 text-purple-700 border-purple-200',
-  'In Queue': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-  'Data is in PP': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  'Unknown': 'bg-gray-100 text-gray-500 border-gray-200',
-  'TBD': 'bg-gray-100 text-gray-500 border-gray-200',
-  'Complete': 'bg-green-50 text-green-700 border-green-200',
-  'Done': 'bg-green-50 text-green-700 border-green-200',
+  'In Production': 'bg-mma-green/10 text-mma-green border-mma-green/20',
+  'Set for Methods Sprint': 'bg-mma-blue/10 text-mma-blue border-mma-blue/20',
+  'Confirming Completion': 'bg-mma-yellow/10 text-mma-yellow border-mma-yellow/30',
+  'Pre-Data Order': 'bg-mma-purple/10 text-mma-purple border-mma-purple/20',
+  'In Queue': 'bg-mma-teal/10 text-mma-teal border-mma-teal/20',
+  'Data is in PP': 'bg-mma-dark-blue/10 text-mma-dark-blue border-mma-dark-blue/20',
+  'Unknown': 'bg-gray-100 text-mma-text border-gray-200',
+  'TBD': 'bg-gray-100 text-mma-text border-gray-200',
+  'Complete': 'bg-mma-turquoise/10 text-mma-turquoise border-mma-turquoise/20',
+  'Done': 'bg-mma-turquoise/10 text-mma-turquoise border-mma-turquoise/20',
 };
 
 export function MMAStatusBadge({ status }: { status: MMATaskStatus }) {
@@ -28,7 +28,7 @@ export function VersionBadge({ version }: { version: string }) {
   if (!version) return null;
   return (
     <span
-      className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700"
+      className="inline-flex items-center rounded-full border border-mma-blue/20 bg-mma-blue/10 px-2 py-0.5 text-xs font-medium text-mma-dark-teal"
       title={`Target version: ${version}`}
     >
       {version}
@@ -41,10 +41,10 @@ export function ContractBadge({ contractRef }: { contractRef: string }) {
   const isCore = contractRef.includes('Core');
   const isEnhancement = contractRef.includes('Enhancement');
   const color = isCore
-    ? 'border-violet-200 bg-violet-50 text-violet-700'
+    ? 'border-mma-purple/20 bg-mma-purple/10 text-mma-purple'
     : isEnhancement
-      ? 'border-teal-200 bg-teal-50 text-teal-700'
-      : 'border-gray-200 bg-gray-50 text-gray-600';
+      ? 'border-mma-turquoise/20 bg-mma-turquoise/10 text-mma-turquoise'
+      : 'border-gray-200 bg-gray-50 text-mma-text';
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${color}`}
