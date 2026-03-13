@@ -24,7 +24,7 @@ import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
 interface SpotlightGridProps {
   projects: BaseballCardProject[];
   onProjectUpdate: (id: string, updates: Partial<BaseballCardProject>) => void;
-  onReorder: (ids: string[]) => void;
+  onReorder: (ids: string[], draggedId: string) => void;
   onNavigate: (id: string) => void;
   onDemote: (id: string) => void;
 }
@@ -45,7 +45,7 @@ export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onNavigate
     const newIds = [...ids];
     newIds.splice(oldIndex, 1);
     newIds.splice(newIndex, 0, active.id as string);
-    onReorder(newIds);
+    onReorder(newIds, active.id as string);
   }
 
   return (

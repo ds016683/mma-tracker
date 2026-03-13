@@ -99,12 +99,17 @@ export function useBaseballCard() {
     })));
   }, []);
 
-  const reorderSpotlight = useCallback((orderedIds: string[]) => {
+  const reorderSpotlight = useCallback((orderedIds: string[], draggedId?: string) => {
     setProjects(prev => {
       const updated = [...prev];
       orderedIds.forEach((id, index) => {
         const idx = updated.findIndex(p => p.id === id);
-        if (idx !== -1) updated[idx] = { ...updated[idx], manual_rank: index + 1 };
+        if (idx !== -1) {
+          // Only set manual_rank on items that already had one, or the dragged item
+          if (updated[idx].manual_rank != null || id === draggedId) {
+            updated[idx] = { ...updated[idx], manual_rank: index + 1 };
+          }
+        }
       });
       return updated;
     });
