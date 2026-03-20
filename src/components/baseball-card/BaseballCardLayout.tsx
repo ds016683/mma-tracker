@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers } from 'lucide-react';
+import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers, LogOut } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useBaseballCard } from '../../hooks/useBaseballCard';
@@ -20,15 +21,33 @@ type View = 'board' | 'schedule-e' | 'schedule-f';
 export function BaseballCardLayout() {
   const {
     spotlight, roster, archive,
+    loading, error: dataError,
     createProject, updateProject, deleteProject,
     pinProject, reorderSpotlight, promoteToSpotlight, demoteToRoster,
     exportToJson, importFromJson,
   } = useBaseballCard();
 
+  const { signOut } = useAuth();
   const [detailProjectId, setDetailProjectId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [view, setView] = useState<View>('board');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl py-20 text-center">
+        <div className="text-sm text-mma-blue-gray">Loading projects...</div>
+      </div>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <div className="mx-auto max-w-6xl py-20 text-center">
+        <div className="text-sm text-red-600">Error: {dataError}</div>
+      </div>
+    );
+  }
 
   const detailProject = detailProjectId
     ? [...spotlight, ...roster, ...archive].find(p => p.id === detailProjectId) ?? null
@@ -95,6 +114,14 @@ export function BaseballCardLayout() {
           >
             <Plus className="h-4 w-4 inline -mt-0.5 mr-1" />
             New Card
+          </button>
+          <div className="h-5 w-px bg-gray-300" />
+          <button
+            onClick={signOut}
+            className="rounded p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
