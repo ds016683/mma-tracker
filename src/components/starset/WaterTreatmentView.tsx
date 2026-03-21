@@ -6,8 +6,7 @@ interface Stage {
   id: number;
   title: string;
   subtitle: string;
-  top: string;
-  left: string;
+  hotspot: { left: string; top: string; width: string; height: string };
   qualityWidth: string;
   qualityColor: string;
   leftHeading: string;
@@ -21,8 +20,7 @@ const stages: Stage[] = [
     id: 1,
     title: 'Water Intake',
     subtitle: 'Pulling in the raw data',
-    top: '55%',
-    left: '6%',
+    hotspot: { left: '24.7%', top: '14.9%', width: '12.0%', height: '25.9%' },
     qualityWidth: '12%',
     qualityColor: '#7EC8C8',
     leftHeading: 'What Happens with Water',
@@ -40,8 +38,7 @@ const stages: Stage[] = [
     id: 2,
     title: 'Coagulation',
     subtitle: 'Reconciling identities and surfacing problems',
-    top: '42%',
-    left: '20%',
+    hotspot: { left: '42.1%', top: '19.5%', width: '11.6%', height: '21.1%' },
     qualityWidth: '30%',
     qualityColor: '#4BA3C3',
     leftHeading: 'What Happens with Water',
@@ -60,8 +57,7 @@ const stages: Stage[] = [
     id: 3,
     title: 'Sedimentation',
     subtitle: 'Removing the obvious junk',
-    top: '35%',
-    left: '34%',
+    hotspot: { left: '57.3%', top: '21.3%', width: '16.1%', height: '19.8%' },
     qualityWidth: '52%',
     qualityColor: '#00968F',
     leftHeading: 'What Happens with Water',
@@ -80,8 +76,7 @@ const stages: Stage[] = [
     id: 4,
     title: 'Filtration',
     subtitle: 'Merging sources and weighting by real-world usage',
-    top: '30%',
-    left: '49%',
+    hotspot: { left: '77.5%', top: '13.5%', width: '10.8%', height: '26.1%' },
     qualityWidth: '72%',
     qualityColor: '#009DE0',
     leftHeading: 'What Happens with Water',
@@ -99,8 +94,7 @@ const stages: Stage[] = [
     id: 5,
     title: 'Disinfection',
     subtitle: 'Quality scoring and confidence testing',
-    top: '38%',
-    left: '64%',
+    hotspot: { left: '76.2%', top: '63.9%', width: '13.3%', height: '21.7%' },
     qualityWidth: '90%',
     qualityColor: '#0077B6',
     leftHeading: 'What Happens with Water',
@@ -118,8 +112,7 @@ const stages: Stage[] = [
     id: 6,
     title: 'Storage',
     subtitle: 'The finished national dataset',
-    top: '46%',
-    left: '78%',
+    hotspot: { left: '59.3%', top: '60.1%', width: '8.6%', height: '26.3%' },
     qualityWidth: '97%',
     qualityColor: '#003366',
     leftHeading: 'What Happens with Water',
@@ -137,8 +130,7 @@ const stages: Stage[] = [
     id: 7,
     title: 'Distribution',
     subtitle: 'Intelligence delivered to brokers and clients',
-    top: '55%',
-    left: '93%',
+    hotspot: { left: '30.8%', top: '62.5%', width: '20.6%', height: '24.8%' },
     qualityWidth: '100%',
     qualityColor: '#001A41',
     leftHeading: 'What Happens with Water',
@@ -196,7 +188,7 @@ export function WaterTreatmentView() {
       <div className="wt-header">
         <h1>How We Turn Raw Data Into Trusted Intelligence</h1>
         <p>
-          Third Horizon Solutions processes millions of healthcare data points the same way a
+          Third Horizon processes millions of healthcare data points the same way a
           treatment plant purifies water — through a rigorous, multi-stage pipeline that removes
           noise, reconciles sources, and delivers a single, reliable product.
         </p>
@@ -207,15 +199,16 @@ export function WaterTreatmentView() {
         <div className="wt-diagram">
           <img src={waterTreatmentImg} alt="Water treatment process diagram" />
           {stages.map((stage, i) => (
-            <button
+            <div
               key={stage.id}
               className={`wt-hotspot${activeStageIndex === i ? ' active' : ''}`}
-              style={{ top: stage.top, left: stage.left }}
+              style={stage.hotspot}
               onClick={() => handleHotspotClick(i)}
+              role="button"
+              tabIndex={0}
               aria-label={`Stage ${stage.id}: ${stage.title}`}
-            >
-              {stage.id}
-            </button>
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleHotspotClick(i); }}
+            />
           ))}
         </div>
         <div className="wt-click-hint">Click a numbered stage to explore</div>
@@ -266,7 +259,7 @@ export function WaterTreatmentView() {
 
       {/* Footer */}
       <div className="wt-footer">
-        &copy; {new Date().getFullYear()} Third Horizon Solutions. All rights reserved.
+        &copy; {new Date().getFullYear()} Third Horizon. All rights reserved.
       </div>
     </div>
   );

@@ -38,7 +38,7 @@
 
 /* ── Diagram Wrapper ── */
 .wt-diagram-wrapper {
-  max-width: 960px;
+  max-width: 1400px;
   margin: 40px auto 0;
   padding: 0 24px;
   position: relative;
@@ -61,35 +61,48 @@
 /* ── Hotspots ── */
 .wt-hotspot {
   position: absolute;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(0, 157, 224, 0.85);
-  border: 3px solid #fff;
   cursor: pointer;
-  transform: translate(-50%, -50%);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 26, 65, 0.25);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  z-index: 2;
 }
 
-.wt-hotspot:hover {
-  transform: translate(-50%, -50%) scale(1.2);
-  background: rgba(0, 157, 224, 1);
-  box-shadow: 0 4px 16px rgba(0, 157, 224, 0.45);
+.wt-hotspot:hover,
+.wt-hotspot.active {
+  border-color: var(--mma-blue);
+  background: rgba(0, 157, 224, 0.1);
+  box-shadow: 0 0 20px rgba(0, 157, 224, 0.25);
 }
 
 .wt-hotspot.active {
-  transform: translate(-50%, -50%) scale(1.25);
-  background: #001A41;
-  box-shadow: 0 4px 20px rgba(0, 26, 65, 0.5);
+  border-color: var(--mma-blue);
+  background: rgba(0, 157, 224, 0.15);
+  box-shadow: 0 0 24px rgba(0, 157, 224, 0.35);
 }
+
+.wt-hotspot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 12px;
+  border: 2px solid var(--mma-teal);
+  opacity: 0;
+  animation: hintPulse 3s ease-in-out infinite;
+}
+.wt-hotspot:hover::after,
+.wt-hotspot.active::after {
+  animation: none;
+  opacity: 0;
+}
+
+.wt-hotspot:nth-child(2)::after { animation-delay: 0s; }
+.wt-hotspot:nth-child(3)::after { animation-delay: 0.4s; }
+.wt-hotspot:nth-child(4)::after { animation-delay: 0.8s; }
+.wt-hotspot:nth-child(5)::after { animation-delay: 1.2s; }
+.wt-hotspot:nth-child(6)::after { animation-delay: 1.6s; }
+.wt-hotspot:nth-child(7)::after { animation-delay: 2.0s; }
+.wt-hotspot:nth-child(8)::after { animation-delay: 2.4s; }
 
 /* ── Hint Pulse ── */
 .wt-click-hint {
@@ -106,23 +119,13 @@
 }
 
 @keyframes hintPulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 150, 143, 0.5); }
-  70% { box-shadow: 0 0 0 12px rgba(0, 150, 143, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 150, 143, 0); }
-}
-
-.wt-hotspot:not(.active) {
-  animation: hintPulse 2s ease-out infinite;
-}
-
-.wt-hotspot:hover,
-.wt-hotspot.active {
-  animation: none;
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.02); }
 }
 
 /* ── Detail Panel ── */
 .wt-detail {
-  max-width: 960px;
+  max-width: 1400px;
   margin: 32px auto 0;
   padding: 0 24px;
   animation: slideUp 0.4s ease-out;
@@ -295,9 +298,7 @@
     padding: 0 24px 24px;
   }
 
-  .wt-hotspot {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+  .wt-header {
+    padding-left: 4rem;
   }
 }
