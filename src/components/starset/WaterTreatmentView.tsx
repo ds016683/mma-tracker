@@ -9,6 +9,7 @@ interface Stage {
   hotspot: { left: string; top: string; width: string; height: string };
   qualityWidth: string;
   qualityColor: string;
+  qualityLabel: string;
   leftHeading: string;
   leftText: string;
   rightHeading: string;
@@ -23,6 +24,7 @@ const stages: Stage[] = [
     hotspot: { left: '24.7%', top: '14.9%', width: '12.0%', height: '25.9%' },
     qualityWidth: '12%',
     qualityColor: '#7EC8C8',
+    qualityLabel: 'Raw, unprocessed',
     leftHeading: 'What Happens with Water',
     leftText:
       'Raw water is pumped from a natural source \u2014 a river, lake, or mountain reservoir. It contains sediment, bacteria, organic matter, and dissolved chemicals. Nothing has been treated yet. This is the rawest possible form of the supply.',
@@ -41,6 +43,7 @@ const stages: Stage[] = [
     hotspot: { left: '42.1%', top: '19.5%', width: '11.6%', height: '21.1%' },
     qualityWidth: '30%',
     qualityColor: '#4BA3C3',
+    qualityLabel: 'Errors becoming visible',
     leftHeading: 'What Happens with Water',
     leftText:
       'Chemical coagulants are added to the water. These carry a positive charge that neutralizes dissolved contaminants, causing tiny particles to bind together into larger clumps called \u201Cfloc.\u201D The water is stirred so these clumps can form. Problems that were invisible are now visible and removable.',
@@ -60,6 +63,7 @@ const stages: Stage[] = [
     hotspot: { left: '57.3%', top: '21.3%', width: '16.1%', height: '19.8%' },
     qualityWidth: '52%',
     qualityColor: '#00968F',
+    qualityLabel: 'Major errors removed',
     leftHeading: 'What Happens with Water',
     leftText:
       'The water sits in a sedimentation basin where gravity does the work. The heavy floc particles that formed during coagulation settle to the bottom as sludge. The clearer water at the top moves forward. This is a brute-force step \u2014 the biggest, most obvious contaminants simply drop out.',
@@ -79,6 +83,7 @@ const stages: Stage[] = [
     hotspot: { left: '77.5%', top: '13.5%', width: '10.8%', height: '26.1%' },
     qualityWidth: '72%',
     qualityColor: '#009DE0',
+    qualityLabel: 'Cross-validated',
     leftHeading: 'What Happens with Water',
     leftText:
       'Water passes through layers of fine filters \u2014 sand, gravel, and activated carbon \u2014 that trap the smaller particles sedimentation missed. This is where precision takes over from brute force. The filters catch what gravity alone could not.',
@@ -97,6 +102,7 @@ const stages: Stage[] = [
     hotspot: { left: '76.2%', top: '63.9%', width: '13.3%', height: '21.7%' },
     qualityWidth: '90%',
     qualityColor: '#0077B6',
+    qualityLabel: 'Trust-scored',
     leftHeading: 'What Happens with Water',
     leftText:
       'Even after filtration, invisible pathogens can remain. Disinfection \u2014 chlorine, UV light, or ozone treatment \u2014 kills bacteria, viruses, and parasites that made it through every previous step. This is the final safety gate before the water is declared safe.',
@@ -115,6 +121,7 @@ const stages: Stage[] = [
     hotspot: { left: '59.3%', top: '60.1%', width: '8.6%', height: '26.3%' },
     qualityWidth: '97%',
     qualityColor: '#003366',
+    qualityLabel: 'Production-ready',
     leftHeading: 'What Happens with Water',
     leftText:
       'Clean, treated water is pumped into storage tanks and water towers. It\u2019s been tested, certified safe, and sits ready for delivery on demand. The supply is reliable, the quality is verified, and it can reach users whenever they need it.',
@@ -133,6 +140,7 @@ const stages: Stage[] = [
     hotspot: { left: '30.8%', top: '62.5%', width: '20.6%', height: '24.8%' },
     qualityWidth: '100%',
     qualityColor: '#001A41',
+    qualityLabel: 'In your hands',
     leftHeading: 'What Happens with Water',
     leftText:
       'Clean water flows through the distribution network \u2014 pipes, pumps, and valves \u2014 to reach homes, businesses, and public facilities. The end user turns on the tap and gets safe, clean water without needing to understand the treatment plant behind it.',
@@ -239,18 +247,21 @@ export function WaterTreatmentView() {
                   ))}
                 </ul>
               </div>
-            </div>
 
-            <div className="wt-quality">
-              <div className="wt-quality-label">Data Quality Progress</div>
-              <div className="wt-quality-track">
-                <div
-                  className="wt-quality-fill"
-                  style={{
-                    width: activeStage.qualityWidth,
-                    background: activeStage.qualityColor,
-                  }}
-                />
+              <div className="wt-quality">
+                <div className="wt-quality-heading">Data Quality at This Stage</div>
+                <div className="wt-quality-track">
+                  <div
+                    className="wt-quality-fill"
+                    style={{
+                      width: activeStage.qualityWidth,
+                      background: activeStage.qualityColor,
+                    }}
+                  />
+                </div>
+                <div className="wt-quality-labels">
+                  <span>{activeStage.qualityLabel}</span>
+                </div>
               </div>
             </div>
           </div>

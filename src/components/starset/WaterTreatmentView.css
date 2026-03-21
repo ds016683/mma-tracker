@@ -238,16 +238,26 @@
 
 /* ── Quality Bar ── */
 .wt-quality {
-  padding: 0 32px 28px;
+  grid-column: 1 / -1;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--water-pale);
 }
 
-.wt-quality-label {
-  font-size: 0.8rem;
+.wt-quality-heading {
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--water-mid);
-  margin-bottom: 8px;
+  margin-bottom: 0.4rem;
   font-weight: 600;
+}
+
+.wt-quality-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  color: #7a8a9a;
 }
 
 .wt-quality-track {
