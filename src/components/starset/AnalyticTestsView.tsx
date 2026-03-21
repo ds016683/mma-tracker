@@ -76,10 +76,10 @@ export function AnalyticTestsView() {
           <p className="at-setup">
             Transparency in Coverage data is now publicly available from every major health insurer. But raw MRF files
             are massive, messy, and full of traps that produce misleading results if not treated properly. These four
-            analytic tests represent the most common data quality challenges we encounter &mdash; and how Third Horizon Solutions
+            analytic tests represent the most common data quality challenges we encounter &mdash; and how Third Horizon
             addresses each one to deliver intelligence you can act on with confidence.
           </p>
-          <p className="at-attribution">Third Horizon Solutions</p>
+          <p className="at-attribution">Third Horizon</p>
         </section>
 
         {/* ──── SLIDE 1: TEST A ──── */}
@@ -182,7 +182,7 @@ export function AnalyticTestsView() {
                 </tbody>
               </table>
               <div className="at-table-footer">
-                <span>Source: Third Horizon Solutions TiC data, Aetna Choice POS</span>
+                <span>Source: Third Horizon TiC data, Aetna Choice POS</span>
                 <span>Data as of Q4 2025</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ export function AnalyticTestsView() {
                 </tbody>
               </table>
               <div className="at-table-footer">
-                <span>Source: Third Horizon Solutions TiC data, BCBS MI Blue Preferred &amp; Cigna PPO</span>
+                <span>Source: Third Horizon TiC data, BCBS MI Blue Preferred &amp; Cigna PPO</span>
                 <span>Data as of Q4 2025</span>
               </div>
             </div>
@@ -345,7 +345,7 @@ export function AnalyticTestsView() {
             <div className="at-panel-card at-solution-card">
               <h3>How We Address It</h3>
               <p>
-                Third Horizon Solutions cross-references every rate against national claims data (Komodo) to validate that
+                Third Horizon cross-references every rate against national claims data (Komodo) to validate that
                 sufficient billing volume or provider-taxonomy prevalence exists. Rates for services with no claims-based
                 evidence for that provider type are filtered out. Rare but legitimate services are retained &mdash; the system
                 is calibrated to eliminate the impossible without discarding the uncommon.
@@ -395,7 +395,7 @@ export function AnalyticTestsView() {
                 </tbody>
               </table>
               <div className="at-table-footer">
-                <span>Source: Third Horizon Solutions TiC data, multiple carriers in CA</span>
+                <span>Source: Third Horizon TiC data, multiple carriers in CA</span>
                 <span>Data as of Q4 2025</span>
               </div>
             </div>
@@ -447,7 +447,7 @@ export function AnalyticTestsView() {
             <div className="at-panel-card at-solution-card">
               <h3>How We Address It</h3>
               <p>
-                Third Horizon Solutions uses multiple data layers and statistical controls to normalize DRG rates to the base
+                Third Horizon uses multiple data layers and statistical controls to normalize DRG rates to the base
                 DRG rate. Komodo claims data provides a reference layer, since real claims include both base payments and
                 outlier adjustments. We also apply median and percentile-based filtering to remove extreme values.
               </p>
@@ -582,7 +582,7 @@ export function AnalyticTestsView() {
           </ul>
           <p className="at-cta-prompt">Want to see your markets run through these tests?</p>
           <p className="at-contact-placeholder">[Contact information]</p>
-          <p className="at-attribution">Third Horizon Solutions &mdash; Price Transparency Intelligence</p>
+          <p className="at-attribution">Third Horizon &mdash; Price Transparency Intelligence</p>
         </section>
       </div>
 
