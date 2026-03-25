@@ -81,6 +81,14 @@ export interface PartitionedPortfolio {
   archive: BaseballCardProject[];
 }
 
+// Dropdown option lists
+export const MMA_VERSION_OPTIONS = ['v7', 'v8', 'v9', 'v9 - v10', 'v9 - 11', 'v10', 'v11'] as const;
+export const MMA_CONTRACT_REF_OPTIONS = ['Schedule E - Core', 'Schedule E - Enhancements', 'Schedule F', 'TBD'] as const;
+export const MMA_STATUS_OPTIONS: readonly MMATaskStatus[] = [
+  'In Production', 'Set for Methods Sprint', 'Confirming Completion',
+  'Pre-Data Order', 'In Queue', 'Data is in PP', 'Unknown', 'TBD', 'Complete', 'Done',
+] as const;
+
 // Budget types for Schedule E / F
 export interface BudgetItem {
   id: string;

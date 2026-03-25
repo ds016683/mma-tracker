@@ -6,7 +6,6 @@ import { useBaseballCard } from '../../hooks/useBaseballCard';
 import { SpotlightGrid } from './SpotlightGrid';
 import { RosterList } from './RosterList';
 import { Archive } from './Archive';
-import { ProjectDetail } from './ProjectDetail';
 import { CreateProjectForm } from './CreateProjectForm';
 import { BudgetView } from './BudgetView';
 import {
@@ -26,10 +25,14 @@ export function BaseballCardLayout() {
     exportToJson, importFromJson,
   } = useBaseballCard();
 
-  const [detailProjectId, setDetailProjectId] = useState<string | null>(null);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [view, setView] = useState<View>('board');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function toggleExpand(id: string) {
+    setExpandedCardId(prev => prev === id ? null : id);
+  }
 
   if (loading) {
     return (
@@ -43,25 +46,6 @@ export function BaseballCardLayout() {
     return (
       <div className="mx-auto max-w-6xl py-20 text-center">
         <div className="text-sm text-red-600">Error: {dataError}</div>
-      </div>
-    );
-  }
-
-  const detailProject = detailProjectId
-    ? [...spotlight, ...roster, ...archive].find(p => p.id === detailProjectId) ?? null
-    : null;
-
-  // Detail view
-  if (detailProject) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <ProjectDetail
-          project={detailProject}
-          onUpdate={updateProject}
-          onPin={pinProject}
-          onDelete={(id) => { deleteProject(id); setDetailProjectId(null); }}
-          onBack={() => setDetailProjectId(null)}
-        />
       </div>
     );
   }
@@ -167,8 +151,11 @@ export function BaseballCardLayout() {
               projects={spotlight}
               onProjectUpdate={updateProject}
               onReorder={reorderSpotlight}
-              onNavigate={setDetailProjectId}
+              onToggleExpand={toggleExpand}
+              expandedCardId={expandedCardId}
               onDemote={demoteToRoster}
+              onPin={pinProject}
+              onDelete={deleteProject}
             />
           </div>
 
@@ -183,13 +170,23 @@ export function BaseballCardLayout() {
                 projects={roster}
                 onProjectUpdate={updateProject}
                 onPromote={promoteToSpotlight}
-                onNavigate={setDetailProjectId}
+                onToggleExpand={toggleExpand}
+                expandedCardId={expandedCardId}
+                onPin={pinProject}
+                onDelete={deleteProject}
               />
             </div>
           )}
 
           {/* Archive */}
-          {archive.length > 0 && <Archive projects={archive} onNavigate={setDetailProjectId} />}
+          {archive.length > 0 && (
+            <Archive
+              projects={archive}
+              onProjectUpdate={updateProject}
+              onToggleExpand={toggleExpand}
+              expandedCardId={expandedCardId}
+            />
+          )}
         </>
       )}
     </div>
@@ -209,4 +206,3 @@ function NavTab({ active, onClick, icon, label }: { active: boolean; onClick: ()
     </button>
   );
 }
-

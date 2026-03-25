@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -15,26 +16,37 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ArrowUpRight, ArrowDown, Users } from 'lucide-react';
-import type { BaseballCardProject, Priority } from '../../lib/baseball-card/types';
+import { GripVertical, ChevronDown, ArrowDown, Users } from 'lucide-react';
+import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
 import { PriorityBadge } from './PriorityBadge';
 import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
+import { ExpandableCardContent } from './ExpandableCardContent';
 
 interface SpotlightGridProps {
   projects: BaseballCardProject[];
   onProjectUpdate: (id: string, updates: Partial<BaseballCardProject>) => void;
   onReorder: (ids: string[], draggedId: string) => void;
-  onNavigate: (id: string) => void;
+  onToggleExpand: (id: string) => void;
+  expandedCardId: string | null;
   onDemote: (id: string) => void;
+  onPin: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onNavigate, onDemote }: SpotlightGridProps) {
+export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onToggleExpand, expandedCardId, onDemote, onPin, onDelete }: SpotlightGridProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  function handleDragStart(_event: DragStartEvent) {
+    // Auto-collapse expanded card when drag starts
+    if (expandedCardId) {
+      onToggleExpand(expandedCardId);
+    }
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -49,16 +61,19 @@ export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onNavigate
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <SortableContext items={projects.map(p => p.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {projects.map(project => (
             <SortableCard
               key={project.id}
               project={project}
-              onNavigate={onNavigate}
+              isExpanded={expandedCardId === project.id}
+              onToggleExpand={() => onToggleExpand(project.id)}
               onDemote={onDemote}
-              onPriorityChange={(p) => onProjectUpdate(project.id, { priority: p })}
+              onProjectUpdate={onProjectUpdate}
+              onPin={onPin}
+              onDelete={onDelete}
             />
           ))}
         </div>
@@ -69,14 +84,20 @@ export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onNavigate
 
 function SortableCard({
   project,
-  onNavigate,
+  isExpanded,
+  onToggleExpand,
   onDemote,
-  onPriorityChange,
+  onProjectUpdate,
+  onPin,
+  onDelete,
 }: {
   project: BaseballCardProject;
-  onNavigate: (id: string) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   onDemote: (id: string) => void;
-  onPriorityChange: (p: Priority) => void;
+  onProjectUpdate: (id: string, updates: Partial<BaseballCardProject>) => void;
+  onPin: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id });
 
@@ -92,7 +113,7 @@ function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-mma-blue/30 ${isPencilsDown ? 'opacity-50 grayscale' : ''}`}
+      className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-mma-blue/30 ${isPencilsDown ? 'opacity-50 grayscale' : ''} ${isExpanded ? 'col-span-1 md:col-span-2 xl:col-span-4' : ''}`}
     >
       <div className="flex items-start gap-2">
         <button
@@ -106,16 +127,18 @@ function SortableCard({
         <div className="min-w-0 flex-1">
           {/* Header row */}
           <div className="mb-2 flex items-start justify-between gap-2">
-            <div className="flex items-center gap-1.5">
+            <div
+              className="flex cursor-pointer items-center gap-1.5"
+              onClick={onToggleExpand}
+            >
               <FreshnessDot lastActivityAt={project.last_activity_at} />
               {project.pinned && (
-                <span className="text-xs text-amber-500" title="This project is pinned to focus">
-                  *
-                </span>
+                <span className="text-xs text-amber-500" title="This project is pinned to focus">*</span>
               )}
               <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue">
                 {project.name}
               </h3>
+              <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
               <button
@@ -125,37 +148,26 @@ function SortableCard({
               >
                 <ArrowDown className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={() => onNavigate(project.id)}
-                className="rounded p-1 text-gray-400 opacity-0 transition-all hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
-                title="Open detail view — see RACI, description, tasks, notes, links, and full project info"
-              >
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </button>
             </div>
           </div>
 
           {/* Badges */}
           <div className="mb-2 flex flex-wrap gap-1">
-            <VersionBadge version={project.mma_version} />
-            <MMAStatusBadge status={project.mma_status} />
-            <PriorityBadge priority={project.priority} onClick={onPriorityChange} />
+            <VersionBadge version={project.mma_version} onChange={(v) => onProjectUpdate(project.id, { mma_version: v })} />
+            <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onProjectUpdate(project.id, { mma_status: s })} />
+            <PriorityBadge priority={project.priority} onClick={(p: Priority) => onProjectUpdate(project.id, { priority: p })} />
+            <ContractBadge contractRef={project.mma_contract_ref} onChange={(c) => onProjectUpdate(project.id, { mma_contract_ref: c })} />
           </div>
 
-          {/* Contract ref */}
-          <div className="mb-2">
-            <ContractBadge contractRef={project.mma_contract_ref} />
-          </div>
-
-          {/* Description preview */}
-          {project.description && (
+          {/* Description preview (only when collapsed) */}
+          {!isExpanded && project.description && (
             <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-gray-500">
               {project.description}
             </p>
           )}
 
-          {/* People */}
-          {project.people.length > 0 && (
+          {/* People (only when collapsed) */}
+          {!isExpanded && project.people.length > 0 && (
             <div
               className="flex items-center gap-1 text-xs text-gray-400"
               title={project.people.map(p => `${p.name}${p.role ? ` (${p.role})` : ''}`).join(', ')}
@@ -165,6 +177,16 @@ function SortableCard({
                 {project.mma_responsible || project.people.map(p => p.name).join(', ')}
               </span>
             </div>
+          )}
+
+          {/* Expanded content */}
+          {isExpanded && (
+            <ExpandableCardContent
+              project={project}
+              onUpdate={onProjectUpdate}
+              onPin={onPin}
+              onDelete={onDelete}
+            />
           )}
         </div>
       </div>
