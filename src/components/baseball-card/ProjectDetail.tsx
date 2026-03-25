@@ -3,7 +3,7 @@ import {
   ArrowLeft, Pin, PinOff, Pencil, Plus, X, Trash2,
   Users, CheckSquare, Link as LinkIcon, FileText, MessageSquare, Calendar,
 } from 'lucide-react';
-import type { BaseballCardProject, Task, Note, ProjectLink, Person, Priority, ProjectStatus } from '../../lib/baseball-card/types';
+import type { BaseballCardProject, Task, Note, ProjectLink, Person, Priority, ProjectStatus, MMATaskStatus } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
 import { PriorityBadge } from './PriorityBadge';
 import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
@@ -94,10 +94,10 @@ export function ProjectDetail({ project, onUpdate, onPin, onDelete, onBack }: Pr
 
         {/* Badges */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <VersionBadge version={project.mma_version} />
-          <MMAStatusBadge status={project.mma_status} />
+          <VersionBadge version={project.mma_version} onChange={(v) => onUpdate(project.id, { mma_version: v })} />
+          <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onUpdate(project.id, { mma_status: s })} />
           <PriorityBadge priority={project.priority} onClick={(p: Priority) => onUpdate(project.id, { priority: p })} />
-          <ContractBadge contractRef={project.mma_contract_ref} />
+          <ContractBadge contractRef={project.mma_contract_ref} onChange={(c) => onUpdate(project.id, { mma_contract_ref: c })} />
           <select
             value={project.status}
             onChange={e => onUpdate(project.id, { status: e.target.value as ProjectStatus })}

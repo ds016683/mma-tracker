@@ -1,8 +1,8 @@
 import { ArrowUp, ArrowUpRight, Users } from 'lucide-react';
-import type { BaseballCardProject, Priority } from '../../lib/baseball-card/types';
+import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
 import { PriorityBadge } from './PriorityBadge';
-import { MMAStatusBadge, VersionBadge } from './MMABadges';
+import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
 
 interface RosterListProps {
   projects: BaseballCardProject[];
@@ -31,12 +31,13 @@ export function RosterList({ projects, onProjectUpdate, onPromote, onNavigate }:
               <p className="mb-1 truncate text-xs text-gray-400">{project.description}</p>
             )}
             <div className="flex flex-wrap items-center gap-1.5">
-              <VersionBadge version={project.mma_version} />
-              <MMAStatusBadge status={project.mma_status} />
+              <VersionBadge version={project.mma_version} onChange={(v) => onProjectUpdate(project.id, { mma_version: v })} />
+              <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onProjectUpdate(project.id, { mma_status: s })} />
               <PriorityBadge
                 priority={project.priority}
                 onClick={(p: Priority) => onProjectUpdate(project.id, { priority: p })}
               />
+              <ContractBadge contractRef={project.mma_contract_ref} onChange={(c) => onProjectUpdate(project.id, { mma_contract_ref: c })} />
               {project.people.length > 0 && (
                 <span
                   className="flex items-center gap-0.5 text-xs text-gray-400"

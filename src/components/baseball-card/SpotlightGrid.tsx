@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ArrowUpRight, ArrowDown, Users } from 'lucide-react';
-import type { BaseballCardProject, Priority } from '../../lib/baseball-card/types';
+import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
 import { PriorityBadge } from './PriorityBadge';
 import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
@@ -59,6 +59,9 @@ export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onNavigate
               onNavigate={onNavigate}
               onDemote={onDemote}
               onPriorityChange={(p) => onProjectUpdate(project.id, { priority: p })}
+              onVersionChange={(v) => onProjectUpdate(project.id, { mma_version: v })}
+              onStatusChange={(s) => onProjectUpdate(project.id, { mma_status: s })}
+              onContractChange={(c) => onProjectUpdate(project.id, { mma_contract_ref: c })}
             />
           ))}
         </div>
@@ -72,11 +75,17 @@ function SortableCard({
   onNavigate,
   onDemote,
   onPriorityChange,
+  onVersionChange,
+  onStatusChange,
+  onContractChange,
 }: {
   project: BaseballCardProject;
   onNavigate: (id: string) => void;
   onDemote: (id: string) => void;
   onPriorityChange: (p: Priority) => void;
+  onVersionChange: (v: string) => void;
+  onStatusChange: (s: MMATaskStatus) => void;
+  onContractChange: (c: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id });
 
@@ -137,14 +146,10 @@ function SortableCard({
 
           {/* Badges */}
           <div className="mb-2 flex flex-wrap gap-1">
-            <VersionBadge version={project.mma_version} />
-            <MMAStatusBadge status={project.mma_status} />
+            <VersionBadge version={project.mma_version} onChange={onVersionChange} />
+            <MMAStatusBadge status={project.mma_status} onChange={onStatusChange} />
             <PriorityBadge priority={project.priority} onClick={onPriorityChange} />
-          </div>
-
-          {/* Contract ref */}
-          <div className="mb-2">
-            <ContractBadge contractRef={project.mma_contract_ref} />
+            <ContractBadge contractRef={project.mma_contract_ref} onChange={onContractChange} />
           </div>
 
           {/* Description preview */}
