@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LayoutGrid, Droplets, FlaskConical, LogOut, Menu, X } from 'lucide-react';
+import { LayoutGrid, Droplets, FlaskConical, BarChart2, LogOut, Menu, X } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
-export type AppView = 'tracker' | 'treatment' | 'analytic-tests';
+export type AppView = 'tracker' | 'treatment' | 'analytic-tests' | 'reporting-queries';
 
 interface AppDrawerProps {
   activeView: AppView;
@@ -15,6 +15,7 @@ const navItems: { id: AppView; label: string; icon: typeof LayoutGrid }[] = [
   { id: 'tracker', label: 'Master Tracker', icon: LayoutGrid },
   { id: 'treatment', label: 'Data Treatment Process', icon: Droplets },
   { id: 'analytic-tests', label: '4 Analytic Tests', icon: FlaskConical },
+  { id: 'reporting-queries', label: 'Reporting Queries', icon: BarChart2 },
 ];
 
 export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {

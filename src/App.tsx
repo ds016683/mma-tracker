@@ -6,6 +6,7 @@ import { AppDrawer } from './components/navigation/AppDrawer';
 import type { AppView } from './components/navigation/AppDrawer';
 import { WaterTreatmentView } from './components/starset/WaterTreatmentView';
 import { AnalyticTestsView } from './components/starset/AnalyticTestsView';
+import { ReportingQueriesView } from './components/starset/ReportingQueriesView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ function AppContent() {
         )}
         {activeView === 'treatment' && <WaterTreatmentView />}
         {activeView === 'analytic-tests' && <AnalyticTestsView />}
+        {activeView === 'reporting-queries' && <ReportingQueriesView />}
       </main>
     </div>
   );
