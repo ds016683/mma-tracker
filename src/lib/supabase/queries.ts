@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { BaseballCardProject, Task, Note, ProjectLink, Person } from '../baseball-card/types';
+import type { BaseballCardProject, Task, Note, ProjectLink, Person, ActivityEvent } from '../baseball-card/types';
 
 // ── Fetch all projects with sub-entities ──
 
@@ -15,6 +15,8 @@ interface ProjectRow {
   last_activity_at: string;
   created_at: string;
   target_date: string | null;
+  start_date: string | null;
+  end_date: string | null;
   tags: string[];
   archived_at: string | null;
   mma_version: string;
@@ -56,11 +58,18 @@ export async function fetchAllProjects(): Promise<BaseballCardProject[]> {
     priority: row.priority as BaseballCardProject['priority'],
     mma_status: row.mma_status as BaseballCardProject['mma_status'],
     mma_priority: row.mma_priority as BaseballCardProject['mma_priority'],
+    start_date: row.start_date ?? null,
+    end_date: row.end_date ?? null,
     tasks: (tasksByProject[row.id] ?? []).map((t): Task => ({
       id: t.id,
-      text: t.text,
+      text: t.text ?? t.task_name ?? '',
       done: t.done,
       created_at: t.created_at,
+      task_name: t.task_name ?? t.text ?? '',
+      description: t.description ?? '',
+      assigned_to: t.assigned_to ?? '',
+      due_date: t.due_date ?? null,
+      start_date: t.start_date ?? null,
     })),
     notes: (notesByProject[row.id] ?? []).map((n): Note => ({
       id: n.id,
@@ -84,7 +93,7 @@ export async function fetchAllProjects(): Promise<BaseballCardProject[]> {
 // ── Project CRUD ──
 
 export async function insertProject(project: BaseballCardProject) {
-  const { people, tasks, notes, links, ...row } = project;
+  const { people, tasks, notes, links, activity, ...row } = project;
 
   const { error } = await supabase.from('projects').insert(row);
   if (error) throw error;
@@ -99,7 +108,7 @@ export async function insertProject(project: BaseballCardProject) {
 
 export async function updateProjectRow(
   id: string,
-  updates: Partial<Omit<BaseballCardProject, 'tasks' | 'notes' | 'links' | 'people'>>
+  updates: Partial<Omit<BaseballCardProject, 'tasks' | 'notes' | 'links' | 'people' | 'activity'>>
 ) {
   const { error } = await supabase.from('projects').update(updates).eq('id', id);
   if (error) throw error;
@@ -116,7 +125,12 @@ export async function upsertTask(projectId: string, task: Task) {
   const { error } = await supabase.from('project_tasks').upsert({
     id: task.id,
     project_id: projectId,
-    text: task.text,
+    text: task.task_name ?? task.text,
+    task_name: task.task_name ?? task.text,
+    description: task.description ?? '',
+    assigned_to: task.assigned_to ?? '',
+    due_date: task.due_date ?? null,
+    start_date: task.start_date ?? null,
     done: task.done,
     created_at: task.created_at,
   });
@@ -160,7 +174,6 @@ export async function deleteLink(linkId: string) {
 }
 
 export async function syncPeople(projectId: string, people: Person[]) {
-  // Delete all existing people for this project, then re-insert
   const { error: delErr } = await supabase.from('project_people').delete().eq('project_id', projectId);
   if (delErr) throw delErr;
 
@@ -170,6 +183,40 @@ export async function syncPeople(projectId: string, people: Person[]) {
     );
     if (insErr) throw insErr;
   }
+}
+
+// ── Activity Feed ──
+
+export async function fetchActivity(projectId: string, limit = 10): Promise<ActivityEvent[]> {
+  const { data, error } = await supabase
+    .from('project_activity')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    // If table doesn't exist yet, return empty gracefully
+    console.warn('Activity fetch failed (table may not exist):', error.message);
+    return [];
+  }
+  return data as ActivityEvent[];
+}
+
+export async function logActivity(
+  projectId: string,
+  userId: string,
+  eventType: string,
+  description: string
+) {
+  const { error } = await supabase.from('project_activity').insert({
+    id: crypto.randomUUID?.() ?? Date.now().toString(36),
+    project_id: projectId,
+    user_id: userId,
+    event_type: eventType,
+    description,
+    created_at: new Date().toISOString(),
+  });
+  if (error) console.warn('Activity log failed:', error.message);
 }
 
 // ── Spotlight reorder RPC ──
@@ -184,14 +231,12 @@ export async function reorderSpotlightRpc(rankUpdates: { id: string; rank: numbe
 // ── Pin project (unpins all others, pins target) ──
 
 export async function pinProjectDb(id: string, currentlyPinned: boolean) {
-  // Unpin all
   const { error: unpinErr } = await supabase
     .from('projects')
     .update({ pinned: false })
     .neq('id', id);
   if (unpinErr) throw unpinErr;
 
-  // Toggle the target
   const { error } = await supabase
     .from('projects')
     .update({ pinned: !currentlyPinned, last_activity_at: new Date().toISOString() })

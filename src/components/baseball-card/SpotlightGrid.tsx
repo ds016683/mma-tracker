@@ -22,6 +22,7 @@ import { FreshnessDot } from './FreshnessDot';
 import { PriorityBadge } from './PriorityBadge';
 import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
 import { ExpandableCardContent } from './ExpandableCardContent';
+import { StatusRollupBadge } from './StatusRollupBadge';
 
 interface SpotlightGridProps {
   projects: BaseballCardProject[];
@@ -42,7 +43,6 @@ export function SpotlightGrid({ projects, onProjectUpdate, onReorder, onToggleEx
   );
 
   function handleDragStart(_event: DragStartEvent) {
-    // Auto-collapse expanded card when drag starts
     if (expandedCardId) {
       onToggleExpand(expandedCardId);
     }
@@ -144,7 +144,7 @@ function SortableCard({
               <button
                 onClick={() => onDemote(project.id)}
                 className="rounded p-1 text-gray-400 opacity-0 transition-all hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
-                title="Move to Roster — remove from Spotlight and place in the overflow list"
+                title="Move to Roster - remove from Spotlight and place in the overflow list"
               >
                 <ArrowDown className="h-3.5 w-3.5" />
               </button>
@@ -159,6 +159,13 @@ function SortableCard({
             <ContractBadge contractRef={project.mma_contract_ref} onChange={(c) => onProjectUpdate(project.id, { mma_contract_ref: c })} />
           </div>
 
+          {/* Status rollup (only when collapsed and has tasks) */}
+          {!isExpanded && project.tasks.length > 0 && (
+            <div className="mb-2">
+              <StatusRollupBadge tasks={project.tasks} compact />
+            </div>
+          )}
+
           {/* Description preview (only when collapsed) */}
           {!isExpanded && project.description && (
             <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-gray-500">
@@ -166,16 +173,11 @@ function SortableCard({
             </p>
           )}
 
-          {/* People (only when collapsed) */}
-          {!isExpanded && project.people.length > 0 && (
-            <div
-              className="flex items-center gap-1 text-xs text-gray-400"
-              title={project.people.map(p => `${p.name}${p.role ? ` (${p.role})` : ''}`).join(', ')}
-            >
+          {/* Owner (only when collapsed) */}
+          {!isExpanded && project.mma_accountable && (
+            <div className="flex items-center gap-1 text-xs text-gray-400">
               <Users className="h-3 w-3 shrink-0" />
-              <span className="truncate">
-                {project.mma_responsible || project.people.map(p => p.name).join(', ')}
-              </span>
+              <span className="truncate">{project.mma_accountable}</span>
             </div>
           )}
 

@@ -1,34 +1,44 @@
 import { useState, useRef } from 'react';
-import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers } from 'lucide-react';
+import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers, GanttChart } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
-import { useBaseballCard } from '../../hooks/useBaseballCard';
+import { useProjects } from '../../contexts/ProjectsContext';
 import { SpotlightGrid } from './SpotlightGrid';
 import { RosterList } from './RosterList';
 import { Archive } from './Archive';
 import { CreateProjectForm } from './CreateProjectForm';
 import { BudgetView } from './BudgetView';
+import { GanttView } from '../gantt/GanttView';
 import {
   SCHEDULE_E_ITEMS, SCHEDULE_F_ITEMS,
   SCHEDULE_E_POOL_START, SCHEDULE_E_TOTAL_ALLOCATED,
   SCHEDULE_F_POOL_START, SCHEDULE_F_TOTAL_ALLOCATED,
 } from '../../lib/baseball-card/seed-data';
 
-type View = 'board' | 'schedule-e' | 'schedule-f';
+type View = 'board' | 'gantt' | 'schedule-e' | 'schedule-f';
 
-export function BaseballCardLayout() {
+interface BaseballCardLayoutProps {
+  onSwitchToGantt?: () => void;
+  onSwitchToBoard?: () => void;
+  forceView?: View;
+}
+
+export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView }: BaseballCardLayoutProps) {
   const {
-    spotlight, roster, archive,
+    projects, spotlight, roster, archive,
     loading, error: dataError,
     createProject, updateProject, deleteProject,
     pinProject, reorderSpotlight, promoteToSpotlight, demoteToRoster,
     exportToJson, importFromJson,
-  } = useBaseballCard();
+  } = useProjects();
 
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [view, setView] = useState<View>('board');
+  const [view, setView] = useState<View>(forceView ?? 'board');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync forceView from parent
+  const effectiveView = forceView ?? view;
 
   function toggleExpand(id: string) {
     setExpandedCardId(prev => prev === id ? null : id);
@@ -50,6 +60,19 @@ export function BaseballCardLayout() {
     );
   }
 
+  // Gantt full-page view
+  if (effectiveView === 'gantt') {
+    return (
+      <GanttView
+        projects={projects}
+        onSwitchToBoard={() => {
+          setView('board');
+          onSwitchToBoard?.();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
@@ -67,7 +90,7 @@ export function BaseballCardLayout() {
           <button
             onClick={() => fileInputRef.current?.click()}
             className="rounded p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
-            title="Import from JSON — load a previously exported portfolio backup"
+            title="Import from JSON"
           >
             <Upload className="h-4 w-4" />
           </button>
@@ -85,7 +108,7 @@ export function BaseballCardLayout() {
           <button
             onClick={exportToJson}
             className="rounded p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
-            title="Export to JSON — download your entire portfolio as a backup file"
+            title="Export to JSON"
           >
             <Download className="h-4 w-4" />
           </button>
@@ -102,15 +125,21 @@ export function BaseballCardLayout() {
 
       {/* Nav tabs */}
       <nav className="flex gap-1 rounded-lg bg-mma-dark-blue/5 p-1">
-        <NavTab active={view === 'board'} onClick={() => setView('board')} icon={<LayoutGrid className="h-4 w-4" />} label="Task Board" />
-        <NavTab active={view === 'schedule-e'} onClick={() => setView('schedule-e')} icon={<DollarSign className="h-4 w-4" />} label="Schedule E" />
-        <NavTab active={view === 'schedule-f'} onClick={() => setView('schedule-f')} icon={<Layers className="h-4 w-4" />} label="Schedule F" />
+        <NavTab active={effectiveView === 'board'} onClick={() => { setView('board'); }} icon={<LayoutGrid className="h-4 w-4" />} label="Task Board" />
+        <NavTab
+          active={effectiveView === 'gantt'}
+          onClick={() => { setView('gantt'); onSwitchToGantt?.(); }}
+          icon={<GanttChart className="h-4 w-4" />}
+          label="Gantt"
+        />
+        <NavTab active={effectiveView === 'schedule-e'} onClick={() => setView('schedule-e')} icon={<DollarSign className="h-4 w-4" />} label="Schedule E" />
+        <NavTab active={effectiveView === 'schedule-f'} onClick={() => setView('schedule-f')} icon={<Layers className="h-4 w-4" />} label="Schedule F" />
       </nav>
 
       {/* Schedule E */}
-      {view === 'schedule-e' && (
+      {effectiveView === 'schedule-e' && (
         <BudgetView
-          title="Schedule E — Data Enhancements"
+          title="Schedule E - Data Enhancements"
           subtitle="EWO budget tracking and monthly allocation burn"
           items={SCHEDULE_E_ITEMS}
           totalAllocated={SCHEDULE_E_TOTAL_ALLOCATED}
@@ -120,9 +149,9 @@ export function BaseballCardLayout() {
       )}
 
       {/* Schedule F */}
-      {view === 'schedule-f' && (
+      {effectiveView === 'schedule-f' && (
         <BudgetView
-          title="Schedule F — Data Innovation"
+          title="Schedule F - Data Innovation"
           subtitle="IWO budget tracking and monthly allocation burn"
           items={SCHEDULE_F_ITEMS}
           totalAllocated={SCHEDULE_F_TOTAL_ALLOCATED}
@@ -132,7 +161,7 @@ export function BaseballCardLayout() {
       )}
 
       {/* Board view */}
-      {view === 'board' && (
+      {effectiveView === 'board' && (
         <>
           {showCreateForm && (
             <CreateProjectForm

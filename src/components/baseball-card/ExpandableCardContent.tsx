@@ -2,10 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Pencil, Plus, X, Trash2,
   Users, CheckSquare, Link as LinkIcon, FileText, MessageSquare, Calendar, Tag,
+  ChevronDown, Activity, Download,
 } from 'lucide-react';
-import type { BaseballCardProject, Task, Note, ProjectLink, Person, Priority, ProjectStatus, MMATaskStatus } from '../../lib/baseball-card/types';
+import type {
+  BaseballCardProject, Task, Note, ProjectLink, Person,
+  Priority, ProjectStatus, MMATaskStatus, ActivityEvent,
+} from '../../lib/baseball-card/types';
 import { PriorityBadge } from './PriorityBadge';
 import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
+import { StatusRollupBadge } from './StatusRollupBadge';
 
 interface ExpandableCardContentProps {
   project: BaseballCardProject;
@@ -20,7 +25,10 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState(project.description);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const descRef = useRef<HTMLTextAreaElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editingDesc) descRef.current?.focus();
@@ -33,6 +41,27 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
     setEditingDesc(false);
   }
 
+  async function handleExportPDF() {
+    setExporting(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+      if (!cardRef.current) return;
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const imgW = pageW - 40;
+      const imgH = (canvas.height / canvas.width) * imgW;
+      pdf.addImage(imgData, 'PNG', 20, 20, imgW, imgH);
+      pdf.save(`${project.name.replace(/[^a-z0-9]/gi, '-')}-card.pdf`);
+    } catch (e) {
+      console.error('PDF export failed', e);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (readOnly) {
     return (
       <div className="space-y-4 border-t border-gray-100 pt-4" onClick={e => e.stopPropagation()}>
@@ -41,11 +70,9 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
             <p className="text-sm leading-relaxed text-gray-600">{project.description}</p>
           </Section>
         )}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <RACIDisplay label="Accountable" value={project.mma_accountable} color="text-mma-crimson" />
-          <RACIDisplay label="Responsible" value={project.mma_responsible} color="text-mma-blue" />
-          <RACIDisplay label="Contributor" value={project.mma_contributor} color="text-mma-orange" />
-          <RACIDisplay label="Informed" value={project.mma_informed} color="text-mma-turquoise" />
+        {/* RACI simplified: Owner only */}
+        <div className="grid grid-cols-1 gap-2">
+          <OwnerDisplay value={project.mma_accountable} />
         </div>
         {project.mma_comments && (
           <Section icon={<MessageSquare className="h-4 w-4" />} title="Comments">
@@ -65,7 +92,21 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
   }
 
   return (
-    <div className="space-y-4 border-t border-gray-100 pt-4" onClick={e => e.stopPropagation()}>
+    <div ref={cardRef} className="space-y-4 border-t border-gray-100 pt-4" onClick={e => e.stopPropagation()}>
+      {/* Top action row */}
+      <div className="flex items-center justify-between gap-2">
+        <StatusRollupBadge tasks={project.tasks} />
+        <button
+          onClick={handleExportPDF}
+          disabled={exporting}
+          className="flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50"
+          title="Export card as PDF"
+        >
+          <Download className="h-3.5 w-3.5" />
+          {exporting ? 'Exporting…' : 'PDF'}
+        </button>
+      </div>
+
       {/* Badges row */}
       <div className="flex flex-wrap items-center gap-2">
         <VersionBadge version={project.mma_version} onChange={(v) => onUpdate(project.id, { mma_version: v })} />
@@ -116,27 +157,26 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
         )}
       </Section>
 
-      {/* RACI + Dates row */}
+      {/* Owner + Dates row */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Section icon={<Users className="h-4 w-4" />} title="RACI Assignments">
-          <div className="grid grid-cols-2 gap-3">
-            <EditableRACIRow label="Accountable" value={project.mma_accountable} color="text-mma-crimson"
-              onSave={(v) => onUpdate(project.id, { mma_accountable: v })} />
-            <EditableRACIRow label="Responsible" value={project.mma_responsible} color="text-mma-blue"
-              onSave={(v) => onUpdate(project.id, { mma_responsible: v })} />
-            <EditableRACIRow label="Contributor" value={project.mma_contributor} color="text-mma-orange"
-              onSave={(v) => onUpdate(project.id, { mma_contributor: v })} />
-            <EditableRACIRow label="Informed" value={project.mma_informed} color="text-mma-turquoise"
-              onSave={(v) => onUpdate(project.id, { mma_informed: v })} />
-          </div>
+        {/* RACI simplified: Owner only */}
+        <Section icon={<Users className="h-4 w-4" />} title="Owner">
+          <EditableRACIRow
+            label="Owner"
+            value={project.mma_accountable}
+            color="text-mma-crimson"
+            onSave={(v) => onUpdate(project.id, { mma_accountable: v })}
+          />
         </Section>
 
         <Section icon={<Calendar className="h-4 w-4" />} title="Dates & Timing">
           <div className="space-y-2">
+            <EditableField label="Start Date" value={project.start_date || ''} type="date"
+              onSave={(v) => onUpdate(project.id, { start_date: v || null })} />
+            <EditableField label="End Date" value={project.end_date || ''} type="date"
+              onSave={(v) => onUpdate(project.id, { end_date: v || null })} />
             <EditableField label="Target Date" value={project.target_date || ''} type="date"
               onSave={(v) => onUpdate(project.id, { target_date: v || null })} />
-            <EditableField label="MMA Date" value={project.mma_date} type="date"
-              onSave={(v) => onUpdate(project.id, { mma_date: v })} />
             <EditableField label="Est. Turn Time" value={project.mma_estimated_turn_time}
               onSave={(v) => onUpdate(project.id, { mma_estimated_turn_time: v })} />
           </div>
@@ -160,6 +200,23 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <LinksSection links={project.links} onChange={links => onUpdate(project.id, { links })} />
         <PeopleSection people={project.people} onChange={people => onUpdate(project.id, { people })} />
+      </div>
+
+      {/* Activity Feed */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <button
+          className="flex w-full items-center gap-2 px-4 py-3 text-xs font-medium text-gray-500 hover:bg-gray-50"
+          onClick={() => setShowActivity(v => !v)}
+        >
+          <Activity className="h-4 w-4" />
+          Activity Feed
+          <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform ${showActivity ? 'rotate-180' : ''}`} />
+        </button>
+        {showActivity && (
+          <div className="border-t border-gray-100 px-4 pb-3">
+            <ActivityFeed activity={project.activity ?? []} />
+          </div>
+        )}
       </div>
 
       {/* Pin + Delete */}
@@ -200,10 +257,10 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
   );
 }
 
-function RACIDisplay({ label, value, color }: { label: string; value: string; color: string }) {
+function OwnerDisplay({ value }: { value: string }) {
   return (
-    <div>
-      <span className={`text-xs font-medium ${color}`}>{label}</span>
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <span className="text-xs font-medium text-mma-crimson">Owner</span>
       <p className="mt-0.5 text-sm text-gray-700">{value || 'TBD'}</p>
     </div>
   );
@@ -259,7 +316,6 @@ function EditableField({ label, value, type = 'text', onSave }: { label: string;
     setEditing(false);
   }
 
-  // Format date for display
   function formatDisplay(v: string) {
     if (!v) return 'Not set';
     if (type === 'date' && /^\d{4}/.test(v)) {
@@ -378,44 +434,146 @@ function EditableCommentsSection({ comments, onSave }: { comments: string; onSav
   );
 }
 
+// --- Structured Tasks ---
+
 function TasksSection({ tasks, onChange }: { tasks: Task[]; onChange: (t: Task[]) => void }) {
-  const [text, setText] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ task_name: '', description: '', assigned_to: '', due_date: '' });
 
   function addTask() {
-    if (!text.trim()) return;
+    if (!form.task_name.trim()) return;
     const task: Task = {
       id: crypto.randomUUID?.() ?? Date.now().toString(36),
-      text: text.trim(),
+      text: form.task_name.trim(),
+      task_name: form.task_name.trim(),
+      description: form.description.trim(),
+      assigned_to: form.assigned_to.trim(),
+      due_date: form.due_date || null,
+      start_date: null,
       done: false,
       created_at: new Date().toISOString(),
     };
     onChange([...tasks, task]);
-    setText('');
+    setForm({ task_name: '', description: '', assigned_to: '', due_date: '' });
+    setShowForm(false);
+  }
+
+  function toggleDone(id: string) {
+    onChange(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  }
+
+  function removeTask(id: string) {
+    onChange(tasks.filter(t => t.id !== id));
   }
 
   return (
     <Section icon={<CheckSquare className="h-4 w-4" />} title="Tasks">
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {tasks.map(task => (
-          <div key={task.id} className="group/task flex items-center gap-2">
-            <button
-              onClick={() => onChange(tasks.map(t => t.id === task.id ? { ...t, done: !t.done } : t))}
-              className={`h-4 w-4 shrink-0 rounded border ${task.done ? 'border-mma-turquoise bg-mma-turquoise' : 'border-gray-300'}`}
-            />
-            <span className={`flex-1 text-sm ${task.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{task.text}</span>
-            <button onClick={() => onChange(tasks.filter(t => t.id !== task.id))} className="text-gray-300 opacity-0 hover:text-red-400 group-hover/task:opacity-100">
-              <X className="h-3.5 w-3.5" />
-            </button>
+          <div key={task.id} className="group/task rounded-lg border border-gray-100 bg-gray-50 p-2">
+            <div className="flex items-start gap-2">
+              <button
+                onClick={() => toggleDone(task.id)}
+                className={`mt-0.5 h-4 w-4 shrink-0 rounded border transition-colors ${task.done ? 'border-mma-turquoise bg-mma-turquoise' : 'border-gray-300 hover:border-mma-blue'}`}
+              />
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-medium leading-tight ${task.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                  {task.task_name || task.text}
+                </p>
+                {task.description && (
+                  <p className="mt-0.5 text-xs text-gray-500">{task.description}</p>
+                )}
+                <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
+                  {task.assigned_to && <span>👤 {task.assigned_to}</span>}
+                  {task.due_date && (
+                    <span className={getDueDateClass(task.due_date, task.done)}>
+                      📅 {formatDate(task.due_date)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => removeTask(task.id)}
+                className="mt-0.5 shrink-0 text-gray-300 opacity-0 hover:text-red-400 group-hover/task:opacity-100"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
-        <div className="flex items-center gap-2">
-          <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addTask(); }}
-            placeholder="Add a task..." className="flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm focus:border-gray-400 focus:outline-none" />
-          <button onClick={addTask} className="rounded p-1 text-gray-400 hover:text-gray-600"><Plus className="h-4 w-4" /></button>
-        </div>
+        {showForm ? (
+          <div className="rounded-lg border border-dashed border-gray-300 p-3 space-y-2">
+            <input
+              autoFocus
+              value={form.task_name}
+              onChange={e => setForm(f => ({ ...f, task_name: e.target.value }))}
+              placeholder="Task name *"
+              className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-gray-400 focus:outline-none"
+            />
+            <input
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="Description (optional)"
+              className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-gray-400 focus:outline-none"
+            />
+            <div className="flex gap-2">
+              <input
+                value={form.assigned_to}
+                onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))}
+                placeholder="Assigned to"
+                className="flex-1 rounded border border-gray-200 px-2 py-1 text-sm focus:border-gray-400 focus:outline-none"
+              />
+              <input
+                type="date"
+                value={form.due_date}
+                onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
+                className="w-36 rounded border border-gray-200 px-2 py-1 text-sm focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={addTask}
+                className="rounded bg-mma-dark-blue px-3 py-1 text-xs text-white hover:bg-mma-blue"
+              >
+                Add Task
+              </button>
+              <button
+                onClick={() => { setShowForm(false); setForm({ task_name: '', description: '', assigned_to: '', due_date: '' }); }}
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add task
+          </button>
+        )}
       </div>
     </Section>
   );
+}
+
+function getDueDateClass(dueDate: string, done: boolean): string {
+  if (done) return 'text-gray-400';
+  const now = Date.now();
+  const due = new Date(dueDate).getTime();
+  const threeDays = 3 * 24 * 60 * 60 * 1000;
+  if (due < now) return 'text-red-500 font-medium';
+  if (due - now <= threeDays) return 'text-yellow-600 font-medium';
+  return 'text-gray-400';
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
 }
 
 function LinksSection({ links, onChange }: { links: ProjectLink[]; onChange: (l: ProjectLink[]) => void }) {
@@ -539,5 +697,24 @@ function PeopleSection({ people, onChange }: { people: Person[]; onChange: (p: P
         </div>
       </div>
     </Section>
+  );
+}
+
+function ActivityFeed({ activity }: { activity: ActivityEvent[] }) {
+  if (activity.length === 0) {
+    return <p className="py-2 text-xs italic text-gray-400">No activity recorded yet.</p>;
+  }
+  return (
+    <ul className="mt-2 space-y-2">
+      {activity.map(event => (
+        <li key={event.id} className="flex items-start gap-2 text-xs">
+          <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-mma-blue" />
+          <div className="min-w-0 flex-1">
+            <p className="text-gray-700">{event.description}</p>
+            <span className="text-gray-400">{new Date(event.created_at).toLocaleString()}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

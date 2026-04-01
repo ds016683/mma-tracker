@@ -17,11 +17,19 @@ export type MMATaskStatus =
 
 export type MMATaskPriority = 'Very High' | 'High' | 'Medium' | 'Low';
 
+// --- Task (structured) ---
 export interface Task {
   id: string;
+  // Legacy text field kept for migration compatibility
   text: string;
   done: boolean;
   created_at: string;
+  // New structured fields (may be absent on old records)
+  task_name?: string;
+  description?: string;
+  assigned_to?: string;
+  due_date?: string | null;
+  start_date?: string | null;
 }
 
 export interface Note {
@@ -43,6 +51,16 @@ export interface Person {
   role?: string;
 }
 
+// --- Activity Feed ---
+export interface ActivityEvent {
+  id: string;
+  project_id: string;
+  user_id: string;
+  event_type: string;
+  description: string;
+  created_at: string;
+}
+
 export interface BaseballCardProject {
   id: string;
   name: string;
@@ -56,11 +74,16 @@ export interface BaseballCardProject {
   last_activity_at: string;
   created_at: string;
   target_date: string | null;
+  // Gantt dates
+  start_date?: string | null;
+  end_date?: string | null;
   tags: string[];
   archived_at: string | null;
   tasks: Task[];
   notes: Note[];
   links: ProjectLink[];
+  // Activity feed (loaded separately)
+  activity?: ActivityEvent[];
   // MMA-specific fields from spreadsheet
   mma_version: string;
   mma_status: MMATaskStatus;
@@ -98,4 +121,31 @@ export interface BudgetItem {
   approvedBudget: number;
   monthlyAllocations: number[];
   poolBalance: number;
+}
+
+// --- Status Rollup ---
+export type RollupStatus = 'on-track' | 'at-risk' | 'overdue' | 'complete' | 'no-tasks';
+
+export function computeRollup(tasks: Task[]): { pct: number; status: RollupStatus } {
+  if (tasks.length === 0) return { pct: 0, status: 'no-tasks' };
+  const done = tasks.filter(t => t.done).length;
+  const pct = Math.round((done / tasks.length) * 100);
+  if (pct === 100) return { pct, status: 'complete' };
+
+  const now = Date.now();
+  const threeDays = 3 * 24 * 60 * 60 * 1000;
+  let hasOverdue = false;
+  let hasAtRisk = false;
+
+  for (const t of tasks) {
+    if (t.done) continue;
+    const due = t.due_date ? new Date(t.due_date).getTime() : null;
+    if (due === null) continue;
+    if (due < now) { hasOverdue = true; break; }
+    if (due - now <= threeDays) hasAtRisk = true;
+  }
+
+  if (hasOverdue) return { pct, status: 'overdue' };
+  if (hasAtRisk) return { pct, status: 'at-risk' };
+  return { pct, status: 'on-track' };
 }

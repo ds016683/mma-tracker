@@ -16,6 +16,8 @@ import {
   upsertLink,
   deleteLink as deleteLinkDb,
   syncPeople,
+  fetchActivity,
+  logActivity,
 } from '../lib/supabase/queries';
 
 const STORAGE_KEY = 'mma-tracker-portfolio';
@@ -24,7 +26,6 @@ function generateId(): string {
   return crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-/** Load projects from localStorage (migration source only) */
 function loadLocalProjects(): BaseballCardProject[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -40,7 +41,6 @@ export function useBaseballCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Track IDs of writes we initiated so Realtime can skip them
   const pendingWriteIds = useRef(new Set<string>());
 
   // ── Initial fetch + localStorage migration ──
@@ -53,15 +53,12 @@ export function useBaseballCard() {
         if (cancelled) return;
 
         if (data.length > 0) {
-          // Supabase has data — use it, clear any stale localStorage
           setProjects(data);
           localStorage.removeItem(STORAGE_KEY);
         } else {
-          // Supabase is empty — check for localStorage data to migrate
           const localData = loadLocalProjects();
           if (localData.length > 0) {
             setProjects(localData);
-            // Upload to Supabase in background
             for (const project of localData) {
               await insertProject(project).catch((err) => {
                 console.error('Migration failed for project:', project.id, err);
@@ -88,12 +85,18 @@ export function useBaseballCard() {
       const data = await fetchAllProjects();
       setProjects(data);
     } catch {
-      // silent — Realtime will retry
+      // silent - Realtime will retry
     }
   }, []);
 
   // ── Realtime subscriptions ──
   useRealtimeProjects({ setProjects, pendingWriteIds, refetch });
+
+  // ── Load activity for a project (lazy) ──
+  const loadProjectActivity = useCallback(async (projectId: string) => {
+    const activity = await fetchActivity(projectId, 10);
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, activity } : p));
+  }, []);
 
   // ── Create ──
   const createProject = useCallback((fields: {
@@ -119,6 +122,8 @@ export function useBaseballCard() {
       last_activity_at: now,
       created_at: now,
       target_date: fields.target_date ?? null,
+      start_date: null,
+      end_date: null,
       tags: fields.tags ?? [],
       archived_at: null,
       tasks: [],
@@ -137,13 +142,11 @@ export function useBaseballCard() {
       mma_date: now.slice(0, 10),
     };
 
-    // Optimistic update
     setProjects(prev => [...prev, project]);
     pendingWriteIds.current.add(project.id);
 
     insertProject(project).catch((err) => {
       console.error('Failed to create project:', err);
-      // Rollback
       setProjects(prev => prev.filter(p => p.id !== project.id));
     }).finally(() => {
       pendingWriteIds.current.delete(project.id);
@@ -163,19 +166,15 @@ export function useBaseballCard() {
 
     pendingWriteIds.current.add(id);
 
-    // Separate sub-entity updates from project row updates
-    const { tasks, notes, links, people, ...rowUpdates } = updates;
+    const { tasks, notes, links, people, activity, ...rowUpdates } = updates;
     rowUpdates.last_activity_at = new Date().toISOString();
     if (updates.status === 'archived') rowUpdates.archived_at = new Date().toISOString();
 
     const ops: Promise<void>[] = [];
 
-    // Always update the project row (at least for last_activity_at)
     ops.push(updateProjectRow(id, rowUpdates));
 
-    // Sync sub-entities if they changed
     if (tasks !== undefined) {
-      // Diff approach: upsert all current tasks, delete removed ones
       ops.push((async () => {
         const currentProject = projects.find(p => p.id === id);
         const oldTaskIds = new Set(currentProject?.tasks.map(t => t.id) ?? []);
@@ -321,6 +320,16 @@ export function useBaseballCard() {
     });
   }, []);
 
+  // ── Log activity helper ──
+  const logProjectActivity = useCallback(async (
+    projectId: string,
+    userId: string,
+    eventType: string,
+    description: string
+  ) => {
+    await logActivity(projectId, userId, eventType, description);
+  }, []);
+
   // ── Export ──
   const exportToJson = useCallback(() => {
     const data = JSON.stringify(projects, null, 2);
@@ -346,17 +355,15 @@ export function useBaseballCard() {
 
         if (newProjects.length === 0) return;
 
-        // Optimistic update
         setProjects(prev => [...prev, ...newProjects]);
 
-        // Write to Supabase
         for (const project of newProjects) {
           await insertProject(project).catch((err) => {
             console.error('Failed to import project:', project.id, err);
           });
         }
       } catch {
-        // Invalid JSON — silently ignore
+        // Invalid JSON - silently ignore
       }
     };
     reader.readAsText(file);
@@ -371,5 +378,6 @@ export function useBaseballCard() {
     pinProject, reorderSpotlight, promoteToSpotlight, demoteToRoster,
     exportToJson, importFromJson,
     refetch, pendingWriteIds,
+    loadProjectActivity, logProjectActivity,
   };
 }
