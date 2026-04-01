@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProjectsProvider, useProjects } from './contexts/ProjectsContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { BaseballCardLayout } from './components/baseball-card/BaseballCardLayout';
+import type { BoardView } from './components/baseball-card/BaseballCardLayout';
 import { AppDrawer } from './components/navigation/AppDrawer';
 import type { AppView } from './components/navigation/AppDrawer';
 import { WaterTreatmentView } from './components/starset/WaterTreatmentView';
@@ -42,6 +43,9 @@ function AppInner({
 }) {
   const { projects } = useProjects();
 
+  // Map drawer nav 'gantt' → forceView prop
+  const boardForceView: BoardView | undefined = activeView === 'gantt' ? 'gantt' : undefined;
+
   return (
     <div className="flex min-h-screen bg-mma-light-bg">
       <AppDrawer activeView={activeView} onViewChange={setActiveView} />
@@ -51,7 +55,7 @@ function AppInner({
             <BaseballCardLayout
               onSwitchToGantt={() => setActiveView('gantt')}
               onSwitchToBoard={() => setActiveView('tracker')}
-              forceView={activeView === 'gantt' ? 'gantt' : undefined}
+              forceView={boardForceView}
             />
           </div>
         )}
@@ -59,7 +63,6 @@ function AppInner({
         {activeView === 'analytic-tests' && <AnalyticTestsView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
       </main>
-      {/* Haiku AI assistant floats on all authenticated views */}
       <HaikuAssistant projects={projects} />
     </div>
   );
