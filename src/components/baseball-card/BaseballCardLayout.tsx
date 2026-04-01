@@ -37,8 +37,14 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
   const [localView, setLocalView] = useState<BoardView>('board');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Parent can override local view
+  // Determine effective view without TypeScript narrowing the type away
   const activeView: BoardView = forceView ?? localView;
+
+  // Pre-compute these to avoid TS narrowing issues inside conditional render
+  const isGantt = activeView === 'gantt';
+  const isBoard = activeView === 'board';
+  const isScheduleE = activeView === 'schedule-e';
+  const isScheduleF = activeView === 'schedule-f';
 
   function toggleExpand(id: string) {
     setExpandedCardId(prev => prev === id ? null : id);
@@ -62,8 +68,8 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      {/* Gantt view replaces entire layout */}
-      {activeView === 'gantt' && (
+      {/* Gantt view */}
+      {isGantt && (
         <GanttView
           projects={projects}
           onSwitchToBoard={() => {
@@ -73,7 +79,8 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
         />
       )}
 
-      {activeView !== 'gantt' && (
+      {/* Board / Schedule views */}
+      {!isGantt && (
         <>
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -115,7 +122,6 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
               <button
                 onClick={() => setShowCreateForm(true)}
                 className="rounded-md bg-mma-dark-blue px-3 py-1.5 text-sm text-white hover:bg-mma-blue transition-colors"
-                title="Create a new task card"
               >
                 <Plus className="h-4 w-4 inline -mt-0.5 mr-1" />
                 New Card
@@ -126,33 +132,32 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
           {/* Nav tabs */}
           <nav className="flex gap-1 rounded-lg bg-mma-dark-blue/5 p-1">
             <NavTab
-              active={activeView === 'board'}
+              active={isBoard}
               onClick={() => setLocalView('board')}
               icon={<LayoutGrid className="h-4 w-4" />}
               label="Task Board"
             />
             <NavTab
-              active={activeView === 'gantt'}
+              active={isGantt}
               onClick={() => { setLocalView('gantt'); onSwitchToGantt?.(); }}
               icon={<GanttChart className="h-4 w-4" />}
               label="Gantt"
             />
             <NavTab
-              active={activeView === 'schedule-e'}
+              active={isScheduleE}
               onClick={() => setLocalView('schedule-e')}
               icon={<DollarSign className="h-4 w-4" />}
               label="Schedule E"
             />
             <NavTab
-              active={activeView === 'schedule-f'}
+              active={isScheduleF}
               onClick={() => setLocalView('schedule-f')}
               icon={<Layers className="h-4 w-4" />}
               label="Schedule F"
             />
           </nav>
 
-          {/* Schedule E */}
-          {activeView === 'schedule-e' && (
+          {isScheduleE && (
             <BudgetView
               title="Schedule E - Data Enhancements"
               subtitle="EWO budget tracking and monthly allocation burn"
@@ -163,8 +168,7 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
             />
           )}
 
-          {/* Schedule F */}
-          {activeView === 'schedule-f' && (
+          {isScheduleF && (
             <BudgetView
               title="Schedule F - Data Innovation"
               subtitle="IWO budget tracking and monthly allocation burn"
@@ -175,8 +179,7 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
             />
           )}
 
-          {/* Board view */}
-          {activeView === 'board' && (
+          {isBoard && (
             <>
               {showCreateForm && (
                 <CreateProjectForm
