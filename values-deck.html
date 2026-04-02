@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Values Deck â€” Sabina Beachdell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF8F3;
+    --cream-dark: #F0EBE0;
+    --forest: #1E2D25;
+    --forest-mid: #2C4035;
+    --forest-light: #4A6B58;
+    --forest-soft: #D6E8DF;
+    --forest-mid-soft: #B8D4C4;
+    --pink: #FF2D8B;
+    --pink-soft: #FFE0F0;
+    --charcoal: #1A1A1A;
+    --warm-gray: #7A7468;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream-dark);
+    font-family: var(--sans);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 50px;
+    background: var(--cream);
+    position: relative;
+  }
+
+  .page::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--pink);
+  }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 50px; }
+
+  .byline {
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--forest-light);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: 52px;
+    line-height: 1.1;
+    color: var(--forest);
+    margin-bottom: 12px;
+  }
+
+  h1 em { font-style: italic; color: var(--pink); }
+
+  .subtitle {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--warm-gray);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* DIVIDER */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0;
+  }
+  .divider-line { flex: 1; height: 0.5px; background: var(--cream-dark); }
+  .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pink); opacity: 0.7; }
+
+  /* NOTE */
+  .definitions-note {
+    background: var(--cream-dark);
+    border-left: 2px solid var(--forest-light);
+    padding: 18px 24px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--warm-gray);
+    line-height: 1.75;
+    font-style: italic;
+    font-family: var(--serif);
+  }
+
+  .definitions-note strong {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--forest);
+  }
+
+  /* INTRO */
+  .intro { text-align: center; margin-bottom: 32px; }
+  .intro p {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--warm-gray);
+    max-width: 620px;
+    margin: 0 auto;
+    letter-spacing: 0.3px;
+  }
+
+  /* INSTRUCTION BLOCK */
+  .instruction-block {
+    background: var(--cream-dark);
+    border-left: 2px solid var(--pink);
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+
+  .instruction-block h2 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--forest);
+    margin-bottom: 12px;
+  }
+
+  .instruction-block ol { padding-left: 18px; }
+
+  .instruction-block li {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--warm-gray);
+    line-height: 1.85;
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+  }
+
+  .instruction-block li strong { font-weight: 500; color: var(--forest); }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5px;
+    background: var(--cream-dark);
+    border: 1px solid var(--cream-dark);
+    margin-bottom: 44px;
+  }
+
+  .value-card {
+    background: var(--cream);
+    padding: 16px 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.18s;
+    user-select: none;
+    position: relative;
+  }
+
+  .value-card:hover { background: #fff; }
+
+  .value-card.selected { background: var(--forest-soft); }
+  .value-card.selected:hover { background: var(--forest-mid-soft); }
+
+  .value-card.selected::after {
+    content: 'âœ“';
+    position: absolute;
+    top: 7px; right: 9px;
+    font-size: 10px;
+    color: var(--forest-light);
+    font-family: var(--sans);
+    font-weight: 500;
+  }
+
+  .value-name {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--forest);
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    transition: color 0.18s;
+  }
+
+  .value-card.selected .value-name { color: var(--pink); }
+
+  .value-def {
+    font-size: 11.5px;
+    font-weight: 300;
+    color: var(--warm-gray);
+    line-height: 1.55;
+    letter-spacing: 0.2px;
+  }
+
+  /* SELECTION PANEL */
+  .selection-panel {
+    background: var(--cream-dark);
+    border: 0.5px solid var(--cream-dark);
+    border-left: 2px solid var(--forest-light);
+    padding: 28px 32px;
+    margin-bottom: 44px;
+  }
+
+  .selection-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .selection-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--forest);
+  }
+
+  .selection-count {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--forest-light);
+  }
+
+  .empty-state {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--warm-gray);
+    font-style: italic;
+    font-family: var(--serif);
+  }
+
+  .selected-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .selected-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--cream);
+    border: 0.5px solid var(--cream-dark);
+    padding: 6px 12px 6px 14px;
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--forest);
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 9px;
+    color: var(--warm-gray);
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s;
+    font-family: var(--sans);
+  }
+
+  .remove-btn:hover { color: var(--pink); }
+
+  .panel-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .clear-all {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    background: none;
+    border: 0.5px solid var(--cream-dark);
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .clear-all:hover { color: var(--pink); border-color: var(--pink); }
+
+  /* FOOTER */
+  footer { text-align: center; padding-top: 8px; }
+
+  footer .name {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--forest);
+    margin-bottom: 4px;
+  }
+
+  footer .tagline {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--forest-light);
+    font-weight: 300;
+  }
+
+  footer .url {
+    font-size: 11.5px;
+    color: var(--warm-gray);
+    font-weight: 300;
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+
+    @media (max-width: 600px) {
+    .page { padding: 28px 16px; }
+    h1 { font-size: 34px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 2px; }
+    .value-card { padding: 18px 12px; }
+    .value-name { font-size: 19px; margin-bottom: 5px; }
+    .value-def { font-size: 12.5px; line-height: 1.5; }
+    .instruction-block { padding: 18px 18px; }
+    .instruction-block h2 { font-size: 19px; }
+    .selection-panel { padding: 20px 18px; }
+    .selected-tag { padding: 8px 14px 8px 16px; font-size: 15px; }
+    .definitions-note { font-size: 12.5px; padding: 14px 18px; }
+    .intro p { font-size: 13px; }
+  }
+  @media (max-width: 380px) {
+    .grid { grid-template-columns: 1fr; }
+    .value-card { padding: 16px 14px; text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="byline">Sabina Beachdell Â· Coaching</div>
+    <h1>The <em>Values</em> Deck</h1>
+    <p class="subtitle">A map of what matters â€” and a mirror for the choices you're already making.</p>
+  </header>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-dot"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="definitions-note">
+    A note on the definitions: they're signposts, not verdicts. If a word resonates but the description doesn't quite fit, trust the word. Use your own definition. And if none of the 73 words are exactly right, write in the one(s) that are.
+  </div>
+
+  <div class="intro">
+    <p>These 73 values represent a wide cross-section of what human beings orient their lives around. Values are not better or more evolved than each other, and this is not a test â€” it's an invitation to see yourself more clearly. Prioritize your truth over what's offered here. If there's a word that's more true for you, please write it in rather than finding the closest available option.</p>
+  </div>
+
+  <div class="instruction-block">
+    <h2>How to use this deck</h2>
+    <ol>
+      <li><strong>First pass:</strong> Read through all 73 values and click any that feel alive or true for you â€” don't overthink it. Let yourself react.</li>
+      <li><strong>Narrow down:</strong> From your selected values, aim for your top 10. Notice what feels <em>essential</em> vs. what feels <em>aspirational</em> â€” both are useful to know, but they're different things.</li>
+      <li><strong>Go deeper:</strong> Look across your selections and notice if any of them are covering similar ground. When two values feel close, ask yourself: <em>which one is more true?</em> Not which one sounds better â€” which one actually lives in you. For example, you might have chosen both Joy and Fun, but when you sit with them, one just lands differently. Trust that. Let it help you narrow.</li>
+      <li><strong>Bring your top 5â€“7 values to our designated session</strong> and together we will develop a compass with them to support you moving forward â€” especially useful when you're facing a decision and can't hear yourself clearly.</li>
+    </ol>
+  </div>
+
+  <div class="grid" id="valuesGrid"></div>
+
+  <div class="selection-panel">
+    <div class="selection-header">
+      <div class="selection-title">Your selected values</div>
+      <div class="selection-count" id="selectionCount">0 selected</div>
+    </div>
+    <div class="empty-state" id="emptyState">Click any value above to begin.</div>
+    <div class="selected-list" id="selectedList" style="display:none;"></div>
+    <div class="panel-footer" id="panelFooter" style="display:none;">
+      <button class="clear-all" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-dot"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <footer>
+    <div class="name">Sabina Beachdell</div>
+    <div class="tagline">Life Coach Â· Ally in Your Becoming</div>
+    <div class="url">sabinabeachdell.com</div>
+  </footer>
+
+</div>
+
+<script>
+  const values = [
+    { name: "Aliveness", def: "Feeling vital, awake, and fully in your body" },
+    { name: "Ambition", def: "Drive to achieve more than what's expected" },
+    { name: "Authenticity", def: "Being the same person inside and out" },
+    { name: "Adventure", def: "Seeking new experiences and unknown territory" },
+    { name: "Beauty", def: "Creating or being surrounded by what moves you aesthetically" },
+    { name: "Belonging", def: "Feeling genuinely accepted by a group or community" },
+    { name: "Comfort", def: "A life that feels safe, familiar, and without unnecessary hardship" },
+    { name: "Compassion", def: "Being moved by the suffering of others and responding to it" },
+    { name: "Competition", def: "Being measured against others and rising to it" },
+    { name: "Contribution", def: "Making a meaningful difference in the world" },
+    { name: "Courage", def: "Acting in spite of fear" },
+    { name: "Creativity", def: "Bringing new things into existence" },
+    { name: "Curiosity", def: "Being drawn toward questions and discovery" },
+    { name: "Devotion", def: "Deep commitment to a person, practice, or belief" },
+    { name: "Discipline", def: "Building your life through structure and consistency" },
+    { name: "Duty", def: "Fulfilling obligations to others, institutions, or ideals" },
+    { name: "Efficiency", def: "Getting the most out of time, energy, and resources" },
+    { name: "Endurance", def: "Staying the course through hardship without losing yourself" },
+    { name: "Fairness", def: "Everyone playing by the same rules" },
+    { name: "Faith", def: "Trust in something larger than yourself" },
+    { name: "Family", def: "The people you came from or chose, placed at the center" },
+    { name: "Flow", def: "Being so absorbed in what you're doing that time disappears and effort becomes effortless" },
+    { name: "Freedom", def: "Living without constraint or interference" },
+    { name: "Friendship", def: "Deep mutual care between equals" },
+    { name: "Fun", def: "Life should include genuine lightheartedness and play" },
+    { name: "Generosity", def: "Giving freely without keeping score" },
+    { name: "Growth", def: "Always becoming more than you were" },
+    { name: "Health", def: "Physical vitality as a core organizing value" },
+    { name: "Home", def: "A rooted sense of place and sanctuary" },
+    { name: "Honesty", def: "Telling the truth even when it costs something" },
+    { name: "Honor", def: "Living in a way you and others can respect" },
+    { name: "Humor", def: "Finding and sharing what's funny about being alive" },
+    { name: "Impact", def: "Leaving a measurable mark on the world" },
+    { name: "Independence", def: "Standing on your own and not needing others to get by" },
+    { name: "Influence", def: "Shaping how others think or act" },
+    { name: "Integrity", def: "Your actions matching your values, consistently" },
+    { name: "Intimacy", def: "Being truly known by another person" },
+    { name: "Joy", def: "A felt sense of delight and lightness" },
+    { name: "Justice", def: "Righting what's wrong in the world" },
+    { name: "Knowledge", def: "Accumulating understanding as an end in itself" },
+    { name: "Legacy", def: "What you leave behind after you're gone" },
+    { name: "Love", def: "Acting in alignment with love as your guiding principle in life" },
+    { name: "Loyalty", def: "Standing by people and commitments over time" },
+    { name: "Mastery", def: "Becoming genuinely excellent at something" },
+    { name: "Meaning", def: "A sense that your life points toward something" },
+    { name: "Nature", def: "Deep connection to the living world" },
+    { name: "Obedience", def: "Living in right relationship with authority or sacred law" },
+    { name: "Order", def: "A life that is structured, organized, and predictable feels right and good" },
+    { name: "Passion", def: "Being on fire about something and letting it drive you" },
+    { name: "Peace", def: "Inner and outer freedom from conflict" },
+    { name: "Pleasure", def: "Savoring what feels good" },
+    { name: "Power", def: "The capacity to make things happen" },
+    { name: "Presence", def: "Being fully here, not elsewhere" },
+    { name: "Purpose", def: "A clear sense of why you're here" },
+    { name: "Recognition", def: "Being seen and acknowledged for what you do" },
+    { name: "Respect", def: "Treating and being treated with basic dignity" },
+    { name: "Responsibility", def: "Owning the consequences of your choices" },
+    { name: "Risk", def: "The aliveness that comes from uncertainty and stakes" },
+    { name: "Security", def: "Stability, predictability, and a known future" },
+    { name: "Sensuality", def: "Being fully alive in your senses and body" },
+    { name: "Service", def: "Giving yourself over to others' needs" },
+    { name: "Simplicity", def: "A life with less noise and more clarity" },
+    { name: "Solitude", def: "Choosing to be alone as a genuine source of nourishment" },
+    { name: "Spirituality", def: "Tending to your inner and transcendent life" },
+    { name: "Status", def: "Social standing and the respect of your peers" },
+    { name: "Steadiness", def: "Being a reliable, grounding presence â€” for yourself and others" },
+    { name: "Tradition", def: "Honoring what has been passed down" },
+    { name: "Truth", def: "Living in alignment with what is real â€” and having the courage to say so" },
+    { name: "Wealth", def: "Financial abundance as a genuine priority" },
+    { name: "Winning", def: "Outcomes matter, and coming out on top matters" },
+    { name: "Wonder", def: "Remaining open to awe at the strangeness and beauty of existence" },
+    { name: "Work", def: "Honest labor as something worthy and dignifying in itself" },
+  ];
+
+  const selected = new Set();
+
+  function buildGrid() {
+    const grid = document.getElementById('valuesGrid');
+    values.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'value-card';
+      card.dataset.name = v.name;
+      card.innerHTML = `<div class="value-name">${v.name}</div><div class="value-def">${v.def}</div>`;
+      card.addEventListener('click', () => toggleValue(v.name, card));
+      grid.appendChild(card);
+    });
+  }
+
+  function toggleValue(name, card) {
+    if (selected.has(name)) {
+      selected.delete(name);
+      card.classList.remove('selected');
+    } else {
+      selected.add(name);
+      card.classList.add('selected');
+    }
+    renderSelectedList();
+  }
+
+  function removeValue(name) {
+    selected.delete(name);
+    const card = document.querySelector(`.value-card[data-name="${CSS.escape(name)}"]`);
+    if (card) card.classList.remove('selected');
+    renderSelectedList();
+  }
+
+  function clearAll() {
+    selected.clear();
+    document.querySelectorAll('.value-card.selected').forEach(c => c.classList.remove('selected'));
+    renderSelectedList();
+  }
+
+  function renderSelectedList() {
+    const list = document.getElementById('selectedList');
+    const empty = document.getElementById('emptyState');
+    const count = document.getElementById('selectionCount');
+    const footer = document.getElementById('panelFooter');
+    const n = selected.size;
+
+    count.textContent = n === 0 ? '0 selected' : `${n} selected`;
+
+    if (n === 0) {
+      empty.style.display = 'block';
+      list.style.display = 'none';
+      footer.style.display = 'none';
+      return;
+    }
+
+    empty.style.display = 'none';
+    list.style.display = 'flex';
+    footer.style.display = 'flex';
+
+    const sorted = [...selected].sort();
+    list.innerHTML = sorted.map(name => `
+      <div class="selected-tag">
+        ${name}
+        <button class="remove-btn" onclick="removeValue('${name.replace(/'/g, "\\'")}')" title="Remove">âœ•</button>
+      </div>
+    `).join('');
+  }
+
+  buildGrid();
+</script>
+</body>
+</html>
+
