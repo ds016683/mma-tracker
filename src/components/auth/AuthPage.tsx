@@ -3,30 +3,28 @@ import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
+type FlowState = 'idle' | 'loading' | 'sent' | 'error';
+
 export function AuthPage() {
-  const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [flowState, setFlowState] = useState<FlowState>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    setFlowState('loading');
+    setErrorMessage(null);
 
-    const result = mode === 'login'
-      ? await signIn(email, password)
-      : await signUp(email, password);
-
-    setSubmitting(false);
+    const result = await signIn(email);
 
     if (result.error) {
-      setError(result.error);
-    } else if (mode === 'signup') {
-      setSignupSuccess(true);
+      setFlowState('error');
+      setErrorMessage(
+        "We couldn't send a link to that address. Make sure you've been added as an authorized user."
+      );
+    } else {
+      setFlowState('sent');
     }
   };
 
@@ -42,32 +40,32 @@ export function AuthPage() {
 
         <div className="text-center">
           <h1 className="text-xl font-bold text-mma-dark-blue">Master Tracker</h1>
-          <p className="text-sm text-mma-blue-gray">
-            {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
-          </p>
+          <p className="text-sm text-mma-blue-gray">Authorized access only</p>
         </div>
 
-        {signupSuccess ? (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-800">
-            Account created! You can now sign in.
+        {flowState === 'sent' ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center space-y-2">
+            <div className="text-2xl">✉️</div>
+            <p className="text-sm font-medium text-green-800">Check your email for a login link.</p>
+            <p className="text-xs text-green-700">It expires in 1 hour. You can close this tab.</p>
             <button
-              onClick={() => { setMode('login'); setSignupSuccess(false); }}
-              className="mt-2 block w-full text-center font-medium text-mma-dark-blue hover:underline"
+              onClick={() => { setFlowState('idle'); setEmail(''); }}
+              className="mt-3 block w-full text-center text-xs font-medium text-mma-dark-blue hover:underline"
             >
-              Go to sign in
+              Use a different email
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {flowState === 'error' && errorMessage && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
+                {errorMessage}
               </div>
             )}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                Email address
               </label>
               <input
                 id="email"
@@ -80,44 +78,14 @@ export function AuthPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-mma-dark-blue focus:outline-none focus:ring-1 focus:ring-mma-dark-blue"
-                placeholder="Min. 6 characters"
-              />
-            </div>
-
             <button
               type="submit"
-              disabled={submitting}
+              disabled={flowState === 'loading'}
               className="w-full rounded-md bg-mma-dark-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-mma-dark-blue/90 disabled:opacity-50 transition-colors"
             >
-              {submitting
-                ? (mode === 'login' ? 'Signing in...' : 'Creating account...')
-                : (mode === 'login' ? 'Sign in' : 'Create account')}
+              {flowState === 'loading' ? 'Sending...' : 'Send Login Link'}
             </button>
           </form>
-        )}
-
-        {!signupSuccess && (
-          <p className="text-center text-sm text-gray-500">
-            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-            <button
-              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
-              className="font-medium text-mma-dark-blue hover:underline"
-            >
-              {mode === 'login' ? 'Sign up' : 'Sign in'}
-            </button>
-          </p>
         )}
       </div>
     </div>
