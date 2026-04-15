@@ -113,7 +113,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 }
 
 export function ReportingQueriesView() {
-  const defaultKey = import.meta.env.VITE_ANTHROPIC_KEY || '';
+  const defaultKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
   const [apiKey, setApiKey] = useState<string>(() => {
     return localStorage.getItem('mma_anthropic_key') || defaultKey;
   });
