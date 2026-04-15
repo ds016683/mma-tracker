@@ -94,5 +94,21 @@
     "mmaRegion": 10,
     "status": "Not in MRF — pilot data usability TBD (Chris Hart to advise)",
     "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Sanford Health Plan",
+    "region": "Upper Midwest",
+    "states": ["ND", "SD", "MN", "WI"],
+    "mmaRegion": 6,
+    "status": "In TH dataset (Not Included for MMA) — SHP Health Plan. Confirm WI/Eau Claire coverage scope.",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Security Health Plan of Wisconsin",
+    "region": "Upper Midwest",
+    "states": ["WI"],
+    "mmaRegion": 6,
+    "status": "v9 candidate — Marshfield Clinic affiliate; covers Eau Claire market. Not in TH dataset. New MRF order required.",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
   }
 ]
