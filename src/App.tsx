@@ -9,6 +9,7 @@ import type { AppView } from './components/navigation/AppDrawer';
 import { WaterTreatmentView } from './components/starset/WaterTreatmentView';
 import { AnalyticTestsView } from './components/starset/AnalyticTestsView';
 import { ReportingQueriesView } from './components/starset/ReportingQueriesView';
+import { RegionalMapView } from './components/starset/RegionalMapView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 
 function AppContent() {
@@ -43,7 +44,7 @@ function AppInner({
 }) {
   const { projects } = useProjects();
 
-  // Map drawer nav 'gantt' → forceView prop
+  // Map drawer nav 'gantt' -> forceView prop
   const boardForceView: BoardView | undefined = activeView === 'gantt' ? 'gantt' : undefined;
 
   return (
@@ -62,6 +63,7 @@ function AppInner({
         {activeView === 'treatment' && <WaterTreatmentView />}
         {activeView === 'analytic-tests' && <AnalyticTestsView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
+        {activeView === 'regional-map' && <RegionalMapView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
