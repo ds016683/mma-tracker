@@ -167,7 +167,7 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
               y={c.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={110}
+              fontSize={83}
               fontWeight="700"
               fontFamily="inherit"
               fill="rgba(255,255,255,0.85)"
