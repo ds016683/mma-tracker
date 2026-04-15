@@ -1,0 +1,98 @@
+[
+  {
+    "name": "PacificSource Health Plans",
+    "region": "Northwest",
+    "states": ["OR", "ID", "MT"],
+    "mmaRegion": 1,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Providence Health",
+    "region": "Northwest",
+    "states": ["OR", "WA"],
+    "mmaRegion": 1,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Asuris Northwest Health",
+    "region": "Northwest",
+    "states": ["WA", "ID", "OR"],
+    "mmaRegion": 1,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "First Choice Health",
+    "region": "Northwest",
+    "states": ["WA", "MT", "ID", "WY"],
+    "mmaRegion": 1,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "HAP (Health Alliance Plan)",
+    "region": "Midwest",
+    "states": ["MI"],
+    "mmaRegion": 5,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Cofinity",
+    "region": "Midwest",
+    "states": ["MI"],
+    "mmaRegion": 5,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Healthcare Highways",
+    "region": "Southwest",
+    "states": ["TX"],
+    "mmaRegion": 4,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Geisinger Health Plan",
+    "region": "Greater Northeast",
+    "states": ["PA"],
+    "mmaRegion": 8,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "UPMC Health Plan",
+    "region": "Greater Northeast",
+    "states": ["PA"],
+    "mmaRegion": 8,
+    "status": "v9 candidate",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "UHC Florida (NHP)",
+    "region": "Florida",
+    "states": ["FL"],
+    "mmaRegion": 7,
+    "status": "v9 candidate — clarify specific network",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Sentara",
+    "region": "Mid-Atlantic",
+    "states": ["VA", "NC", "WV", "MD"],
+    "mmaRegion": 10,
+    "status": "In TH dataset (Not Included for MMA) — verify MRF currency",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  },
+  {
+    "name": "Medcost",
+    "region": "Mid-Atlantic",
+    "states": ["NC", "SC"],
+    "mmaRegion": 10,
+    "status": "Not in MRF — pilot data usability TBD (Chris Hart to advise)",
+    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+  }
+]

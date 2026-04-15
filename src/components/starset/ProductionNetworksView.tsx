@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import tab1Data from './tab1-data.json';
 import tab2Data from './tab2-data.json';
+import tab3Data from './tab3-data.json';
 
 type TabId = 'mma' | 'full' | 'v9' | 'v10';
 
@@ -67,7 +68,7 @@ export function ProductionNetworksView() {
           <Tab2FullList />
         )}
         {activeTab === 'v9' && (
-          <EmptyTab label="Networks for v9 Production" />
+          <Tab3V9Networks />
         )}
         {activeTab === 'v10' && (
           <EmptyTab label="Networks for v10 Production" />
@@ -220,6 +221,98 @@ function CarrierCard({ carrier, showMMABadge }: { carrier: CarrierGroup & { netw
               <div className="col-span-1 self-center text-xs text-gray-400">
                 {network.version || <span className="text-gray-300">—</span>}
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface V9Carrier {
+  name: string;
+  region: string;
+  states: string[];
+  status: string;
+  networks: { name: string; planId: string; networkType: string; lastUpdated: string; version: string }[];
+}
+
+function Tab3V9Networks() {
+  const carriers = tab3Data as V9Carrier[];
+  return (
+    <div className="max-w-5xl">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <span className="rounded-full bg-[#001A41] px-3 py-1 text-xs font-semibold text-white">
+          {carriers.length} payers under evaluation
+        </span>
+        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+          Network names TBD — pending MRF sourcing
+        </span>
+      </div>
+      <div className="space-y-2">
+        {carriers.map((carrier) => (
+          <V9CarrierCard key={carrier.name} carrier={carrier} />
+        ))}
+      </div>
+      <div className="mt-6 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+        <span className="font-semibold">Note:</span> Network product names (PPO, HMO, POS, etc.) are pending confirmation from MMA regional leads and Chris Hart. Specific network files must be identified before MRF data orders can be placed for v9 processing.
+      </div>
+    </div>
+  );
+}
+
+function V9CarrierCard({ carrier }: { carrier: V9Carrier }) {
+  const [open, setOpen] = useState(false);
+  const isTHDataset = carrier.status.includes('TH dataset');
+  const isConditional = carrier.status.includes('TBD') || carrier.status.includes('Chris Hart');
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50"
+      >
+        <div className="flex items-center gap-3">
+          {open
+            ? <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
+            : <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+          }
+          <span className="font-semibold text-[#001A41]">{carrier.name}</span>
+          {isTHDataset && (
+            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+              In TH dataset
+            </span>
+          )}
+          {isConditional && (
+            <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600">
+              Conditional
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-xs text-gray-400">
+          <span>{carrier.region}</span>
+          <span>{carrier.states.join(', ')}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-gray-100">
+          <div className="px-4 py-2.5 bg-gray-50 text-xs text-gray-500 italic">
+            {carrier.status}
+          </div>
+          <div className="grid grid-cols-12 gap-2 border-b border-gray-50 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <div className="col-span-4">Network Name</div>
+            <div className="col-span-3">Plan ID</div>
+            <div className="col-span-2">Type</div>
+            <div className="col-span-2">Last Updated</div>
+            <div className="col-span-1">Version</div>
+          </div>
+          {carrier.networks.map((network, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 border-b border-gray-50 px-4 py-2.5 text-sm last:border-0">
+              <div className="col-span-4 font-medium text-amber-600 italic">{network.name}</div>
+              <div className="col-span-3 text-gray-300 text-xs self-center">—</div>
+              <div className="col-span-2 text-gray-300 text-xs self-center">—</div>
+              <div className="col-span-2 text-gray-300 text-xs self-center">—</div>
+              <div className="col-span-1 text-gray-300 text-xs self-center">—</div>
             </div>
           ))}
         </div>
