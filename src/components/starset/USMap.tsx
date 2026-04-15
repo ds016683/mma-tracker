@@ -93,6 +93,37 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
     if (region) onRegionSelect(region.id);
   }, [getRegionForFips, onRegionSelect]);
 
+  // Compute centroid for each region to place the number label
+  const regionCentroids = useMemo(() => {
+    const centroids: Record<number, {x: number, y: number}> = {};
+    const projection = geoAlbersUsa().scale(1300).translate([WIDTH / 2, HEIGHT / 2]);
+    const pg = geoPath(projection);
+
+    for (const region of REGIONS) {
+      const regionFeatures = features.filter(f => {
+        const fips = String(f.id).padStart(2, '0');
+        const abbr = FIPS_TO_STATE[fips];
+        return abbr && region.states.includes(abbr);
+      });
+      if (regionFeatures.length === 0) continue;
+
+      // Average the centroids of all states in the region
+      let totalX = 0, totalY = 0, count = 0;
+      for (const f of regionFeatures) {
+        const c = pg.centroid(f as any);
+        if (c && !isNaN(c[0]) && !isNaN(c[1])) {
+          totalX += c[0];
+          totalY += c[1];
+          count++;
+        }
+      }
+      if (count > 0) {
+        centroids[region.id] = { x: totalX / count, y: totalY / count };
+      }
+    }
+    return centroids;
+  }, [features]);
+
   return (
     <div className="w-full">
       <svg
@@ -123,30 +154,57 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
           );
         })}
 
-        {/* Region legend */}
-        <g transform="translate(10, 530)">
-          {REGIONS.map((region, i) => (
-            <g
+        {/* Region number labels overlaid on map */}
+        {REGIONS.map((region) => {
+          const c = regionCentroids[region.id];
+          if (!c) return null;
+          const isSelected = selectedRegionId === region.id;
+          const isDimmed = selectedRegionId !== null && !isSelected;
+          return (
+            <text
               key={region.id}
-              transform={`translate(${(i % 5) * 190}, ${Math.floor(i / 5) * 22})`}
-              style={{ cursor: 'pointer' }}
-              onClick={() => onRegionSelect(region.id)}
+              x={c.x}
+              y={c.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={22}
+              fontWeight="700"
+              fontFamily="inherit"
+              fill="rgba(255,255,255,0.85)"
+              style={{
+                cursor: 'pointer',
+                opacity: isDimmed ? 0.3 : 1,
+                transition: 'opacity 0.2s ease',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              }}
             >
-              <rect
-                width={14}
-                height={14}
-                rx={2}
-                fill={selectedRegionId !== null && selectedRegionId !== region.id
-                  ? region.color + '44'
-                  : region.color}
-              />
-              <text x={18} y={11} fontSize={11} fill="#444" fontFamily="inherit">
-                {region.name}
-              </text>
-            </g>
-          ))}
-        </g>
+              {region.id}
+            </text>
+          );
+        })}
       </svg>
+
+      {/* Legend — below the map */}
+      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 px-2 sm:grid-cols-3 lg:grid-cols-5">
+        {REGIONS.map((region) => (
+          <button
+            key={region.id}
+            onClick={() => onRegionSelect(region.id)}
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-gray-100"
+            style={{ opacity: selectedRegionId !== null && selectedRegionId !== region.id ? 0.4 : 1 }}
+          >
+            <span
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-xs font-bold text-white"
+              style={{ background: region.color }}
+            >
+              {region.id}
+            </span>
+            <span className="text-gray-700 font-medium">{region.name}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
