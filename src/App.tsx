@@ -10,6 +10,7 @@ import { WaterTreatmentView } from './components/starset/WaterTreatmentView';
 import { AnalyticTestsView } from './components/starset/AnalyticTestsView';
 import { ReportingQueriesView } from './components/starset/ReportingQueriesView';
 import { RegionalMapView } from './components/starset/RegionalMapView';
+import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 
 function AppContent() {
@@ -64,6 +65,7 @@ function AppInner({
         {activeView === 'analytic-tests' && <AnalyticTestsView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
+        {activeView === 'production-networks' && <ProductionNetworksView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>

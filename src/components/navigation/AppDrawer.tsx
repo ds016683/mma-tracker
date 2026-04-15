@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { LayoutGrid, Droplets, FlaskConical, BarChart2, LogOut, Menu, X, GanttChart, Map } from 'lucide-react';
+import { LayoutGrid, Droplets, FlaskConical, BarChart2, LogOut, Menu, X, GanttChart, Map, Network } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
-export type AppView = 'tracker' | 'gantt' | 'treatment' | 'analytic-tests' | 'reporting-queries' | 'regional-map';
+export type AppView = 'tracker' | 'gantt' | 'treatment' | 'analytic-tests' | 'reporting-queries' | 'regional-map' | 'production-networks';
 
 interface AppDrawerProps {
   activeView: AppView;
@@ -18,6 +18,7 @@ const navItems: { id: AppView; label: string; icon: typeof LayoutGrid }[] = [
   { id: 'analytic-tests', label: '4 Analytic Tests', icon: FlaskConical },
   { id: 'reporting-queries', label: 'Reporting Queries', icon: BarChart2 },
   { id: 'regional-map', label: 'Regional Map', icon: Map },
+  { id: 'production-networks', label: 'Production Networks', icon: Network },
 ];
 
 export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
