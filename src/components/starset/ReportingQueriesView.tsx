@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Send, ChevronDown, ChevronUp, Settings, CheckCircle, Loader2 } from 'lucide-react';
 
 interface Message {
@@ -23,7 +23,7 @@ Key facts about the data:
 - V8 uses Candor Health provider directory (refreshed Jan 2026)
 - V8 added anesthesia benchmarking
 - Data quality confidence scores: Green = high confidence, Yellow = moderate, Red = low confidence
-- Rate record counts grew significantly V7→V8 (example: Aetna Choice POS in Abilene TX went from 2.6M to 4.3M records)
+- Rate record counts grew significantly V7ΓåÆV8 (example: Aetna Choice POS in Abilene TX went from 2.6M to 4.3M records)
 
 Answer questions clearly and concisely. Use bullet points for comparisons. Be specific about version differences. If asked about something you don't have data for (like specific dollar amounts from the raw files), explain what the data structure shows and what would need to be queried directly.`;
 
@@ -50,8 +50,8 @@ function renderMarkdown(text: string): React.ReactNode {
     const line = lines[i];
 
     // Bullet points
-    if (line.match(/^[-*•]\s+/)) {
-      const content = line.replace(/^[-*•]\s+/, '');
+    if (line.match(/^[-*ΓÇó]\s+/)) {
+      const content = line.replace(/^[-*ΓÇó]\s+/, '');
       elements.push(
         <li key={key++} className="ml-4 mb-1 text-gray-700 text-sm">
           {renderInlineMarkdown(content)}
@@ -115,7 +115,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 export function ReportingQueriesView() {
   const defaultKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
   const [apiKey, setApiKey] = useState<string>(() => {
-    return localStorage.getItem('mma_anthropic_key') || defaultKey;
+    return defaultKey || localStorage.getItem('mma_anthropic_key') || '';
   });
   const [apiKeyInput, setApiKeyInput] = useState(apiKey);
   const [settingsOpen, setSettingsOpen] = useState(!apiKey);
@@ -275,7 +275,7 @@ export function ReportingQueriesView() {
                     <Send className="h-6 w-6 text-[#009DE0]" />
                   </div>
                   <p className="text-sm font-medium text-gray-700">Ask a question to get started</p>
-                  <p className="text-xs text-gray-400 mt-1">Try one of the suggested queries on the right →</p>
+                  <p className="text-xs text-gray-400 mt-1">Try one of the suggested queries on the right ΓåÆ</p>
                 </div>
               )}
 
@@ -344,7 +344,7 @@ export function ReportingQueriesView() {
                   )}
                 </button>
               </form>
-              <p className="mt-1.5 px-1 text-xs text-gray-400">Press Enter to send · Shift+Enter for new line</p>
+              <p className="mt-1.5 px-1 text-xs text-gray-400">Press Enter to send ┬╖ Shift+Enter for new line</p>
             </div>
           </div>
         </div>
@@ -403,7 +403,7 @@ export function ReportingQueriesView() {
             <p className="text-xs font-semibold text-[#FF8C00] mb-1">About this tool</p>
             <p className="text-xs text-gray-600">
               AI-powered analysis of Starset Analytics V7 &amp; V8 reporting packages. 
-              Answers are based on the data structure and known facts — not live queries of raw files.
+              Answers are based on the data structure and known facts ΓÇö not live queries of raw files.
             </p>
           </div>
         </div>
