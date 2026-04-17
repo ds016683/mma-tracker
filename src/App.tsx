@@ -6,6 +6,7 @@ import { BaseballCardLayout } from './components/baseball-card/BaseballCardLayou
 import { AppDrawer } from './components/navigation/AppDrawer';
 import type { AppView } from './components/navigation/AppDrawer';
 import { DataIntelligenceView } from './components/starset/DataIntelligenceView';
+import { ReportingQueriesView } from './components/starset/ReportingQueriesView';
 import { RegionalMapView } from './components/starset/RegionalMapView';
 import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
@@ -85,6 +86,7 @@ function AppInner({
           </div>
         )}
         {activeView === 'data-intelligence' && <DataIntelligenceView />}
+        {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
         {activeView === 'production-networks' && <ProductionNetworksView />}
       </main>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
-  GanttChart, Map, Network, FlaskConical,
+  GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
@@ -13,6 +13,7 @@ export type AppView =
   | 'project-plan'
   | 'timeline'
   | 'data-intelligence'
+  | 'reporting-queries'
   | 'regional-map'
   | 'production-networks';
 
@@ -48,7 +49,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Network Navigator Deployment',
     defaultOpen: true,
     items: [
-      { id: 'data-intelligence', label: 'Data Intelligence', icon: FlaskConical },
+      { id: 'data-intelligence',  label: 'Data Intelligence',  icon: FlaskConical },
+      { id: 'reporting-queries',  label: 'Reporting Queries',  icon: BarChart2 },
     ],
   },
   {

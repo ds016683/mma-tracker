@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { WaterTreatmentView } from './WaterTreatmentView';
 import { AnalyticTestsView } from './AnalyticTestsView';
-import { ReportingQueriesView } from './ReportingQueriesView';
 
-type DITab = 'pipeline' | 'tests' | 'queries';
+type DITab = 'pipeline' | 'tests';
 
 const TABS: { id: DITab; label: string; description: string }[] = [
-  { id: 'pipeline', label: 'Data Pipeline', description: 'How raw MRF data becomes trusted intelligence' },
+  { id: 'pipeline', label: 'Data Pipeline',  description: 'How raw MRF data becomes trusted intelligence' },
   { id: 'tests',    label: 'Analytic Tests', description: 'Four tests your price transparency data should pass' },
-  { id: 'queries',  label: 'Reporting Queries', description: 'AI-assisted analysis of v7/v8 reporting data' },
 ];
 
 export function DataIntelligenceView() {
@@ -47,7 +45,7 @@ export function DataIntelligenceView() {
       <div className="flex-1 overflow-auto">
         {activeTab === 'pipeline' && <WaterTreatmentView />}
         {activeTab === 'tests' && <AnalyticTestsView />}
-        {activeTab === 'queries' && <ReportingQueriesView />}
+
       </div>
     </div>
   );
