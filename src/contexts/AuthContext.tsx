@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -23,20 +23,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-
         if (event === 'INITIAL_SESSION') {
           setLoading(false);
         }
       }
     );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { subscription.unsubscribe(); };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const signIn = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false, // invite-only — only pre-approved users get a link
+      },
+    });
     return { error: error?.message ?? null };
   };
 
