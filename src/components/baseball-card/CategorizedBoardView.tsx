@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin, PinOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin } from 'lucide-react';
 import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
