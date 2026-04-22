@@ -360,7 +360,6 @@ function RACISection({
   accountable: string;
   readOnly?: boolean;
   onPeopleChange?: (p: Person[]) => void;
-  onAccountableChange?: (_v: string) => void;
 }) {
   const [name, setName] = useState('');
   const [role, setRole] = useState<RACIRole>('Responsible');
