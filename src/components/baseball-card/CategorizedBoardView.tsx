@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin, Trash2 } from 'lucide-react';
 import { computeScheduleHealth, ScheduleIndicator } from './ExpandableCardContent';
-import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
+import type { BaseballCardProject } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
-import { PriorityBadge } from './PriorityBadge';
-import { MMAStatusBadge, VersionBadge, ContractBadge } from './MMABadges';
 import { ExpandableCardContent } from './ExpandableCardContent';
 import { StatusRollupBadge } from './StatusRollupBadge';
 import { InlineDropdown } from './InlineDropdown';
@@ -252,12 +250,6 @@ function CategoryCard({
           />
         </div>
 
-        <div className="mb-2 flex flex-wrap gap-1">
-          <VersionBadge version={project.mma_version} onChange={v => onProjectUpdate(project.id, { mma_version: v })} />
-          <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onProjectUpdate(project.id, { mma_status: s })} />
-          <PriorityBadge priority={project.priority} onClick={(p: Priority) => onProjectUpdate(project.id, { priority: p })} />
-          <ContractBadge contractRef={project.mma_contract_ref} onChange={c => onProjectUpdate(project.id, { mma_contract_ref: c })} />
-        </div>
 
         {!isExpanded && project.tasks.length > 0 && (
           <div className="mb-2"><StatusRollupBadge tasks={project.tasks} compact /></div>
@@ -303,10 +295,8 @@ function RosterRow({
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <VersionBadge version={project.mma_version} onChange={v => onProjectUpdate(project.id, { mma_version: v })} />
-            <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onProjectUpdate(project.id, { mma_status: s })} />
-            <PriorityBadge priority={project.priority} onClick={(p: Priority) => onProjectUpdate(project.id, { priority: p })} />
-            <ContractBadge contractRef={project.mma_contract_ref} onChange={c => onProjectUpdate(project.id, { mma_contract_ref: c })} />
+            <span className="text-xs text-gray-400">{project.mma_status}</span>
+            {project.mma_contract_ref && <span className="text-xs text-gray-300">· {project.mma_contract_ref}</span>}
           </div>
         </div>
 
