@@ -149,3 +149,50 @@ export function computeRollup(tasks: Task[]): { pct: number; status: RollupStatu
   if (hasAtRisk) return { pct, status: 'at-risk' };
   return { pct, status: 'on-track' };
 }
+
+// ── Board categories (ordered) ────────────────────────────────────────────────
+export interface BoardCategory {
+  id: string;
+  label: string;
+  borderColor: string;
+  iconColor: string;
+  labelColor: string;
+}
+
+export const BOARD_CATEGORIES: BoardCategory[] = [
+  {
+    id: 'Production Priorities',
+    label: 'Production Priorities',
+    borderColor: 'border-mma-dark-blue/30',
+    iconColor: 'text-mma-dark-blue',
+    labelColor: 'text-mma-dark-blue',
+  },
+  {
+    id: 'Data Enhancements (Schedule E)',
+    label: 'Data Enhancements (Schedule E)',
+    borderColor: 'border-mma-purple/30',
+    iconColor: 'text-mma-purple',
+    labelColor: 'text-mma-purple',
+  },
+  {
+    id: 'Innovation Roadmap',
+    label: 'Innovation Roadmap',
+    borderColor: 'border-mma-teal/30',
+    iconColor: 'text-mma-teal',
+    labelColor: 'text-mma-teal',
+  },
+  {
+    id: 'Completed',
+    label: 'Completed',
+    borderColor: 'border-mma-green/30',
+    iconColor: 'text-mma-green',
+    labelColor: 'text-mma-green',
+  },
+  {
+    id: 'Extraneous',
+    label: 'Extraneous',
+    borderColor: 'border-gray-200',
+    iconColor: 'text-gray-400',
+    labelColor: 'text-gray-500',
+  },
+];
