@@ -3,8 +3,6 @@ import { Plus, Download, Upload, LayoutGrid, DollarSign, Layers, GanttChart } fr
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useProjects } from '../../contexts/ProjectsContext';
-import { SpotlightGrid } from './SpotlightGrid';
-import { RosterList } from './RosterList';
 import { Archive } from './Archive';
 import { CategorizedBoardView } from './CategorizedBoardView';
 import { CreateProjectForm } from './CreateProjectForm';
@@ -26,10 +24,10 @@ interface BaseballCardLayoutProps {
 
 export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView }: BaseballCardLayoutProps) {
   const {
-    projects, spotlight, roster, archive,
+    projects, archive,
     loading, error: dataError,
     createProject, updateProject, deleteProject,
-    pinProject, reorderSpotlight, promoteToSpotlight, demoteToRoster,
+    pinProject,
     exportToJson, importFromJson,
   } = useProjects();
 
