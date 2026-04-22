@@ -310,8 +310,6 @@ function RACISection({
   readOnly?: boolean;
   onPeopleChange?: (p: Person[]) => void;
 }) {
-  const [name, setName] = useState('');
-
   // Group by role
   const byRole: Record<string, Person[]> = {};
   for (const p of people) {
