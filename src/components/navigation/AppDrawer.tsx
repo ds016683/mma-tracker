@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
-  ChevronDown, ChevronRight, FileText
+  ChevronDown, ChevronRight, FileText, Activity, Handshake
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -15,7 +15,9 @@ export type AppView =
   | 'data-intelligence'
   | 'reporting-queries'
   | 'regional-map'
-  | 'production-networks';
+  | 'production-networks'
+  | 'production-progress'
+  | 'promise-health-plan';
 
 interface NavItem {
   id: AppView;
@@ -57,8 +59,16 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Production & Region Engagement',
     defaultOpen: true,
     items: [
-      { id: 'regional-map',        label: 'Regional Map',       icon: Map },
-      { id: 'production-networks', label: 'Production Networks', icon: Network },
+      { id: 'regional-map',          label: 'Regional Map',        icon: Map },
+      { id: 'production-networks',   label: 'Production Networks', icon: Network },
+      { id: 'production-progress',   label: 'Production Progress', icon: Activity, badge: 'Soon' },
+    ],
+  },
+  {
+    label: 'Joint Project Work',
+    defaultOpen: true,
+    items: [
+      { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake, badge: 'Soon' },
     ],
   },
 ];
