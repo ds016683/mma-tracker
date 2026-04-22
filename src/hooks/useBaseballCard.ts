@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { partitionProjects } from '../lib/baseball-card/partition';
 import type { BaseballCardProject, Person, Priority } from '../lib/baseball-card/types';
+import { migrateCategory } from '../lib/baseball-card/types';
 import { useRealtimeProjects } from './useRealtimeProjects';
 import {
   fetchAllProjects,
