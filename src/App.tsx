@@ -95,6 +95,9 @@ function AppInner({
         {activeView === 'promise-health-plan' && (
           <PlaceholderView title="1. Promise Health Plan — Rate Analysis" subtitle="Joint project workspace coming soon" />
         )}
+        {activeView === 'call-notes' && (
+          <PlaceholderView title="Call Notes" subtitle="Granola integration wired — sync coming soon" />
+        )}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
