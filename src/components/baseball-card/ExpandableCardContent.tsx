@@ -18,7 +18,7 @@ import { InlineDropdown } from './InlineDropdown';
 
 export type ScheduleHealth = 'on-track' | 'slipping' | 'critical' | 'no-date';
 
-export function computeScheduleHealth(targetDate: string | null | undefined, tasks: Task[]): ScheduleHealth {
+export function computeScheduleHealth(targetDate: string | null | undefined, _tasks?: Task[]): ScheduleHealth {
   if (!targetDate) return 'no-date';
   const now = Date.now();
   const target = new Date(targetDate).getTime();
@@ -360,7 +360,7 @@ function RACISection({
   accountable: string;
   readOnly?: boolean;
   onPeopleChange?: (p: Person[]) => void;
-  onAccountableChange?: (v: string) => void;
+  onAccountableChange?: (_v: string) => void;
 }) {
   const [name, setName] = useState('');
   const [role, setRole] = useState<RACIRole>('Responsible');
@@ -833,7 +833,5 @@ function formatDate(dateStr: string): string {
   catch { return dateStr; }
 }
 
-// Export for use in CategorizedBoardView card face
-export { computeScheduleHealth, ScheduleIndicator };
-// Already exported above via named export
-void CheckCircle; void Clock; void AlertTriangle; // suppress unused warnings
+// suppress unused import warnings
+void CheckCircle; void Clock; void AlertTriangle;
