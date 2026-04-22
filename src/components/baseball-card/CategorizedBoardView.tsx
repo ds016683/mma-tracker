@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin, Trash2 } from 'lucide-react';
 import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
@@ -26,15 +26,10 @@ export function CategorizedBoardView({
   onPin,
   onDelete,
 }: CategorizedBoardViewProps) {
-  // Start all sections expanded
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
-  const toggle = (id: string) =>
-    setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
-
-  const moveCategory = (projectId: string, newCategory: string) => {
+  const toggle = (id: string) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
+  const moveCategory = (projectId: string, newCategory: string) =>
     onProjectUpdate(projectId, { category: newCategory });
-  };
 
   return (
     <div className="space-y-4">
@@ -47,11 +42,7 @@ export function CategorizedBoardView({
         const isCollapsed = !!collapsed[section.id];
 
         return (
-          <div
-            key={section.id}
-            className={`rounded-xl border bg-white shadow-sm ${section.borderColor}`}
-          >
-            {/* Section header — click to collapse/expand */}
+          <div key={section.id} className={`rounded-xl border bg-white shadow-sm ${section.borderColor}`}>
             <button
               onClick={() => toggle(section.id)}
               className="flex w-full items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors hover:bg-[#E8F0F8]/40"
@@ -71,7 +62,6 @@ export function CategorizedBoardView({
 
             {!isCollapsed && (
               <div className="px-5 pb-5">
-                {/* Pinned cards — grid */}
                 {pinned.length > 0 && (
                   <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {pinned.map(p => (
@@ -89,14 +79,10 @@ export function CategorizedBoardView({
                     ))}
                   </div>
                 )}
-
-                {/* Unpinned — roster-style list */}
                 {unpinned.length > 0 && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
                     <div className="border-b border-gray-200 px-4 py-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                        Not Pinned
-                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Not Pinned</span>
                       <span className="text-[10px] text-gray-300">{unpinned.length}</span>
                     </div>
                     {unpinned.map(p => (
@@ -114,7 +100,6 @@ export function CategorizedBoardView({
                     ))}
                   </div>
                 )}
-
                 {sectionProjects.length === 0 && (
                   <div className="py-6 text-center">
                     <p className="text-sm text-gray-400">No items in this category.</p>
@@ -125,6 +110,92 @@ export function CategorizedBoardView({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── Card action bar (shared by grid + roster) ────────────────────────────────
+
+function CardActions({
+  project,
+  currentCategory,
+  onPin,
+  onDelete,
+  onMoveCategory,
+  alwaysVisible = false,
+}: {
+  project: BaseballCardProject;
+  currentCategory: string;
+  onPin: (id: string) => void;
+  onDelete: (id: string) => void;
+  onMoveCategory: (id: string, cat: string) => void;
+  alwaysVisible?: boolean;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const categoryIds = BOARD_CATEGORIES.map(c => c.id) as unknown as readonly string[];
+  const labels = Object.fromEntries(BOARD_CATEGORIES.map(c => [c.id, c.label])) as Record<string, string>;
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (confirmDelete) {
+      onDelete(project.id);
+    } else {
+      setConfirmDelete(true);
+      // Auto-cancel confirm state after 3s
+      setTimeout(() => setConfirmDelete(false), 3000);
+    }
+  }
+
+  return (
+    // stopPropagation on the whole action bar — nothing here should expand/collapse the card
+    <div
+      className={`flex shrink-0 items-center gap-1 transition-opacity ${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'}`}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Pin / Unpin */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
+        className={`rounded p-1 transition-colors ${
+          project.pinned
+            ? 'text-[#F8C762] hover:text-amber-500'
+            : 'text-gray-300 hover:text-[#F8C762]'
+        }`}
+        title={project.pinned ? 'Unpin — move to roster list' : 'Pin — promote to card grid'}
+      >
+        <Pin className={`h-3.5 w-3.5 ${project.pinned ? 'fill-current' : ''}`} />
+      </button>
+
+      {/* Move category */}
+      <InlineDropdown
+        options={categoryIds}
+        value={currentCategory}
+        onChange={(cat) => onMoveCategory(project.id, cat)}
+        labels={labels}
+      >
+        <span
+          className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-400 hover:border-[#234D8B]/40 hover:text-[#234D8B] transition-colors cursor-pointer"
+          title="Move to another category"
+        >
+          <MoveRight size={11} />
+          Move
+        </span>
+      </InlineDropdown>
+
+      {/* Hard delete */}
+      <button
+        onClick={handleDelete}
+        className={`rounded p-1 transition-colors ${
+          confirmDelete
+            ? 'bg-red-500 text-white hover:bg-red-600'
+            : 'text-gray-300 hover:text-red-500'
+        }`}
+        title={confirmDelete ? 'Click again to confirm delete' : 'Delete card permanently'}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+      {confirmDelete && (
+        <span className="text-[10px] text-red-500 font-medium">confirm?</span>
+      )}
     </div>
   );
 }
@@ -147,8 +218,6 @@ function CategoryCard({
   onProjectUpdate, onPin, onDelete,
   onMoveCategory, currentCategory,
 }: CardProps) {
-  const categoryIds = BOARD_CATEGORIES.map(c => c.id) as unknown as readonly string[];
-
   return (
     <div
       className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-mma-blue/30 hover:shadow-md ${
@@ -156,8 +225,8 @@ function CategoryCard({
       }`}
     >
       <div className="min-w-0">
-        {/* Header row */}
         <div className="mb-2 flex items-start justify-between gap-2">
+          {/* Clickable title area */}
           <div
             className="flex cursor-pointer items-center gap-1.5 flex-1 min-w-0"
             onClick={() => onToggleExpand(project.id)}
@@ -171,26 +240,16 @@ function CategoryCard({
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
-            {/* Pin / Unpin button */}
-            <button
-              onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
-              className={`rounded p-1 transition-colors ${project.pinned ? 'text-th-gold hover:text-amber-500' : 'text-gray-300 opacity-0 group-hover:opacity-100 hover:text-th-gold'}`}
-              title={project.pinned ? 'Unpin — move to roster list' : 'Pin — promote to card grid'}
-            >
-              {project.pinned ? <Pin className="h-3.5 w-3.5 fill-current" /> : <Pin className="h-3.5 w-3.5" />}
-            </button>
-
-            {/* Move-to-category dropdown */}
-            <MoveCategoryButton
-              currentCategory={currentCategory}
-              categoryIds={categoryIds}
-              onMove={(cat) => onMoveCategory(project.id, cat)}
-            />
-          </div>
+          {/* Action bar — isolated from expand clicks */}
+          <CardActions
+            project={project}
+            currentCategory={currentCategory}
+            onPin={onPin}
+            onDelete={onDelete}
+            onMoveCategory={onMoveCategory}
+          />
         </div>
 
-        {/* Badges */}
         <div className="mb-2 flex flex-wrap gap-1">
           <VersionBadge version={project.mma_version} onChange={v => onProjectUpdate(project.id, { mma_version: v })} />
           <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onProjectUpdate(project.id, { mma_status: s })} />
@@ -199,17 +258,11 @@ function CategoryCard({
         </div>
 
         {!isExpanded && project.tasks.length > 0 && (
-          <div className="mb-2">
-            <StatusRollupBadge tasks={project.tasks} compact />
-          </div>
+          <div className="mb-2"><StatusRollupBadge tasks={project.tasks} compact /></div>
         )}
-
         {!isExpanded && project.description && (
-          <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-gray-500">
-            {project.description}
-          </p>
+          <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-gray-500">{project.description}</p>
         )}
-
         {isExpanded && (
           <ExpandableCardContent
             project={project}
@@ -230,8 +283,6 @@ function RosterRow({
   onProjectUpdate, onPin, onDelete,
   onMoveCategory, currentCategory,
 }: CardProps) {
-  const categoryIds = BOARD_CATEGORIES.map(c => c.id) as unknown as readonly string[];
-
   return (
     <div className="group border-b border-gray-100 last:border-0">
       <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white">
@@ -256,21 +307,13 @@ function RosterRow({
           </div>
         </div>
 
-        {/* Actions: pin + move */}
-        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <button
-            onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
-            className="rounded p-1 text-gray-300 hover:text-th-gold transition-colors"
-            title="Pin — promote to card grid"
-          >
-            <Pin className="h-3.5 w-3.5" />
-          </button>
-          <MoveCategoryButton
-            currentCategory={currentCategory}
-            categoryIds={categoryIds}
-            onMove={(cat) => onMoveCategory(project.id, cat)}
-          />
-        </div>
+        <CardActions
+          project={project}
+          currentCategory={currentCategory}
+          onPin={onPin}
+          onDelete={onDelete}
+          onMoveCategory={onMoveCategory}
+        />
       </div>
 
       {isExpanded && (
@@ -284,38 +327,5 @@ function RosterRow({
         </div>
       )}
     </div>
-  );
-}
-
-// ── Move-category button ─────────────────────────────────────────────────────
-
-function MoveCategoryButton({
-  currentCategory,
-  categoryIds,
-  onMove,
-}: {
-  currentCategory: string;
-  categoryIds: readonly string[];
-  onMove: (cat: string) => void;
-}) {
-  const labels = Object.fromEntries(
-    BOARD_CATEGORIES.map(c => [c.id, c.label])
-  ) as Record<string, string>;
-
-  return (
-    <InlineDropdown
-      options={categoryIds}
-      value={currentCategory}
-      onChange={onMove}
-      labels={labels}
-    >
-      <span
-        className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-400 hover:border-mma-blue/40 hover:text-mma-blue transition-colors"
-        title="Move to another category"
-      >
-        <MoveRight size={11} />
-        Move
-      </span>
-    </InlineDropdown>
   );
 }
