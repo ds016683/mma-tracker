@@ -163,23 +163,23 @@ export const BOARD_CATEGORIES: BoardCategory[] = [
   {
     id: 'Production Priorities',
     label: 'Production Priorities',
-    borderColor: 'border-mma-dark-blue/30',
-    iconColor: 'text-mma-dark-blue',
-    labelColor: 'text-mma-dark-blue',
+    borderColor: 'border-th-dark-blue/40',
+    iconColor: 'text-th-dark-blue',
+    labelColor: 'text-th-dark-blue',
   },
   {
     id: 'Data Enhancements (Schedule E)',
     label: 'Data Enhancements (Schedule E)',
-    borderColor: 'border-mma-purple/30',
-    iconColor: 'text-mma-purple',
-    labelColor: 'text-mma-purple',
+    borderColor: 'border-th-medium-blue/40',
+    iconColor: 'text-th-medium-blue',
+    labelColor: 'text-th-medium-blue',
   },
   {
     id: 'Innovation Roadmap',
     label: 'Innovation Roadmap',
-    borderColor: 'border-mma-teal/30',
-    iconColor: 'text-mma-teal',
-    labelColor: 'text-mma-teal',
+    borderColor: 'border-th-gold/50',
+    iconColor: 'text-th-gold',
+    labelColor: 'text-th-gold',
   },
   {
     id: 'Completed',
@@ -196,3 +196,15 @@ export const BOARD_CATEGORIES: BoardCategory[] = [
     labelColor: 'text-gray-500',
   },
 ];
+
+// ── Category migration map (old seed values → new 5-category system) ─────────
+export const CATEGORY_MIGRATION_MAP: Record<string, string> = {
+  'Schedule E - Core': 'Production Priorities',
+  'Schedule E - Enhancements': 'Data Enhancements (Schedule E)',
+  'Schedule F': 'Innovation Roadmap',
+  'TBD': 'Production Priorities',
+};
+
+export function migrateCategory(cat: string): string {
+  return CATEGORY_MIGRATION_MAP[cat] ?? cat;
+}
