@@ -170,7 +170,11 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ScheduleIndicator health={scheduleHealth} />
-          <StatusRollupBadge tasks={project.tasks} />
+          {project.tasks.length > 0 && (
+            <span className="text-xs text-gray-400">
+              {project.tasks.filter(t => t.done).length}/{project.tasks.length} tasks
+            </span>
+          )}
         </div>
         <button
           onClick={handleExportPDF}
