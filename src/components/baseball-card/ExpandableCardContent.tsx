@@ -257,7 +257,6 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
           people={project.people}
           accountable={project.mma_accountable}
           onPeopleChange={people => onUpdate(project.id, { people })}
-          onAccountableChange={v => onUpdate(project.id, { mma_accountable: v })}
         />
         <Section icon={<Calendar className="h-4 w-4" />} title="Dates & Timing">
           <div className="space-y-2">
@@ -354,7 +353,7 @@ const RACI_COLORS: Record<RACIRole, string> = {
 
 function RACISection({
   people, accountable, readOnly = false,
-  onPeopleChange, onAccountableChange,
+  onPeopleChange,
 }: {
   people: Person[];
   accountable: string;
