@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Pencil, Plus, X, Trash2,
   Users, CheckSquare, FileText, Calendar, Tag,
-  ChevronDown, Phone, ExternalLink, AlertTriangle,
-  CheckCircle, Clock, Download,
+  ChevronDown, Phone, ExternalLink, Download,
 } from 'lucide-react';
 import type {
   BaseballCardProject, Task, Note, ProjectLink, Person,
@@ -11,7 +10,6 @@ import type {
 } from '../../lib/baseball-card/types';
 import { MMA_CONTRACT_REF_OPTIONS } from '../../lib/baseball-card/types';
 import { MMAStatusBadge, VersionBadge } from './MMABadges';
-import { StatusRollupBadge } from './StatusRollupBadge';
 import { InlineDropdown } from './InlineDropdown';
 
 // ── Schedule health ───────────────────────────────────────────────────────────
@@ -831,5 +829,4 @@ function formatDate(dateStr: string): string {
   catch { return dateStr; }
 }
 
-// suppress unused import warnings
-void CheckCircle; void Clock; void AlertTriangle;
+
