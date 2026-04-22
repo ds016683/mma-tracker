@@ -6,6 +6,7 @@ import { useProjects } from '../../contexts/ProjectsContext';
 import { SpotlightGrid } from './SpotlightGrid';
 import { RosterList } from './RosterList';
 import { Archive } from './Archive';
+import { CategorizedBoardView } from './CategorizedBoardView';
 import { CreateProjectForm } from './CreateProjectForm';
 import { BudgetView } from './BudgetView';
 import { GanttView } from '../gantt/GanttView';
@@ -188,40 +189,14 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
                 />
               )}
 
-              <div>
-                <h2 className="mb-3 text-sm font-semibold text-mma-dark-blue">
-                  Spotlight
-                  <span className="ml-2 rounded-full bg-mma-blue/10 px-2 py-0.5 text-xs text-mma-blue">{spotlight.length}</span>
-                </h2>
-                <SpotlightGrid
-                  projects={spotlight}
-                  onProjectUpdate={updateProject}
-                  onReorder={reorderSpotlight}
-                  onToggleExpand={toggleExpand}
-                  expandedCardId={expandedCardId}
-                  onDemote={demoteToRoster}
-                  onPin={pinProject}
-                  onDelete={deleteProject}
-                />
-              </div>
-
-              {roster.length > 0 && (
-                <div>
-                  <h2 className="mb-3 text-sm font-semibold text-mma-dark-blue">
-                    Roster
-                    <span className="ml-2 rounded-full bg-mma-orange/10 px-2 py-0.5 text-xs text-mma-orange">{roster.length}</span>
-                  </h2>
-                  <RosterList
-                    projects={roster}
-                    onProjectUpdate={updateProject}
-                    onPromote={promoteToSpotlight}
-                    onToggleExpand={toggleExpand}
-                    expandedCardId={expandedCardId}
-                    onPin={pinProject}
-                    onDelete={deleteProject}
-                  />
-                </div>
-              )}
+              <CategorizedBoardView
+                projects={projects}
+                onProjectUpdate={updateProject}
+                onToggleExpand={toggleExpand}
+                expandedCardId={expandedCardId}
+                onPin={pinProject}
+                onDelete={deleteProject}
+              />
 
               {archive.length > 0 && (
                 <Archive
