@@ -10,6 +10,7 @@ import { ReportingQueriesView } from './components/starset/ReportingQueriesView'
 import { RegionalMapView } from './components/starset/RegionalMapView';
 import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
+import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 
 // Placeholder for views coming soon
 function PlaceholderView({ title, subtitle }: { title: string; subtitle: string }) {
@@ -92,9 +93,7 @@ function AppInner({
         {activeView === 'production-progress' && (
           <PlaceholderView title="Production Progress" subtitle="Monday.com integration coming soon" />
         )}
-        {activeView === 'promise-health-plan' && (
-          <PlaceholderView title="1. Promise Health Plan — Rate Analysis" subtitle="Joint project workspace coming soon" />
-        )}
+        {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && (
           <PlaceholderView title="Call Notes" subtitle="Granola integration wired — sync coming soon" />
         )}
