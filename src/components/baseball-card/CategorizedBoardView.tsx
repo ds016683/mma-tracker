@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin, Trash2 } from 'lucide-react';
+import { computeScheduleHealth, ScheduleIndicator } from './ExpandableCardContent';
 import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
@@ -232,6 +233,7 @@ function CategoryCard({
             onClick={() => onToggleExpand(project.id)}
           >
             <FreshnessDot lastActivityAt={project.last_activity_at} />
+            <ScheduleIndicator health={computeScheduleHealth(project.target_date, project.tasks)} compact />
             <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue truncate">
               {project.name}
             </h3>
@@ -293,6 +295,7 @@ function RosterRow({
               className="flex cursor-pointer items-center gap-1.5 truncate text-sm font-medium text-mma-dark-blue"
               onClick={() => onToggleExpand(project.id)}
             >
+              <ScheduleIndicator health={computeScheduleHealth(project.target_date, project.tasks)} compact />
               {project.name}
               <ChevronDown
                 className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
