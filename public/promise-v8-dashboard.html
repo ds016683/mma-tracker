@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promise Health Plan — MRF Rate Analysis v8</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1923;color:#e0e6ed}
+.ph{background:#1A3A5C;border-bottom:3px solid #F8C762;padding:16px 28px}
+.ph h1{font-size:19px;font-weight:700;color:#fff;margin-bottom:3px}
+.ph p{font-size:12px;color:#F8C762}
+.vbadge{display:inline-block;background:#F8C762;color:#1A3A5C;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;margin-left:8px;letter-spacing:0.5px}
+.tabbar{display:flex;background:#0d1a26;border-bottom:2px solid #1e3448;padding:0 24px;gap:4px}
+.tb{padding:11px 20px;font-size:13px;font-weight:600;color:#6a8aaa;background:transparent;border:none;border-bottom:3px solid transparent;cursor:pointer;transition:color .15s,border-color .15s;margin-bottom:-2px}
+.tb:hover{color:#c8d8e8}.tb.on{color:#F8C762;border-bottom-color:#F8C762}
+.panel{display:none;padding:20px 28px}.panel.on{display:block}
+.cbar{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.clabel{font-size:12px;color:#8ab4d4;font-weight:600}
+.tog{display:flex;background:#0d1a26;border:1px solid #1e3448;border-radius:6px;overflow:hidden}
+.togbtn{padding:6px 16px;font-size:12px;font-weight:600;color:#6a8aaa;background:transparent;border:none;cursor:pointer;transition:background .15s,color .15s}
+.togbtn.on{background:#234D8B;color:#fff}
+.sec{background:#16232f;border:1px solid #1e3448;border-radius:8px;padding:20px 24px 16px;margin-bottom:18px}
+.sec h2{font-size:14px;font-weight:600;color:#F8C762;margin-bottom:4px}
+.sub{font-size:12px;color:#8ab4d4;margin-bottom:14px}
+.cw{position:relative}
+.drill-wrap{background:#16232f;border:1px solid #1e3448;border-radius:8px;padding:16px 24px;margin-bottom:18px}
+.drill-wrap h2{font-size:13px;font-weight:600;color:#F8C762;margin-bottom:10px}
+.drill-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.drill-row label{font-size:12px;color:#8ab4d4;font-weight:600}
+select{background:#0d1a26;color:#e0e6ed;border:1px solid #1e3448;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;min-width:200px}
+select:focus{outline:none;border-color:#F8C762}
+.drill-chart-wrap{position:relative;height:260px;display:none}
+.dt{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
+.dt th{background:#1A3A5C;color:#fff;padding:7px 10px;text-align:left;font-weight:600}
+.dt th:not(:first-child){text-align:center}
+.dt td{padding:6px 10px;border-bottom:1px solid #1e3448}
+.dt td:not(:first-child){text-align:center;font-weight:700;font-size:13px}
+.dt tr:nth-child(even) td{background:#1a2a3a}
+.hi{color:#ffb347}.lo{color:#7ecf7e}.mid{color:#e0e6ed}.na{color:#445566;font-style:italic;font-weight:400!important;font-size:11px}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.hcard{background:#16232f;border:1px solid #1e3448;border-radius:8px;padding:14px 16px}
+.hcard h3{font-size:13px;font-weight:700;color:#F8C762;margin-bottom:2px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-bottom:10px}
+.bp{background:#1A3A5C;color:#7ab4e0}.bn{background:#2a1a3a;color:#c07ae0}
+.hcard-meta{font-size:11px;color:#6a8aaa;margin-bottom:8px}
+.hcard-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px}
+.hcard-stat{background:#0d1a26;border-radius:4px;padding:5px 8px;text-align:center}
+.hcard-stat .slabel{color:#6a8aaa;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+.hcard-stat .sval{font-weight:700;font-size:13px;margin-top:2px}
+.ms{background:#16232f;border:1px solid #1e3448;border-radius:8px;padding:20px 24px;margin-bottom:18px}
+.ms h2{font-size:15px;font-weight:700;color:#F8C762;margin-bottom:12px;border-bottom:1px solid #1e3448;padding-bottom:8px}
+.ms h3{font-size:13px;font-weight:600;color:#c8d8e8;margin:12px 0 6px}
+.ms p,.ms li{font-size:12px;color:#8ab4d4;line-height:1.7}
+.ms ul{padding-left:18px}
+.ft{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.ft th{background:#1A3A5C;color:#fff;padding:5px 8px;text-align:left}
+.ft td{padding:4px 8px;border-bottom:1px solid #1e3448;color:#8ab4d4}
+.ft tr:nth-child(even) td{background:#1a2a3a}
+.skbadge{display:inline-block;background:#2a1a1a;color:#cc6666;font-size:10px;padding:2px 5px;border-radius:3px}
+.issuebadge{display:inline-block;background:#2a1a0a;color:#f59e0b;font-size:10px;padding:2px 5px;border-radius:3px}
+.nb{background:#1a2a1a;border:1px solid #2a4a2a;border-radius:6px;padding:10px 14px;margin-top:10px;font-size:12px;color:#7ecf7e}
+.nb.warn{background:#2a2416;border-color:#4a3f1e;color:#e0c97a}
+.nb.issue{background:#2a1a0a;border-color:#4a3000;color:#f59e0b}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-bottom:12px}
+.legend span{display:flex;align-items:center;gap:5px}
+.ldot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+.sl-layout{display:flex;gap:14px;align-items:flex-start;margin-top:10px}
+.sl-picker{width:196px;flex-shrink:0;background:#0d1a26;border:1px solid #1e3448;border-radius:8px;padding:10px 10px 6px;max-height:430px;display:flex;flex-direction:column}
+.sl-picker-actions{display:flex;gap:5px;margin-bottom:8px;flex-shrink:0}
+.sl-picker-actions button{flex:1;padding:4px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;background:#1e3448;border:1px solid #2a4a6a;color:#8ab4d4;border-radius:4px;cursor:pointer}
+.sl-picker-actions button:hover{background:#234D8B;color:#fff}
+.sl-items{flex:1;overflow-y:auto;padding-right:2px}
+.sl-item{display:flex;align-items:center;gap:5px;padding:3px 2px;cursor:pointer;border-radius:3px}
+.sl-item:hover{background:#1e3448}
+.sl-item input[type=checkbox]{accent-color:#52AAC8;cursor:pointer;flex-shrink:0;width:13px;height:13px}
+.sl-name{font-size:11px;color:#c8d8e8;flex:1;line-height:1.3}
+.sl-pct{font-size:10px;font-weight:700;flex-shrink:0;min-width:34px;text-align:right}
+.sl-count{font-size:10px;color:#6a8aaa;text-align:center;padding:5px 0 2px;border-top:1px solid #1e3448;flex-shrink:0;margin-top:4px}
+.sl-chart-area{flex:1;min-width:0}
+.chart-empty{display:flex;align-items:center;justify-content:center;height:420px;color:#445566;font-size:13px;font-style:italic}
+</style>
+</head>
+<body>
+<div class="ph">
+  <h1>Promise Health Plan — MRF Rate Analysis<span class="vbadge">v8 · PROMISE FOCUS</span></h1>
+  <p>Columbia MSA &amp; Greenville MSA &nbsp;|&nbsp; 19 SC Hospitals: Prisma Tier 1 &amp; Non-Prisma (McLeod) &nbsp;|&nbsp; Komodo Region 5 Utilization-Weighted % of Medicare &nbsp;|&nbsp; Promise &middot; Blues &middot; Cigna &nbsp;|&nbsp; 6,141 benchmark codes</p>
+</div>
+<div class="tabbar">
+  <button class="tb on" onclick="tab('columbia',this)">Columbia MSA</button>
+  <button class="tb" onclick="tab('greenville',this)">Greenville MSA</button>
+  <button class="tb" onclick="tab('byhospital',this)">By Hospital</button>
+  <button class="tb" onclick="tab('methodology',this)">Methodology</button>
+</div>
+
+<!-- COLUMBIA PANEL -->
+<div id="p-columbia" class="panel on">
+  <div class="cbar">
+    <span class="clabel">COHORT:</span>
+    <div class="tog">
+      <button class="togbtn on" id="col-c-prisma" onclick="setCohort('columbia','col_prisma')">Prisma Tier 1</button>
+      <button class="togbtn" id="col-c-nonprisma" onclick="setCohort('columbia','col_nonprisma')">Non-Prisma Tier 1</button>
+      <button class="togbtn" id="col-c-combined" onclick="setCohort('columbia','col_combined')">Combined</button>
+    </div>
+    <span class="clabel" style="margin-left:8px">SECTION:</span>
+    <div class="tog">
+      <button class="togbtn on" id="col-s-ip" onclick="setSection('columbia','Inpatient')">Inpatient</button>
+      <button class="togbtn" id="col-s-op" onclick="setSection('columbia','Outpatient')">Outpatient</button>
+      <button class="togbtn" id="col-s-pr" onclick="setSection('columbia','Professional')">Professional</button>
+    </div>
+  </div>
+  <div class="sec">
+    <h2 id="columbia-chart-title">Columbia MSA — Prisma Tier 1 — Inpatient</h2>
+    <div class="sub" id="columbia-chart-sub">Promise, Blues, and Cigna negotiated rates as % of Medicare by service line. Sorted by Promise rate.</div>
+    <div class="legend">
+      <span><span class="ldot" style="background:rgba(82,170,200,0.85)"></span>Promise</span>
+      <span><span class="ldot" style="background:rgba(35,77,139,0.88)"></span>Blues</span>
+      <span><span class="ldot" style="background:rgba(248,199,98,0.90)"></span>Cigna</span>
+      <span><span class="ldot" style="background:rgba(255,255,255,0.3)"></span>Medicare = 100%</span>
+    </div>
+    <div class="sl-layout">
+      <div class="sl-picker" id="columbia-sl-picker"></div>
+      <div class="sl-chart-area">
+        <div id="columbia-chart-wrap" style="position:relative;height:420px">
+          <canvas id="columbia-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drill-wrap">
+    <h2>Service Line Detail</h2>
+    <div class="drill-row">
+      <label>SELECT SERVICE LINE:</label>
+      <select id="columbia-sl-select" onchange="drawDrillChart('columbia')">
+        <option value="">-- Select a service line to compare across all views --</option>
+      </select>
+    </div>
+    <div class="drill-chart-wrap" id="columbia-drill-wrap"><canvas id="col-drill-chart"></canvas></div>
+  </div>
+  <div class="sec">
+    <h2>Data Table</h2>
+    <table class="dt" id="columbia-table"></table>
+  </div>
+</div>
+
+<!-- GREENVILLE PANEL -->
+<div id="p-greenville" class="panel">
+  <div class="cbar">
+    <span class="clabel">COHORT:</span>
+    <div class="tog">
+      <button class="togbtn on" id="gvl-c-prisma" onclick="setCohort('greenville','gvl_prisma')">Prisma Tier 1</button>
+      <button class="togbtn" id="gvl-c-nonprisma" onclick="setCohort('greenville','gvl_nonprisma')">Non-Prisma Tier 1</button>
+      <button class="togbtn" id="gvl-c-combined" onclick="setCohort('greenville','gvl_combined')">Combined</button>
+    </div>
+    <span class="clabel" style="margin-left:8px">SECTION:</span>
+    <div class="tog">
+      <button class="togbtn on" id="gvl-s-ip" onclick="setSection('greenville','Inpatient')">Inpatient</button>
+      <button class="togbtn" id="gvl-s-op" onclick="setSection('greenville','Outpatient')">Outpatient</button>
+      <button class="togbtn" id="gvl-s-pr" onclick="setSection('greenville','Professional')">Professional</button>
+    </div>
+  </div>
+  <div class="sec">
+    <h2 id="greenville-chart-title">Greenville MSA — Prisma Tier 1 — Inpatient</h2>
+    <div class="sub" id="greenville-chart-sub">Promise, Blues, and Cigna negotiated rates as % of Medicare by service line. Sorted by Promise rate.</div>
+    <div class="legend">
+      <span><span class="ldot" style="background:rgba(82,170,200,0.85)"></span>Promise</span>
+      <span><span class="ldot" style="background:rgba(35,77,139,0.88)"></span>Blues</span>
+      <span><span class="ldot" style="background:rgba(248,199,98,0.90)"></span>Cigna</span>
+      <span><span class="ldot" style="background:rgba(255,255,255,0.3)"></span>Medicare = 100%</span>
+    </div>
+    <div class="sl-layout">
+      <div class="sl-picker" id="greenville-sl-picker"></div>
+      <div class="sl-chart-area">
+        <div id="greenville-chart-wrap" style="position:relative;height:420px">
+          <canvas id="greenville-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drill-wrap">
+    <h2>Service Line Detail</h2>
+    <div class="drill-row">
+      <label>SELECT SERVICE LINE:</label>
+      <select id="greenville-sl-select" onchange="drawDrillChart('greenville')">
+        <option value="">-- Select a service line to compare across all views --</option>
+      </select>
+    </div>
+    <div class="drill-chart-wrap" id="greenville-drill-wrap"><canvas id="gvl-drill-chart"></canvas></div>
+  </div>
+  <div class="sec">
+    <h2>Data Table</h2>
+    <table class="dt" id="greenville-table"></table>
+  </div>
+</div>
+
+<!-- BY HOSPITAL PANEL -->
+<div id="p-byhospital" class="panel">
+  <div class="cbar">
+    <span class="clabel">FILTER:</span>
+    <div class="tog">
+      <button class="togbtn on" id="hf-all" onclick="setHospFilter('all')">All Hospitals</button>
+      <button class="togbtn" id="hf-prisma" onclick="setHospFilter('Prisma')">Prisma Only</button>
+      <button class="togbtn" id="hf-nonprisma" onclick="setHospFilter('Non-Prisma')">Non-Prisma Only</button>
+    </div>
+  </div>
+  <div class="nb warn" style="margin-bottom:16px">
+    <strong>Data note:</strong> Values shown are utilization-weighted averages of Promise % of Medicare across all matched service lines in each section.
+    <strong>Greer Memorial</strong> has 0 matched records (MRF format mismatch). <strong>Newberry County Memorial</strong> has 0 Promise matched records (Promise not contracted at Newberry).
+    <strong>McLeod hospitals</strong> show low record counts due to APC-level reporting vs CPT/HCPCS.
+  </div>
+  <div class="hgrid" id="hgrid"></div>
+</div>
+
+<!-- METHODOLOGY PANEL -->
+<div id="p-methodology" class="panel">
+  <div class="ms">
+    <h2>v8 Key Updates</h2>
+    <div class="nb warn"><strong>New in v8:</strong> Interactive charts above each data table. Service line drill-down: select any service line to compare Promise vs Blues vs Cigna across all 6 cohort views for the selected section. TH branding applied. Data identical to v7.</div>
+  </div>
+  <div class="ms">
+    <h2>Overview</h2>
+    <p>This analysis compares Promise Health Plan-negotiated rates at SC hospitals to Medicare benchmarks using Machine-Readable Files (MRFs) submitted under the CMS Hospital Price Transparency Rule (45 CFR Part 180). Rates are expressed as % of Medicare, utilization-weighted using Komodo Health national claims frequency (330M covered lives). Files downloaded April 21, 2026.</p>
+  </div>
+  <div class="ms" id="hosp-inv-section">
+    <h2>Hospital File Inventory</h2>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+      <div>
+        <div class="clabel" style="margin-bottom:4px">MSA / REGION</div>
+        <select id="hf-msa" onchange="setHF('msa',this.value)" style="min-width:220px">
+          <option value="all">All MSAs / Regions</option>
+          <option value="columbia">Columbia, SC MSA</option>
+          <option value="greenville">Greenville-Anderson, SC MSA</option>
+          <option value="florence_pee_dee">Florence / Pee Dee Region</option>
+          <option value="myrtle_beach">Myrtle Beach-Conway MSA</option>
+          <option value="other">Other / Out of Scope</option>
+        </select>
+      </div>
+      <div>
+        <div class="clabel" style="margin-bottom:4px">COHORT</div>
+        <select id="hf-cohort" onchange="setHF('cohort',this.value)">
+          <option value="all">All Cohorts</option>
+          <option value="prisma">Prisma Tier 1</option>
+          <option value="nonprisma">Non-Prisma Tier 1</option>
+        </select>
+      </div>
+      <div>
+        <div class="clabel" style="margin-bottom:4px">VERSION</div>
+        <select id="hf-version" onchange="setHF('version',this.value)">
+          <option value="all">All Versions</option>
+          <option value="3.0.0">3.0.0 (2025 schema)</option>
+          <option value="2.0.0">2.0.0 (2024 schema)</option>
+          <option value="N/A">N/A (no file)</option>
+        </select>
+      </div>
+      <div>
+        <div class="clabel" style="margin-bottom:4px">STATUS</div>
+        <select id="hf-status" onchange="setHF('status',this.value)">
+          <option value="all">All Statuses</option>
+          <option value="included">Included</option>
+          <option value="apc">Included (APC Caveat)</option>
+          <option value="caveat">Caveat / Issues</option>
+          <option value="excluded">Excluded</option>
+        </select>
+      </div>
+      <div style="margin-left:auto;align-self:flex-end">
+        <span id="hosp-count" style="font-size:12px;color:#8ab4d4;font-weight:600"></span>
+        &nbsp;<button onclick="resetHF()" style="background:#0d1a26;border:1px solid #1e3448;color:#8ab4d4;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px">Reset</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="ft" id="hosp-inv-table" style="font-size:11px;min-width:900px">
+        <tr>
+          <th style="min-width:190px">Hospital</th>
+          <th style="min-width:100px">Cohort</th>
+          <th style="min-width:160px">MSA / Region</th>
+          <th style="min-width:90px">Address</th>
+          <th style="min-width:80px">MRF Date</th>
+          <th style="min-width:60px">Version</th>
+          <th style="min-width:90px">Status</th>
+          <th>Notes &amp; Source</th>
+        </tr>
+      </table>
+    </div>
+    <div class="nb warn" style="margin-top:16px">
+      <strong>APC Caveat (McLeod Health System):</strong> McLeod Health hospitals publish outpatient standard charges at the <strong>Ambulatory Payment Classification (APC)</strong> group level rather than individual CPT/HCPCS procedure code level. APCs are CMS payment groupings for the Outpatient Prospective Payment System (OPPS) that consolidate multiple related procedures into a single bundled code. The Komodo Region 5 benchmark table used in this analysis operates at the individual CPT/HCPCS code level. APC codes cannot be matched to individual Komodo benchmarks, producing severely limited match rates for McLeod outpatient and professional data (~12,000 records vs 200,000+ for comparable Prisma hospitals). <strong>McLeod inpatient data (MS-DRG) is not affected</strong> and matches normally.
+    </div>
+  </div>
+  <div class="ms">
+    <h2>Methodology</h2>
+    <h3>Code Resolution (cascade)</h3>
+    <ul>
+      <li><strong>code|1:</strong> Used if type = MS-DRG, CPT, or HCPCS</li>
+      <li><strong>code|2:</strong> Fallback for CDM rows (94% of CDM rows have CPT/HCPCS in code|2)</li>
+      <li><strong>code|3, code|4:</strong> Additional fallbacks</li>
+    </ul>
+    <h3>Dollar Rate Resolution</h3>
+    <ul>
+      <li>Use <code>standard_charge|negotiated_dollar</code> directly when populated</li>
+      <li>Otherwise: rate = negotiated_percentage x gross_charge</li>
+    </ul>
+    <h3>Medicare Benchmark Matching</h3>
+    <p>Each code + section combination matched against Komodo Region 5 reference (6,141 codes):</p>
+    <ul>
+      <li><strong>Inpatient:</strong> MS-DRG codes matched to IPPS DRG weight x base rate</li>
+      <li><strong>Outpatient:</strong> CPT/HCPCS codes matched to OPPS APC payment amounts</li>
+      <li><strong>Professional:</strong> CPT codes matched to PFS locality-adjusted physician fee schedule</li>
+    </ul>
+    <h3>% of Medicare Calculation</h3>
+    <p>pct_medicare = negotiated_dollar / matched_medicare_benchmark x 100. Outlier cap: rows where pct &gt; 600% excluded.</p>
+    <h3>Komodo Utilization Weighting</h3>
+    <p>Each code weighted by claims_per_1000 from Komodo Health (330M covered lives, Nov 2025). Weighted average = Sum(pct x claims_per_1000) / Sum(claims_per_1000).</p>
+    <h3>Cohort Aggregation</h3>
+    <p>Aggregate views weight each hospital by included row count. "Combined" mixes Prisma and Non-Prisma. Columbia and Greenville refer to target MSA groupings as assigned in the pipeline.</p>
+  </div>
+  <div class="ms">
+    <h2>Limitations</h2>
+    <h3>Professional Bucket Caveat</h3>
+    <div class="nb warn">Professional benchmarks use the PFS locality schedule (physician billing). Hospitals that bill facility-level charges under professional codes will show inflated Professional % values. Inpatient and Outpatient are the cleaner buckets.</div>
+    <h3>Code Coverage</h3>
+    <p>Komodo Region 5 reference: 6,141 codes. Hospital MRFs: 15,000-25,000 line items. Unmatched rows: hospital-specific CDM codes, pharmacy/drug codes (NDC), revenue codes without CPT, and low-volume specialty procedures.</p>
+    <h3>Outpatient Drugs / Imaging Outliers</h3>
+    <p>Outpatient Drugs and Imaging show very high % of Medicare (300-2,500%+). Hospital outpatient drug charges vs. very low per-unit Medicare drug payments. Directionally meaningful but not literal multipliers.</p>
+  </div>
+  <div class="ms">
+    <h2>Interpretation Guide</h2>
+    <ul>
+      <li><strong>100% of Medicare</strong> = payer pays exactly what Medicare pays</li>
+      <li><span class="lo"><strong>&lt;150%</strong></span> = strong payer leverage or value-based arrangement</li>
+      <li><span class="mid"><strong>150-200%</strong></span> = typical mid-range commercial contract</li>
+      <li><span class="hi"><strong>200-300%</strong></span> = aggressive pricing, high-leverage system</li>
+      <li><span style="color:#ef4444"><strong>&gt;300%</strong></span> = premium contract or facility billing under physician fee schedule</li>
+    </ul>
+    <h3>Prisma vs Non-Prisma</h3>
+    <p>Promise rates at Prisma hospitals (160-220% inpatient) reflect pricing power of a dominant integrated system. Non-Prisma (McLeod) inpatient rates higher in most categories, suggesting less leverage with McLeod.</p>
+  </div>
+  <div class="ms">
+    <h2>Data Lineage</h2>
+    <p>Hospital MRFs downloaded April 21, 2026. CMS v3.0.0 schema (Greer Memorial and Newberry v2.0.0). Medicare benchmarks: Komodo Health Region 5, 6,141 codes, Nov 2025. Pipeline: promise-pipeline.py. Executed Mac M5 (macOS). Orchestrated by Mr. BigQuery + Hermes (Third Horizon, April 2026).</p>
+  </div>
+
+  <script id="hosp-inv-script">
+  const HOSP_INV = [{"name": "Prisma Health Baptist Columbia Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "1330 Taylor St, Columbia SC 29201", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "Multi-location MRF: also covers Baptist Behavioral Care and Baptist Columbia LTACH under same file.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Baptist Parkridge Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "400 Palmetto Health Pkwy, Columbia SC 29212", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Richland Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "5 Richland Medical Park Drive, Columbia SC 29203", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "Multi-location MRF: also covers Richland Inpatient Pediatric Rehab Unit and Richland Springs Hospital under same file.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Baptist Easley Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "200 Fleetwood Drive, Easley SC 29640", "msa": "Greenville-Anderson, SC MSA (Pickens County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Greenville Memorial Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "701 Grove Road, Greenville SC 29605", "msa": "Greenville-Anderson, SC MSA (Greenville County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "Multi-location MRF: also covers Marshall Pickens Hospital and Roger C. Peace Rehab. Only Greenville Memorial rates extracted.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Hillcrest Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "729 SE Main Street, Simpsonville SC 29681", "msa": "Greenville-Anderson, SC MSA (Greenville County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Laurens County Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "22725 US Highway 76 E, Clinton SC 29325", "msa": "Greenville-Anderson, SC MSA (Laurens County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "Laurens County is formally included in the Greenville-Anderson MSA per OMB definition.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health North Greenville Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "807 North Main Street, Travelers Rest SC 29690", "msa": "Greenville-Anderson, SC MSA (Greenville County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "MRF self-identifies as North Greenville LTACH Hospital (Long-Term Acute Care). Rates reflect LTACH specialty care.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Oconee Memorial Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "298 Memorial Drive, Seneca SC 29672", "msa": "Greenville-Anderson adjacent (Oconee County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "Oconee County is not formally in the Greenville-Anderson MSA per OMB, but is part of Prisma Upstate SC network. Grouped under Greenville Tier 1 for this analysis.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Patewood Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "175 Patewood Drive, Greenville SC 29615", "msa": "Greenville-Anderson, SC MSA (Greenville County)", "msa_group": "greenville", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "INCLUDED", "status_key": "included", "notes": "", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Greer Memorial Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "830 S Buncombe Road, Greer SC 29650", "msa": "Greenville-Anderson, SC MSA (Greenville County)", "msa_group": "greenville", "mrf_date": "2024-12-10", "version": "2.0.0", "status": "CAVEAT (schema mismatch)", "status_key": "caveat", "notes": "MRF schema mismatch: Greer Memorial published v2.0.0 (Dec 2024) while all other Prisma hospitals updated to v3.0.0 (Mar 2026). CMS v3.0.0 introduced column layout changes. Pipeline was built for v3.0.0 format. Greer file produces 0 matched records. Result: 0 records in analysis. Fixable by writing a v2.0.0-compatible parser branch.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Blount Memorial Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "907 E Lamar Alexander Pkwy, Maryville TN 37804", "msa": "Knoxville, TN MSA", "msa_group": "other", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "EXCLUDED", "status_key": "excluded", "notes": "Not a South Carolina facility. Located in Tennessee (Blount County). MRF available and downloaded but excluded from SC analysis.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Tuomey Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "129 N Washington St, Sumter SC 29150", "msa": "Sumter, SC MSA", "msa_group": "other", "mrf_date": "2026-03-01", "version": "3.0.0", "status": "EXCLUDED", "status_key": "excluded", "notes": "Not in target MSA. Sumter is its own MSA, not Columbia or Greenville. MRF available and downloaded but out of scope.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Children's Hospital – Midlands", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "Columbia, SC", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No MRF file listed on Prisma Health price transparency page. Specialty pediatric hospital; charges likely consolidated into parent facility MRF.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Children's Hospital – Upstate", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "Greenville, SC", "msa": "Greenville-Anderson, SC MSA", "msa_group": "greenville", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No MRF file listed on Prisma Health price transparency page. Specialty pediatric hospital; charges likely consolidated into Greenville Memorial MRF.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Heart Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "Columbia, SC", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No MRF file listed on Prisma Health price transparency page. Specialty cardiac hospital.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Marshall I. Pickens Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "Greenville, SC", "msa": "Greenville-Anderson, SC MSA", "msa_group": "greenville", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No standalone MRF. Rates appear in the Greenville Memorial multi-location MRF but were not separately extracted for this analysis. Behavioral/psychiatric specialty facility.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Richland Springs Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "11 Richland Medical Park Drive, Columbia SC 29203", "msa": "Columbia, SC MSA", "msa_group": "columbia", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No standalone MRF. Rates appear in the Richland Hospital multi-location MRF but were not separately extracted. Specialty inpatient psychiatric facility.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "Prisma Health Roger C. Peace Rehabilitation Hospital", "cohort": "Prisma Tier 1", "cohort_key": "prisma", "address": "Greenville, SC", "msa": "Greenville-Anderson, SC MSA", "msa_group": "greenville", "mrf_date": "N/A", "version": "N/A", "status": "EXCLUDED", "status_key": "excluded", "notes": "No standalone MRF. Rates appear in the Greenville Memorial multi-location MRF but were not separately extracted. Specialty inpatient rehabilitation facility.", "url": "https://prismahealth.org/patients-and-guests/billing-and-insurance/price-transparency", "url2": ""}, {"name": "McLeod Regional Medical Center", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "555 East Cheves Street, Florence SC 29506", "msa": "Florence, SC MSA (Florence County)", "msa_group": "florence_pee_dee", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~12,354 matched records.", "url": "https://www.mcleodhealth.org/wp-content/uploads/price-transparency/57-0370242_mcleod-regional-medical-center_standardcharges.csv", "url2": "https://www.mcleodhealth.org/about-us/price-transparency/"}, {"name": "McLeod Health Cheraw", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "711 Chesterfield Highway, Cheraw SC 29520", "msa": "Pee Dee Region (Chesterfield County, no major MSA)", "msa_group": "florence_pee_dee", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~12,510 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "McLeod Health Clarendon", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "10 East Hospital Street, Manning SC 29102", "msa": "Pee Dee Region (Clarendon County, no major MSA)", "msa_group": "florence_pee_dee", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~12,127 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "McLeod Health Dillon", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "301 East Jackson Street, Dillon SC 29536", "msa": "Pee Dee Region (Dillon County, no major MSA)", "msa_group": "florence_pee_dee", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~11,939 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "McLeod Health Loris", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "3655 Mitchell Street, Loris SC 29569", "msa": "Myrtle Beach-Conway-North Myrtle Beach, SC MSA (Horry County)", "msa_group": "myrtle_beach", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~11,745 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "McLeod Health Seacoast", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "4000 Highway 9 East, Little River SC 29566", "msa": "Myrtle Beach-Conway-North Myrtle Beach, SC MSA (Horry County)", "msa_group": "myrtle_beach", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~11,745 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "McLeod Health Carolina Forest", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "101 McLeod Health Blvd, Myrtle Beach SC 29579", "msa": "Myrtle Beach-Conway-North Myrtle Beach, SC MSA (Horry County)", "msa_group": "myrtle_beach", "mrf_date": "2026-02-01", "version": "3.0.0", "status": "INCLUDED (APC caveat)", "status_key": "apc", "notes": "APC Caveat applies (see below): McLeod reports outpatient rates at APC group level, not individual CPT/HCPCS. Severely limits outpatient/professional match rates. Inpatient (MS-DRG) data is reliable. ~11,745 matched records.", "url": "https://www.mcleodhealth.org/about-us/price-transparency/", "url2": ""}, {"name": "Newberry County Memorial Hospital", "cohort": "Non-Prisma Tier 1", "cohort_key": "nonprisma", "address": "2669 Kinard Street, Newberry SC 29108", "msa": "Newberry County, SC (non-MSA)", "msa_group": "other", "mrf_date": "2025-09-15", "version": "2.0.0", "status": "CAVEAT (0 Promise matches)", "status_key": "caveat", "notes": "Promise not contracted. 105,306 total MRF rows processed. 0 Promise-payer code matches found. Blues data is present (474+ matched codes for Circulatory alone), confirming the file parsed correctly. Newberry County Memorial does not appear to be contracted with Promise Health Plan.", "url": "https://search.hospitalpriceindex.com/hpi2/machineReadable/NewberryCountyMemorialHospital/8016or", "url2": ""}];
+  const HF = {msa:'all', cohort:'all', version:'all', status:'all'};
+  const SC = {
+    included:  {color:'#7ecf7e', rowbg:''},
+    apc:       {color:'#e0c97a', rowbg:'background:#1a2510'},
+    caveat:    {color:'#f59e0b', rowbg:'background:#2a2010'},
+    excluded:  {color:'#888',    rowbg:'background:#1a1a2a'}
+  };
+
+  function setHF(key, val) {
+    HF[key] = val;
+    renderHospInv();
+  }
+  function resetHF() {
+    HF.msa = 'all'; HF.cohort = 'all'; HF.version = 'all'; HF.status = 'all';
+    ['msa','cohort','version','status'].forEach(k => {
+      const el = document.getElementById('hf-'+k);
+      if(el) el.value = 'all';
+    });
+    renderHospInv();
+  }
+
+  function renderHospInv() {
+    const filtered = HOSP_INV.filter(h =>
+      (HF.msa === 'all' || h.msa_group === HF.msa) &&
+      (HF.cohort === 'all' || h.cohort_key === HF.cohort) &&
+      (HF.version === 'all' || h.version === HF.version) &&
+      (HF.status === 'all' || h.status_key === HF.status)
+    );
+    const tbl = document.getElementById('hosp-inv-table');
+    if (!tbl) return;
+    const sc = SC[filtered.length > 0 ? filtered[0].status_key : 'included'];
+    let rows = '<tr><th style="min-width:190px">Hospital</th><th>Cohort</th><th style="min-width:160px">MSA / Region</th><th>Address</th><th>MRF Date</th><th>Version</th><th>Status</th><th>Notes &amp; Source</th></tr>';
+    filtered.forEach(h => {
+      const s = SC[h.status_key] || SC.included;
+      const urlHtml = h.url ? ' <a href="' + h.url + '" style="color:#52AAC8" target="_blank">[source]</a>' : '';
+      const url2Html = h.url2 ? ' <a href="' + h.url2 + '" style="color:#52AAC8" target="_blank">[alt]</a>' : '';
+      rows += '<tr style="' + s.rowbg + '">'
+        + '<td><strong>' + h.name + '</strong></td>'
+        + '<td>' + h.cohort + '</td>'
+        + '<td>' + h.msa + '</td>'
+        + '<td style="font-size:10px;color:#6a8aaa">' + h.address + '</td>'
+        + '<td>' + h.mrf_date + '</td>'
+        + '<td>' + h.version + '</td>'
+        + '<td><span style="color:' + s.color + ';font-weight:700">' + h.status + '</span></td>'
+        + '<td style="font-size:11px;color:#8ab4d4">' + h.notes + urlHtml + url2Html + '</td>'
+        + '</tr>';
+    });
+    if (filtered.length === 0) {
+      rows += '<tr><td colspan="8" style="text-align:center;color:#6a8aaa;padding:16px">No facilities match the selected filters.</td></tr>';
+    }
+    tbl.innerHTML = rows;
+    const cnt = document.getElementById('hosp-count');
+    if (cnt) cnt.textContent = filtered.length + ' of ' + HOSP_INV.length + ' facilities';
+  }
+
+  // Auto-init when methodology tab is active (called after main script runs)
+  if (document.getElementById('hosp-inv-table')) renderHospInv();
+  </script>
+</div>
+
+<script>
+const AGG = {"col_prisma":{"Inpatient":{"Addiction":{"mcare":9787.41,"Promise":185.6,"Promise_r":18168.57,"Blues":106.0,"Blues_r":10378.54,"Cigna":92.0,"Cigna_r":9008.17},"Andrology":{"mcare":10630.8,"Promise":190.8,"Promise_r":20278.22,"Blues":109.7,"Blues_r":11659.11,"Cigna":166.0,"Cigna_r":17648.92},"Blood & Immune":{"mcare":12333.68,"Promise":198.4,"Promise_r":24468.51,"Blues":179.8,"Blues_r":22172.94,"Cigna":170.6,"Cigna_r":21037.2},"Burns":{"mcare":19596.61,"Promise":207.2,"Promise_r":40598.87,"Blues":89.8,"Blues_r":17587.76,"Cigna":174.1,"Cigna_r":34125.69},"Circulatory":{"mcare":17443.43,"Promise":162.4,"Promise_r":28331.58,"Blues":211.5,"Blues_r":36899.21,"Cigna":164.8,"Cigna_r":28742.15},"ENT":{"mcare":10828.97,"Promise":190.4,"Promise_r":20615.64,"Blues":150.4,"Blues_r":16285.79,"Cigna":165.5,"Cigna_r":17924.41},"Endocrine":{"mcare":11274.28,"Promise":180.3,"Promise_r":20333.62,"Blues":142.5,"Blues_r":16066.61,"Cigna":154.4,"Cigna_r":17407.22},"Eye":{"mcare":8966.67,"Promise":179.4,"Promise_r":16088.2,"Blues":139.4,"Blues_r":12501.18,"Cigna":159.1,"Cigna_r":14262.52},"Gastro":{"mcare":13746.17,"Promise":190.5,"Promise_r":26191.42,"Blues":191.9,"Blues_r":26383.28,"Cigna":165.6,"Cigna_r":22761.98},"Gynecology":{"mcare":13359.67,"Promise":202.5,"Promise_r":27053.1,"Blues":188.4,"Blues_r":25167.96,"Cigna":173.1,"Cigna_r":23126.05},"HIV":{"mcare":20302.29,"Promise":217.2,"Promise_r":44103.13,"Blues":199.1,"Blues_r":40429.59,"Cigna":181.8,"Cigna_r":36913.39},"Health Status":{"mcare":11291.86,"Promise":190.5,"Promise_r":21512.63,"Blues":169.8,"Blues_r":19172.04,"Cigna":155.2,"Cigna_r":17526.12},"Hepatobiliary":{"mcare":13695.9,"Promise":188.7,"Promise_r":25845.25,"Blues":193.3,"Blues_r":26473.85,"Cigna":173.3,"Cigna_r":23730.96},"Infection":{"mcare":18246.52,"Promise":180.6,"Promise_r":32957.74,"Blues":233.2,"Blues_r":42554.19,"Cigna":180.3,"Cigna_r":32891.71},"Injury":{"mcare":13460.06,"Promise":202.4,"Promise_r":27248.84,"Blues":178.7,"Blues_r":24052.76,"Cigna":159.9,"Cigna_r":21528.24},"Maternity":{"mcare":8962.5,"Promise":123.1,"Promise_r":11035.11,"Blues":130.8,"Blues_r":11721.91,"Cigna":139.6,"Cigna_r":12511.13},"Neoplasms":{"mcare":22037.17,"Promise":190.7,"Promise_r":42013.56,"Blues":188.6,"Blues_r":41559.51,"Cigna":184.6,"Cigna_r":40671.38},"Neurology":{"mcare":10787.71,"Promise":191.4,"Promise_r":20644.61,"Blues":143.3,"Blues_r":15458.2,"Cigna":166.3,"Cigna_r":17945.52},"Newborns":{"mcare":12196.68,"Promise":39.4,"Promise_r":4809.92,"Blues":42.9,"Blues_r":5227.09,"Cigna":71.5,"Cigna_r":8718.93},"Orthopedics":{"mcare":16800.2,"Promise":197.9,"Promise_r":33249.25,"Blues":211.5,"Blues_r":35530.43,"Cigna":177.3,"Cigna_r":29793.19},"Psychiatry":{"mcare":9987.74,"Promise":268.5,"Promise_r":26813.57,"Blues":106.3,"Blues_r":10616.91,"Cigna":124.8,"Cigna_r":12467.99},"Renal":{"mcare":11965.81,"Promise":196.6,"Promise_r":23525.56,"Blues":206.3,"Blues_r":24684.28,"Cigna":169.4,"Cigna_r":20275.39},"Respiratory":{"mcare":13536.56,"Promise":188.2,"Promise_r":25483.25,"Blues":210.7,"Blues_r":28522.37,"Cigna":173.2,"Cigna_r":23447.47},"Skin/breast":{"mcare":11661.97,"Promise":192.6,"Promise_r":22455.33,"Blues":160.8,"Blues_r":18752.94,"Cigna":168.8,"Cigna_r":19686.25},"Transplant":{"mcare":23310.75,"Promise":190.1,"Promise_r":44309.63,"Blues":227.6,"Blues_r":53054.04,"Cigna":184.5,"Cigna_r":43007.74},"Trauma":{"mcare":33560.42,"Promise":147.4,"Promise_r":49457.29,"Blues":189.5,"Blues_r":63604.07,"Cigna":149.3,"Cigna_r":50118.33}},"Outpatient":{"DME":{"mcare":1046.7,"Promise":172.3,"Promise_r":1803.57,"Blues":11.2,"Blues_r":117.54,"Cigna":292.4,"Cigna_r":3060.75},"Drugs":{"mcare":7.68,"Promise":2543.2,"Promise_r":195.42,"Blues":16821.7,"Blues_r":1292.54,"Cigna":3211.2,"Cigna_r":246.74},"E&M":{"mcare":204.57,"Promise":127.6,"Promise_r":261.02,"Blues":181.8,"Blues_r":371.97,"Cigna":177.9,"Cigna_r":363.87},"General Lab":{"mcare":20.15,"Promise":442.9,"Promise_r":89.24,"Blues":307.7,"Blues_r":62.0,"Cigna":268.5,"Cigna_r":54.1},"Imaging":{"mcare":107.22,"Promise":458.0,"Promise_r":491.04,"Blues":417.5,"Blues_r":447.69,"Cigna":396.1,"Cigna_r":424.7},"Other":{"mcare":85.8,"Promise":264.0,"Promise_r":226.47,"Blues":250.4,"Blues_r":214.86,"Cigna":360.6,"Cigna_r":309.39},"Post Acute Care":{"mcare":0,"Promise":null,"Promise_r":90.25,"Blues":null,"Blues_r":2930.04,"Cigna":null,"Cigna_r":131.86},"Procedure":{"mcare":251.52,"Promise":120.9,"Promise_r":304.19,"Blues":588.6,"Blues_r":1480.34,"Cigna":221.1,"Cigna_r":556.03},"Test":{"mcare":396.03,"Promise":193.6,"Promise_r":766.84,"Blues":214.6,"Blues_r":849.88,"Cigna":176.4,"Cigna_r":698.7},"Treatment":{"mcare":98.68,"Promise":225.9,"Promise_r":222.9,"Blues":374.4,"Blues_r":369.45,"Cigna":213.4,"Cigna_r":210.63}},"Professional":{"DME":{"mcare":245.5,"Promise":66.6,"Promise_r":163.47,"Blues":71.0,"Blues_r":174.41,"Cigna":96.7,"Cigna_r":237.36},"Drugs":{"mcare":33.22,"Promise":343.9,"Promise_r":114.24,"Blues":194.7,"Blues_r":64.69,"Cigna":236.1,"Cigna_r":78.44},"E&M":{"mcare":96.65,"Promise":95.0,"Promise_r":91.8,"Blues":137.3,"Blues_r":132.73,"Cigna":95.6,"Cigna_r":92.43},"General Lab":{"mcare":0,"Promise":null,"Promise_r":80.43,"Blues":null,"Blues_r":85.7,"Cigna":null,"Cigna_r":107.22},"Imaging":{"mcare":179.63,"Promise":152.9,"Promise_r":274.58,"Blues":276.8,"Blues_r":497.12,"Cigna":212.9,"Cigna_r":382.51},"Other":{"mcare":134.1,"Promise":141.9,"Promise_r":190.27,"Blues":157.9,"Blues_r":211.8,"Cigna":195.7,"Cigna_r":262.38},"Procedure":{"mcare":318.65,"Promise":85.0,"Promise_r":270.74,"Blues":441.1,"Blues_r":1405.54,"Cigna":146.6,"Cigna_r":466.98},"Test":{"mcare":132.01,"Promise":162.0,"Promise_r":213.82,"Blues":150.4,"Blues_r":198.52,"Cigna":190.9,"Cigna_r":251.98},"Treatment":{"mcare":65.17,"Promise":191.4,"Promise_r":124.71,"Blues":163.9,"Blues_r":106.81,"Cigna":227.6,"Cigna_r":148.33}}},"col_nonprisma":{"Inpatient":{"Addiction":{"mcare":7497.87,"Promise":22.1,"Promise_r":1659.65,"Blues":68.7,"Blues_r":5149.39,"Cigna":353.7,"Cigna_r":26516.79},"Andrology":{"mcare":10614.74,"Promise":265.1,"Promise_r":28140.09,"Blues":185.3,"Blues_r":19671.94,"Cigna":353.7,"Cigna_r":37539.81},"Blood & Immune":{"mcare":10204.88,"Promise":277.9,"Promise_r":28358.99,"Blues":178.7,"Blues_r":18233.09,"Cigna":353.7,"Cigna_r":36090.31},"Burns":{"mcare":20159.09,"Promise":189.0,"Promise_r":38092.32,"Blues":125.6,"Blues_r":25323.24,"Cigna":353.7,"Cigna_r":71294.13},"Circulatory":{"mcare":17214.2,"Promise":303.1,"Promise_r":52182.55,"Blues":202.5,"Blues_r":34861.18,"Cigna":353.7,"Cigna_r":60879.29},"ENT":{"mcare":9104.29,"Promise":251.9,"Promise_r":22936.09,"Blues":174.9,"Blues_r":15926.26,"Cigna":353.7,"Cigna_r":32198.01},"Endocrine":{"mcare":9769.72,"Promise":263.7,"Promise_r":25764.2,"Blues":177.8,"Blues_r":17366.02,"Cigna":353.7,"Cigna_r":34551.35},"Eye":{"mcare":6869.64,"Promise":278.7,"Promise_r":19146.21,"Blues":181.1,"Blues_r":12441.23,"Cigna":353.7,"Cigna_r":24295.0},"Gastro":{"mcare":11566.54,"Promise":318.6,"Promise_r":36848.81,"Blues":201.2,"Blues_r":23274.9,"Cigna":353.7,"Cigna_r":40905.92},"Gynecology":{"mcare":11031.89,"Promise":249.8,"Promise_r":27563.11,"Blues":168.0,"Blues_r":18534.78,"Cigna":353.7,"Cigna_r":39015.11},"HIV":{"mcare":18639.97,"Promise":270.8,"Promise_r":50471.14,"Blues":181.5,"Blues_r":33826.46,"Cigna":353.7,"Cigna_r":65921.64},"Health Status":{"mcare":9138.69,"Promise":248.8,"Promise_r":22739.45,"Blues":172.2,"Blues_r":15733.55,"Cigna":353.7,"Cigna_r":32319.65},"Hepatobiliary":{"mcare":11575.7,"Promise":318.8,"Promise_r":36902.54,"Blues":200.1,"Blues_r":23166.44,"Cigna":353.7,"Cigna_r":40938.33},"Infection":{"mcare":16127.98,"Promise":247.9,"Promise_r":39986.77,"Blues":166.3,"Blues_r":26819.98,"Cigna":353.7,"Cigna_r":57037.82},"Injury":{"mcare":11295.44,"Promise":267.5,"Promise_r":30215.92,"Blues":168.2,"Blues_r":18997.3,"Cigna":353.7,"Cigna_r":39947.17},"Maternity":{"mcare":6655.2,"Promise":193.9,"Promise_r":12901.53,"Blues":146.2,"Blues_r":9731.19,"Cigna":210.1,"Cigna_r":13981.96},"Neoplasms":{"mcare":18601.39,"Promise":283.1,"Promise_r":52652.09,"Blues":180.4,"Blues_r":33560.13,"Cigna":353.7,"Cigna_r":65785.21},"Neurology":{"mcare":8519.7,"Promise":229.9,"Promise_r":19590.08,"Blues":153.2,"Blues_r":13056.0,"Cigna":353.7,"Cigna_r":30130.54},"Newborns":{"mcare":9958.97,"Promise":63.1,"Promise_r":6283.13,"Blues":56.8,"Blues_r":5656.12,"Cigna":353.7,"Cigna_r":35220.65},"Orthopedics":{"mcare":14759.41,"Promise":276.0,"Promise_r":40736.41,"Blues":186.7,"Blues_r":27550.49,"Cigna":353.7,"Cigna_r":52197.74},"Psychiatry":{"mcare":11139.69,"Promise":14.9,"Promise_r":1659.65,"Blues":65.3,"Blues_r":7270.84,"Cigna":353.7,"Cigna_r":39396.34},"Renal":{"mcare":10236.98,"Promise":310.4,"Promise_r":31771.5,"Blues":193.8,"Blues_r":19836.93,"Cigna":353.7,"Cigna_r":36203.84},"Respiratory":{"mcare":11362.53,"Promise":311.8,"Promise_r":35427.48,"Blues":194.3,"Blues_r":22076.93,"Cigna":353.7,"Cigna_r":40184.45},"Skin/breast":{"mcare":9534.47,"Promise":216.5,"Promise_r":20639.36,"Blues":158.2,"Blues_r":15085.03,"Cigna":353.7,"Cigna_r":33719.36},"Transplant":{"mcare":21312.23,"Promise":196.6,"Promise_r":41895.89,"Blues":148.4,"Blues_r":31621.33,"Cigna":353.7,"Cigna_r":75372.28},"Trauma":{"mcare":31461.83,"Promise":283.6,"Promise_r":89237.46,"Blues":192.8,"Blues_r":60643.62,"Cigna":353.7,"Cigna_r":111267.13}},"Outpatient":{"Anesthesia":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":5.12,"Cigna":null,"Cigna_r":null},"DME":{"mcare":1046.7,"Promise":null,"Promise_r":null,"Blues":20.5,"Blues_r":214.53,"Cigna":311.7,"Cigna_r":3262.64},"Drugs":{"mcare":7.68,"Promise":null,"Promise_r":null,"Blues":1507.0,"Blues_r":115.74,"Cigna":2428.8,"Cigna_r":186.53},"E&M":{"mcare":204.57,"Promise":null,"Promise_r":null,"Blues":218.2,"Blues_r":446.41,"Cigna":300.1,"Cigna_r":613.85},"General Lab":{"mcare":20.15,"Promise":null,"Promise_r":null,"Blues":446.8,"Blues_r":90.02,"Cigna":831.0,"Cigna_r":167.45},"Imaging":{"mcare":107.22,"Promise":null,"Promise_r":null,"Blues":234.1,"Blues_r":250.98,"Cigna":683.8,"Cigna_r":733.19},"Other":{"mcare":85.8,"Promise":null,"Promise_r":null,"Blues":140.5,"Blues_r":120.56,"Cigna":10158.3,"Cigna_r":8715.8},"Procedure":{"mcare":251.52,"Promise":null,"Promise_r":null,"Blues":314.0,"Blues_r":789.76,"Cigna":4554.1,"Cigna_r":11454.49},"Test":{"mcare":396.03,"Promise":null,"Promise_r":null,"Blues":165.3,"Blues_r":654.84,"Cigna":258.2,"Cigna_r":1022.62},"Treatment":{"mcare":98.68,"Promise":257.2,"Promise_r":253.79,"Blues":109.2,"Blues_r":107.76,"Cigna":1980.4,"Cigna_r":1954.28}},"Professional":{"DME":{"mcare":245.5,"Promise":null,"Promise_r":null,"Blues":136.0,"Blues_r":333.81,"Cigna":1.3,"Cigna_r":3.24},"Drugs":{"mcare":33.22,"Promise":null,"Promise_r":null,"Blues":236.8,"Blues_r":78.66,"Cigna":351.4,"Cigna_r":116.74},"E&M":{"mcare":96.65,"Promise":null,"Promise_r":null,"Blues":117.8,"Blues_r":113.82,"Cigna":256.4,"Cigna_r":247.78},"General Lab":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":53.15,"Cigna":null,"Cigna_r":101.25},"Imaging":{"mcare":179.63,"Promise":null,"Promise_r":null,"Blues":157.6,"Blues_r":283.11,"Cigna":447.3,"Cigna_r":803.5},"Other":{"mcare":134.1,"Promise":null,"Promise_r":null,"Blues":81.2,"Blues_r":108.86,"Cigna":210.2,"Cigna_r":281.95},"Procedure":{"mcare":318.65,"Promise":null,"Promise_r":null,"Blues":168.8,"Blues_r":538.01,"Cigna":1524.1,"Cigna_r":4856.66},"Test":{"mcare":132.01,"Promise":null,"Promise_r":null,"Blues":132.7,"Blues_r":175.22,"Cigna":261.9,"Cigna_r":345.78},"Treatment":{"mcare":65.17,"Promise":null,"Promise_r":null,"Blues":105.0,"Blues_r":68.41,"Cigna":133.1,"Cigna_r":86.71}}},"gvl_prisma":{"Inpatient":{"Addiction":{"mcare":7213.56,"Promise":250.1,"Promise_r":18041.92,"Blues":118.2,"Blues_r":8528.58,"Cigna":176.4,"Cigna_r":12724.9},"Andrology":{"mcare":9997.24,"Promise":211.7,"Promise_r":21161.3,"Blues":103.9,"Blues_r":10387.0,"Cigna":147.2,"Cigna_r":14715.46},"Blood & Immune":{"mcare":11122.0,"Promise":218.2,"Promise_r":24271.98,"Blues":131.5,"Blues_r":14626.53,"Cigna":150.1,"Cigna_r":16692.27},"Burns":{"mcare":24187.14,"Promise":249.2,"Promise_r":60281.08,"Blues":93.8,"Blues_r":22684.63,"Cigna":163.4,"Cigna_r":39521.52},"Circulatory":{"mcare":13697.31,"Promise":158.5,"Promise_r":21716.35,"Blues":138.8,"Blues_r":19016.14,"Cigna":136.9,"Cigna_r":18751.46},"ENT":{"mcare":10135.26,"Promise":221.5,"Promise_r":22451.76,"Blues":123.3,"Blues_r":12493.35,"Cigna":151.9,"Cigna_r":15392.17},"Endocrine":{"mcare":10682.66,"Promise":198.1,"Promise_r":21165.09,"Blues":143.4,"Blues_r":15315.12,"Cigna":153.8,"Cigna_r":16430.5},"Eye":{"mcare":8033.68,"Promise":199.3,"Promise_r":16013.17,"Blues":101.0,"Blues_r":8116.44,"Cigna":142.3,"Cigna_r":11434.6},"Gastro":{"mcare":11504.87,"Promise":198.0,"Promise_r":22776.28,"Blues":144.7,"Blues_r":16647.18,"Cigna":154.5,"Cigna_r":17780.09},"Gynecology":{"mcare":10453.4,"Promise":223.6,"Promise_r":23374.88,"Blues":118.3,"Blues_r":12366.77,"Cigna":152.2,"Cigna_r":15906.6},"HIV":{"mcare":18244.74,"Promise":195.0,"Promise_r":35574.21,"Blues":120.0,"Blues_r":21886.93,"Cigna":158.3,"Cigna_r":28883.15},"Health Status":{"mcare":8109.02,"Promise":159.2,"Promise_r":12913.04,"Blues":110.2,"Blues_r":8940.2,"Cigna":132.1,"Cigna_r":10715.49},"Hepatobiliary":{"mcare":12030.62,"Promise":218.9,"Promise_r":26340.71,"Blues":133.9,"Blues_r":16110.7,"Cigna":152.0,"Cigna_r":18289.31},"Infection":{"mcare":16226.64,"Promise":200.6,"Promise_r":32553.24,"Blues":133.5,"Blues_r":21666.37,"Cigna":157.6,"Cigna_r":25577.72},"Injury":{"mcare":12431.22,"Promise":202.8,"Promise_r":25216.24,"Blues":137.3,"Blues_r":17069.91,"Cigna":156.0,"Cigna_r":19397.96},"Maternity":{"mcare":7336.93,"Promise":159.4,"Promise_r":11692.0,"Blues":99.6,"Blues_r":7304.86,"Cigna":132.1,"Cigna_r":9688.64},"Neoplasms":{"mcare":18541.39,"Promise":222.7,"Promise_r":41291.31,"Blues":113.7,"Blues_r":21081.05,"Cigna":151.6,"Cigna_r":28100.52},"Neurology":{"mcare":9700.24,"Promise":212.7,"Promise_r":20631.98,"Blues":121.4,"Blues_r":11778.19,"Cigna":148.0,"Cigna_r":14352.4},"Newborns":{"mcare":11073.51,"Promise":11.9,"Promise_r":1320.89,"Blues":62.4,"Blues_r":6914.33,"Cigna":63.2,"Cigna_r":6998.77},"Orthopedics":{"mcare":14153.71,"Promise":198.9,"Promise_r":28149.37,"Blues":138.6,"Blues_r":19617.27,"Cigna":154.1,"Cigna_r":21814.38},"Psychiatry":{"mcare":9895.46,"Promise":271.6,"Promise_r":26871.26,"Blues":122.7,"Blues_r":12141.76,"Cigna":171.9,"Cigna_r":17013.37},"Renal":{"mcare":10383.22,"Promise":194.0,"Promise_r":20139.02,"Blues":146.0,"Blues_r":15163.13,"Cigna":151.4,"Cigna_r":15718.53},"Respiratory":{"mcare":12090.92,"Promise":182.0,"Promise_r":22006.69,"Blues":150.4,"Blues_r":18187.67,"Cigna":151.6,"Cigna_r":18331.53},"Skin/breast":{"mcare":10552.7,"Promise":197.4,"Promise_r":20831.11,"Blues":126.0,"Blues_r":13291.0,"Cigna":153.4,"Cigna_r":16184.93},"Transplant":{"mcare":21490.85,"Promise":215.1,"Promise_r":46220.73,"Blues":149.2,"Blues_r":32053.17,"Cigna":162.4,"Cigna_r":34892.45},"Trauma":{"mcare":23903.6,"Promise":187.8,"Promise_r":44890.58,"Blues":155.7,"Blues_r":37219.29,"Cigna":138.8,"Cigna_r":33180.21}},"Outpatient":{"DME":{"mcare":1310.94,"Promise":82.1,"Promise_r":1076.56,"Blues":84.1,"Blues_r":1102.52,"Cigna":146.0,"Cigna_r":1914.01},"Drugs":{"mcare":10.71,"Promise":1283.2,"Promise_r":137.4,"Blues":1904.2,"Blues_r":203.89,"Cigna":1513.8,"Cigna_r":162.09},"E&M":{"mcare":211.27,"Promise":112.5,"Promise_r":237.66,"Blues":143.3,"Blues_r":302.77,"Cigna":152.2,"Cigna_r":321.64},"General Lab":{"mcare":20.23,"Promise":435.6,"Promise_r":88.11,"Blues":246.3,"Blues_r":49.83,"Cigna":250.6,"Cigna_r":50.68},"Imaging":{"mcare":125.16,"Promise":416.2,"Promise_r":520.86,"Blues":221.7,"Blues_r":277.44,"Cigna":328.2,"Cigna_r":410.82},"Other":{"mcare":84.16,"Promise":253.4,"Promise_r":213.25,"Blues":195.0,"Blues_r":164.14,"Cigna":302.4,"Cigna_r":254.54},"Post Acute Care":{"mcare":0,"Promise":null,"Promise_r":90.25,"Blues":null,"Blues_r":34.33,"Cigna":null,"Cigna_r":131.86},"Procedure":{"mcare":224.28,"Promise":144.3,"Promise_r":323.64,"Blues":138.4,"Blues_r":310.45,"Cigna":219.5,"Cigna_r":492.35},"Test":{"mcare":365.44,"Promise":209.9,"Promise_r":767.24,"Blues":199.4,"Blues_r":728.84,"Cigna":188.4,"Cigna_r":688.44},"Treatment":{"mcare":102.04,"Promise":219.1,"Promise_r":223.57,"Blues":145.3,"Blues_r":148.23,"Cigna":189.8,"Cigna_r":193.72}},"Professional":{"DME":{"mcare":147.84,"Promise":88.8,"Promise_r":131.29,"Blues":119.5,"Blues_r":176.75,"Cigna":145.2,"Cigna_r":214.59},"Drugs":{"mcare":31.23,"Promise":196.3,"Promise_r":61.31,"Blues":94.2,"Blues_r":29.42,"Cigna":142.8,"Cigna_r":44.59},"E&M":{"mcare":124.3,"Promise":84.7,"Promise_r":105.23,"Blues":73.6,"Blues_r":91.44,"Cigna":81.7,"Cigna_r":101.51},"General Lab":{"mcare":0,"Promise":null,"Promise_r":80.43,"Blues":null,"Blues_r":71.43,"Cigna":null,"Cigna_r":201.67},"Imaging":{"mcare":231.59,"Promise":176.1,"Promise_r":407.78,"Blues":105.1,"Blues_r":243.31,"Cigna":125.5,"Cigna_r":290.62},"Other":{"mcare":134.89,"Promise":141.1,"Promise_r":190.27,"Blues":134.5,"Blues_r":181.41,"Cigna":175.8,"Cigna_r":237.21},"Procedure":{"mcare":303.2,"Promise":103.4,"Promise_r":313.45,"Blues":164.1,"Blues_r":497.39,"Cigna":160.5,"Cigna_r":486.56},"Test":{"mcare":95.8,"Promise":225.6,"Promise_r":216.08,"Blues":164.2,"Blues_r":157.31,"Cigna":383.0,"Cigna_r":366.88},"Treatment":{"mcare":63.69,"Promise":157.4,"Promise_r":100.25,"Blues":126.4,"Blues_r":80.49,"Cigna":201.7,"Cigna_r":128.49}}},"gvl_nonprisma":{"Inpatient":{"Addiction":{"mcare":7497.87,"Promise":22.1,"Promise_r":1659.65,"Blues":68.7,"Blues_r":5149.39,"Cigna":353.7,"Cigna_r":26516.79},"Andrology":{"mcare":10614.74,"Promise":265.1,"Promise_r":28140.09,"Blues":185.3,"Blues_r":19671.94,"Cigna":353.7,"Cigna_r":37539.81},"Blood & Immune":{"mcare":10204.88,"Promise":277.9,"Promise_r":28358.99,"Blues":178.7,"Blues_r":18233.09,"Cigna":353.7,"Cigna_r":36090.31},"Burns":{"mcare":20159.09,"Promise":189.0,"Promise_r":38092.32,"Blues":125.6,"Blues_r":25323.24,"Cigna":353.7,"Cigna_r":71294.13},"Circulatory":{"mcare":17214.2,"Promise":303.1,"Promise_r":52182.55,"Blues":202.5,"Blues_r":34861.18,"Cigna":353.7,"Cigna_r":60879.29},"ENT":{"mcare":9104.29,"Promise":251.9,"Promise_r":22936.09,"Blues":174.9,"Blues_r":15926.26,"Cigna":353.7,"Cigna_r":32198.01},"Endocrine":{"mcare":9769.72,"Promise":263.7,"Promise_r":25764.2,"Blues":177.8,"Blues_r":17366.02,"Cigna":353.7,"Cigna_r":34551.35},"Eye":{"mcare":6869.64,"Promise":278.7,"Promise_r":19146.21,"Blues":181.1,"Blues_r":12441.23,"Cigna":353.7,"Cigna_r":24295.0},"Gastro":{"mcare":11566.54,"Promise":318.6,"Promise_r":36848.81,"Blues":201.2,"Blues_r":23274.9,"Cigna":353.7,"Cigna_r":40905.92},"Gynecology":{"mcare":11031.89,"Promise":249.8,"Promise_r":27563.11,"Blues":168.0,"Blues_r":18534.78,"Cigna":353.7,"Cigna_r":39015.11},"HIV":{"mcare":18639.97,"Promise":270.8,"Promise_r":50471.14,"Blues":181.5,"Blues_r":33826.46,"Cigna":353.7,"Cigna_r":65921.64},"Health Status":{"mcare":9138.69,"Promise":248.8,"Promise_r":22739.45,"Blues":172.2,"Blues_r":15733.55,"Cigna":353.7,"Cigna_r":32319.65},"Hepatobiliary":{"mcare":11575.7,"Promise":318.8,"Promise_r":36902.54,"Blues":200.1,"Blues_r":23166.44,"Cigna":353.7,"Cigna_r":40938.33},"Infection":{"mcare":16127.98,"Promise":247.9,"Promise_r":39986.77,"Blues":166.3,"Blues_r":26819.98,"Cigna":353.7,"Cigna_r":57037.82},"Injury":{"mcare":11295.44,"Promise":267.5,"Promise_r":30215.92,"Blues":168.2,"Blues_r":18997.3,"Cigna":353.7,"Cigna_r":39947.17},"Maternity":{"mcare":6655.2,"Promise":193.9,"Promise_r":12901.53,"Blues":146.2,"Blues_r":9731.19,"Cigna":210.1,"Cigna_r":13981.96},"Neoplasms":{"mcare":18601.39,"Promise":283.1,"Promise_r":52652.09,"Blues":180.4,"Blues_r":33560.13,"Cigna":353.7,"Cigna_r":65785.21},"Neurology":{"mcare":8519.7,"Promise":229.9,"Promise_r":19590.08,"Blues":153.2,"Blues_r":13056.0,"Cigna":353.7,"Cigna_r":30130.54},"Newborns":{"mcare":9958.97,"Promise":63.1,"Promise_r":6283.13,"Blues":56.8,"Blues_r":5656.12,"Cigna":353.7,"Cigna_r":35220.65},"Orthopedics":{"mcare":14759.41,"Promise":276.0,"Promise_r":40736.41,"Blues":186.7,"Blues_r":27550.49,"Cigna":353.7,"Cigna_r":52197.74},"Psychiatry":{"mcare":11139.69,"Promise":14.9,"Promise_r":1659.65,"Blues":65.3,"Blues_r":7270.84,"Cigna":353.7,"Cigna_r":39396.34},"Renal":{"mcare":10236.98,"Promise":310.4,"Promise_r":31771.5,"Blues":193.8,"Blues_r":19836.93,"Cigna":353.7,"Cigna_r":36203.84},"Respiratory":{"mcare":11362.53,"Promise":311.8,"Promise_r":35427.48,"Blues":194.3,"Blues_r":22076.93,"Cigna":353.7,"Cigna_r":40184.45},"Skin/breast":{"mcare":9534.47,"Promise":216.5,"Promise_r":20639.36,"Blues":158.2,"Blues_r":15085.03,"Cigna":353.7,"Cigna_r":33719.36},"Transplant":{"mcare":21312.23,"Promise":196.6,"Promise_r":41895.89,"Blues":148.4,"Blues_r":31621.33,"Cigna":353.7,"Cigna_r":75372.28},"Trauma":{"mcare":31461.83,"Promise":283.6,"Promise_r":89237.46,"Blues":192.8,"Blues_r":60643.62,"Cigna":353.7,"Cigna_r":111267.13}},"Outpatient":{"Anesthesia":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":5.12,"Cigna":null,"Cigna_r":null},"DME":{"mcare":1310.94,"Promise":null,"Promise_r":null,"Blues":16.4,"Blues_r":214.53,"Cigna":248.9,"Cigna_r":3262.64},"Drugs":{"mcare":10.71,"Promise":null,"Promise_r":null,"Blues":1080.7,"Blues_r":115.74,"Cigna":1741.6,"Cigna_r":186.53},"E&M":{"mcare":211.27,"Promise":null,"Promise_r":null,"Blues":211.3,"Blues_r":446.41,"Cigna":290.6,"Cigna_r":613.85},"General Lab":{"mcare":20.23,"Promise":null,"Promise_r":null,"Blues":445.0,"Blues_r":90.02,"Cigna":827.7,"Cigna_r":167.45},"Imaging":{"mcare":125.16,"Promise":null,"Promise_r":null,"Blues":200.5,"Blues_r":250.98,"Cigna":585.8,"Cigna_r":733.19},"Other":{"mcare":84.16,"Promise":null,"Promise_r":null,"Blues":143.2,"Blues_r":120.56,"Cigna":10356.2,"Cigna_r":8715.8},"Procedure":{"mcare":224.28,"Promise":null,"Promise_r":null,"Blues":352.1,"Blues_r":789.76,"Cigna":5107.2,"Cigna_r":11454.49},"Test":{"mcare":365.44,"Promise":null,"Promise_r":null,"Blues":179.2,"Blues_r":654.84,"Cigna":279.8,"Cigna_r":1022.62},"Treatment":{"mcare":102.04,"Promise":248.7,"Promise_r":253.79,"Blues":105.6,"Blues_r":107.76,"Cigna":1915.2,"Cigna_r":1954.28}},"Professional":{"DME":{"mcare":147.84,"Promise":null,"Promise_r":null,"Blues":225.8,"Blues_r":333.81,"Cigna":2.2,"Cigna_r":3.24},"Drugs":{"mcare":31.23,"Promise":null,"Promise_r":null,"Blues":251.9,"Blues_r":78.66,"Cigna":373.8,"Cigna_r":116.74},"E&M":{"mcare":124.3,"Promise":null,"Promise_r":null,"Blues":91.6,"Blues_r":113.82,"Cigna":199.3,"Cigna_r":247.78},"General Lab":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":53.15,"Cigna":null,"Cigna_r":101.25},"Imaging":{"mcare":231.59,"Promise":null,"Promise_r":null,"Blues":122.2,"Blues_r":283.11,"Cigna":346.9,"Cigna_r":803.5},"Other":{"mcare":134.89,"Promise":null,"Promise_r":null,"Blues":80.7,"Blues_r":108.86,"Cigna":209.0,"Cigna_r":281.95},"Procedure":{"mcare":303.2,"Promise":null,"Promise_r":null,"Blues":177.4,"Blues_r":538.01,"Cigna":1601.8,"Cigna_r":4856.66},"Test":{"mcare":95.8,"Promise":null,"Promise_r":null,"Blues":182.9,"Blues_r":175.22,"Cigna":360.9,"Cigna_r":345.78},"Treatment":{"mcare":63.69,"Promise":null,"Promise_r":null,"Blues":107.4,"Blues_r":68.41,"Cigna":136.1,"Cigna_r":86.71}}},"col_combined":{"Inpatient":{"Addiction":{"mcare":8642.64,"Promise":114.7,"Promise_r":9914.11,"Blues":89.8,"Blues_r":7763.97,"Cigna":205.5,"Cigna_r":17762.48},"Andrology":{"mcare":10622.77,"Promise":227.9,"Promise_r":24209.15,"Blues":147.5,"Blues_r":15665.52,"Cigna":259.8,"Cigna_r":27594.36},"Blood & Immune":{"mcare":11269.28,"Promise":234.4,"Promise_r":26413.75,"Blues":179.3,"Blues_r":20203.01,"Cigna":253.5,"Cigna_r":28563.75},"Burns":{"mcare":19877.85,"Promise":197.9,"Promise_r":39345.6,"Blues":107.9,"Blues_r":21455.5,"Cigna":265.2,"Cigna_r":52709.91},"Circulatory":{"mcare":17328.82,"Promise":232.3,"Promise_r":40257.07,"Blues":207.1,"Blues_r":35880.19,"Cigna":258.6,"Cigna_r":44810.72},"ENT":{"mcare":9966.63,"Promise":218.5,"Promise_r":21775.86,"Blues":161.6,"Blues_r":16106.03,"Cigna":251.4,"Cigna_r":25061.21},"Endocrine":{"mcare":10522.0,"Promise":219.1,"Promise_r":23048.91,"Blues":158.9,"Blues_r":16716.32,"Cigna":246.9,"Cigna_r":25979.28},"Eye":{"mcare":7918.16,"Promise":222.5,"Promise_r":17617.21,"Blues":157.5,"Blues_r":12471.2,"Cigna":243.5,"Cigna_r":19278.76},"Gastro":{"mcare":12656.35,"Promise":249.1,"Promise_r":31520.11,"Blues":196.2,"Blues_r":24829.09,"Cigna":251.5,"Cigna_r":31833.95},"Gynecology":{"mcare":12195.78,"Promise":223.9,"Promise_r":27308.1,"Blues":179.2,"Blues_r":21851.37,"Cigna":254.8,"Cigna_r":31070.58},"HIV":{"mcare":19471.13,"Promise":242.9,"Promise_r":47287.13,"Blues":190.7,"Blues_r":37128.02,"Cigna":264.1,"Cigna_r":51417.51},"Health Status":{"mcare":10215.28,"Promise":216.6,"Promise_r":22126.04,"Blues":170.8,"Blues_r":17452.79,"Cigna":244.0,"Cigna_r":24922.89},"Hepatobiliary":{"mcare":12635.8,"Promise":248.3,"Promise_r":31373.9,"Blues":196.4,"Blues_r":24820.14,"Cigna":255.9,"Cigna_r":32334.65},"Infection":{"mcare":17187.25,"Promise":212.2,"Promise_r":36472.25,"Blues":201.8,"Blues_r":34687.08,"Cigna":261.6,"Cigna_r":44964.76},"Injury":{"mcare":12377.75,"Promise":232.1,"Promise_r":28732.38,"Blues":173.9,"Blues_r":21525.03,"Cigna":248.3,"Cigna_r":30737.71},"Maternity":{"mcare":7808.85,"Promise":153.3,"Promise_r":11968.32,"Blues":137.4,"Blues_r":10726.55,"Cigna":169.6,"Cigna_r":13246.54},"Neoplasms":{"mcare":20319.28,"Promise":232.9,"Promise_r":47332.82,"Blues":184.8,"Blues_r":37559.82,"Cigna":262.0,"Cigna_r":53228.29},"Neurology":{"mcare":9653.7,"Promise":208.4,"Promise_r":20117.35,"Blues":147.7,"Blues_r":14257.1,"Cigna":249.0,"Cigna_r":24038.03},"Newborns":{"mcare":11077.83,"Promise":50.1,"Promise_r":5546.52,"Blues":49.1,"Blues_r":5441.6,"Cigna":198.3,"Cigna_r":21969.79},"Orthopedics":{"mcare":15779.81,"Promise":234.4,"Promise_r":36992.83,"Blues":199.9,"Blues_r":31540.46,"Cigna":259.8,"Cigna_r":40995.46},"Psychiatry":{"mcare":10563.72,"Promise":134.8,"Promise_r":14236.61,"Blues":84.7,"Blues_r":8943.88,"Cigna":245.5,"Cigna_r":25932.16},"Renal":{"mcare":11101.4,"Promise":249.1,"Promise_r":27648.53,"Blues":200.5,"Blues_r":22260.6,"Cigna":254.4,"Cigna_r":28239.61},"Respiratory":{"mcare":12449.55,"Promise":244.6,"Promise_r":30455.37,"Blues":203.2,"Blues_r":25299.65,"Cigna":255.6,"Cigna_r":31815.96},"Skin/breast":{"mcare":10598.22,"Promise":203.3,"Promise_r":21547.35,"Blues":159.6,"Blues_r":16918.99,"Cigna":252.0,"Cigna_r":26702.81},"Transplant":{"mcare":22311.49,"Promise":193.2,"Promise_r":43102.76,"Blues":189.8,"Blues_r":42337.68,"Cigna":265.3,"Cigna_r":59190.01},"Trauma":{"mcare":32511.12,"Promise":213.3,"Promise_r":69347.38,"Blues":191.1,"Blues_r":62123.85,"Cigna":248.2,"Cigna_r":80692.73}},"Outpatient":{"Anesthesia":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":5.12,"Cigna":null,"Cigna_r":null},"DME":{"mcare":1046.7,"Promise":172.3,"Promise_r":1803.57,"Blues":15.9,"Blues_r":166.03,"Cigna":302.1,"Cigna_r":3161.69},"Drugs":{"mcare":7.68,"Promise":2544.5,"Promise_r":195.42,"Blues":9168.5,"Blues_r":704.14,"Cigna":2820.8,"Cigna_r":216.63},"E&M":{"mcare":204.57,"Promise":127.6,"Promise_r":261.02,"Blues":200.0,"Blues_r":409.19,"Cigna":239.0,"Cigna_r":488.86},"General Lab":{"mcare":20.15,"Promise":442.9,"Promise_r":89.24,"Blues":377.2,"Blues_r":76.01,"Cigna":549.8,"Cigna_r":110.77},"Imaging":{"mcare":107.22,"Promise":458.0,"Promise_r":491.04,"Blues":325.8,"Blues_r":349.33,"Cigna":540.0,"Cigna_r":578.95},"Other":{"mcare":85.8,"Promise":263.9,"Promise_r":226.47,"Blues":195.5,"Blues_r":167.71,"Cigna":5259.4,"Cigna_r":4512.59},"Post Acute Care":{"mcare":0,"Promise":null,"Promise_r":90.25,"Blues":null,"Blues_r":2930.04,"Cigna":null,"Cigna_r":131.86},"Procedure":{"mcare":251.52,"Promise":120.9,"Promise_r":304.19,"Blues":451.3,"Blues_r":1135.05,"Cigna":2387.6,"Cigna_r":6005.26},"Test":{"mcare":396.03,"Promise":193.6,"Promise_r":766.84,"Blues":190.0,"Blues_r":752.36,"Cigna":217.3,"Cigna_r":860.66},"Treatment":{"mcare":98.68,"Promise":241.5,"Promise_r":238.34,"Blues":241.8,"Blues_r":238.6,"Cigna":1096.9,"Cigna_r":1082.45}},"Professional":{"DME":{"mcare":245.5,"Promise":66.6,"Promise_r":163.47,"Blues":103.5,"Blues_r":254.11,"Cigna":49.0,"Cigna_r":120.3},"Drugs":{"mcare":33.22,"Promise":343.9,"Promise_r":114.24,"Blues":215.8,"Blues_r":71.67,"Cigna":293.8,"Cigna_r":97.59},"E&M":{"mcare":96.65,"Promise":95.0,"Promise_r":91.8,"Blues":127.5,"Blues_r":123.27,"Cigna":176.0,"Cigna_r":170.11},"General Lab":{"mcare":0,"Promise":null,"Promise_r":80.43,"Blues":null,"Blues_r":69.42,"Cigna":null,"Cigna_r":104.23},"Imaging":{"mcare":179.63,"Promise":152.9,"Promise_r":274.58,"Blues":217.2,"Blues_r":390.12,"Cigna":330.1,"Cigna_r":593.0},"Other":{"mcare":134.1,"Promise":141.9,"Promise_r":190.27,"Blues":119.6,"Blues_r":160.33,"Cigna":203.0,"Cigna_r":272.16},"Procedure":{"mcare":318.65,"Promise":85.0,"Promise_r":270.74,"Blues":305.0,"Blues_r":971.77,"Cigna":835.3,"Cigna_r":2661.82},"Test":{"mcare":132.01,"Promise":162.0,"Promise_r":213.82,"Blues":141.6,"Blues_r":186.87,"Cigna":226.4,"Cigna_r":298.88},"Treatment":{"mcare":65.17,"Promise":191.4,"Promise_r":124.71,"Blues":134.4,"Blues_r":87.61,"Cigna":180.3,"Cigna_r":117.52}}},"gvl_combined":{"Inpatient":{"Addiction":{"mcare":7355.72,"Promise":133.9,"Promise_r":9850.78,"Blues":93.0,"Blues_r":6838.99,"Cigna":266.7,"Cigna_r":19620.85},"Andrology":{"mcare":10305.99,"Promise":239.2,"Promise_r":24650.69,"Blues":145.8,"Blues_r":15029.47,"Cigna":253.5,"Cigna_r":26127.63},"Blood & Immune":{"mcare":10663.44,"Promise":246.8,"Promise_r":26315.49,"Blues":154.1,"Blues_r":16429.81,"Cigna":247.5,"Cigna_r":26391.29},"Burns":{"mcare":22173.11,"Promise":221.8,"Promise_r":49186.7,"Blues":108.3,"Blues_r":24003.94,"Cigna":249.9,"Cigna_r":55407.82},"Circulatory":{"mcare":15455.76,"Promise":239.1,"Promise_r":36949.45,"Blues":174.3,"Blues_r":26938.66,"Cigna":257.6,"Cigna_r":39815.38},"ENT":{"mcare":9619.78,"Promise":235.9,"Promise_r":22693.92,"Blues":147.7,"Blues_r":14209.81,"Cigna":247.4,"Cigna_r":23795.09},"Endocrine":{"mcare":10226.19,"Promise":229.5,"Promise_r":23464.65,"Blues":159.8,"Blues_r":16340.57,"Cigna":249.3,"Cigna_r":25490.92},"Eye":{"mcare":7451.66,"Promise":235.9,"Promise_r":17579.69,"Blues":137.9,"Blues_r":10278.83,"Cigna":239.7,"Cigna_r":17864.8},"Gastro":{"mcare":11535.71,"Promise":258.4,"Promise_r":29812.54,"Blues":173.0,"Blues_r":19961.04,"Cigna":254.4,"Cigna_r":29343.0},"Gynecology":{"mcare":10742.65,"Promise":237.1,"Promise_r":25469.0,"Blues":143.8,"Blues_r":15450.77,"Cigna":255.6,"Cigna_r":27460.85},"HIV":{"mcare":18442.36,"Promise":233.3,"Promise_r":43022.68,"Blues":151.1,"Blues_r":27856.69,"Cigna":257.0,"Cigna_r":47402.4},"Health Status":{"mcare":8623.85,"Promise":206.7,"Promise_r":17826.25,"Blues":143.1,"Blues_r":12336.88,"Cigna":249.5,"Cigna_r":21517.57},"Hepatobiliary":{"mcare":11803.16,"Promise":267.9,"Promise_r":31621.62,"Blues":166.4,"Blues_r":19638.57,"Cigna":250.9,"Cigna_r":29613.82},"Infection":{"mcare":16177.31,"Promise":224.2,"Promise_r":36270.0,"Blues":149.9,"Blues_r":24243.17,"Cigna":255.3,"Cigna_r":41307.77},"Injury":{"mcare":11863.33,"Promise":233.6,"Promise_r":27716.08,"Blues":152.0,"Blues_r":18033.6,"Cigna":250.1,"Cigna_r":29672.56},"Maternity":{"mcare":6996.07,"Promise":175.8,"Promise_r":12296.76,"Blues":121.8,"Blues_r":8518.02,"Cigna":169.2,"Cigna_r":11835.3},"Neoplasms":{"mcare":18571.39,"Promise":252.9,"Promise_r":46971.7,"Blues":147.1,"Blues_r":27320.59,"Cigna":252.8,"Cigna_r":46942.87},"Neurology":{"mcare":9109.97,"Promise":220.8,"Promise_r":20111.03,"Blues":136.3,"Blues_r":12417.1,"Cigna":244.1,"Cigna_r":22241.47},"Newborns":{"mcare":10516.24,"Promise":36.1,"Promise_r":3802.01,"Blues":59.8,"Blues_r":6285.23,"Cigna":200.7,"Cigna_r":21109.71},"Orthopedics":{"mcare":14456.56,"Promise":238.2,"Promise_r":34442.89,"Blues":163.1,"Blues_r":23583.88,"Cigna":256.0,"Cigna_r":37006.06},"Psychiatry":{"mcare":10517.58,"Promise":135.6,"Promise_r":14265.45,"Blues":92.3,"Blues_r":9706.3,"Cigna":268.2,"Cigna_r":28204.85},"Renal":{"mcare":10310.1,"Promise":251.8,"Promise_r":25955.26,"Blues":169.7,"Blues_r":17500.03,"Cigna":251.8,"Cigna_r":25961.18},"Respiratory":{"mcare":11726.73,"Promise":244.9,"Promise_r":28717.08,"Blues":171.7,"Blues_r":20132.3,"Cigna":249.5,"Cigna_r":29257.99},"Skin/breast":{"mcare":10043.58,"Promise":206.4,"Promise_r":20735.24,"Blues":141.3,"Blues_r":14188.01,"Cigna":248.4,"Cigna_r":24952.15},"Transplant":{"mcare":21401.54,"Promise":205.9,"Promise_r":44058.31,"Blues":148.8,"Blues_r":31837.25,"Cigna":257.6,"Cigna_r":55132.36},"Trauma":{"mcare":27682.72,"Promise":242.3,"Promise_r":67064.02,"Blues":176.8,"Blues_r":48931.46,"Cigna":260.9,"Cigna_r":72223.67}},"Outpatient":{"Anesthesia":{"mcare":0,"Promise":null,"Promise_r":null,"Blues":null,"Blues_r":5.12,"Cigna":null,"Cigna_r":null},"DME":{"mcare":1310.94,"Promise":82.1,"Promise_r":1076.56,"Blues":50.2,"Blues_r":658.52,"Cigna":197.4,"Cigna_r":2588.32},"Drugs":{"mcare":10.71,"Promise":1282.9,"Promise_r":137.4,"Blues":1492.2,"Blues_r":159.81,"Cigna":1627.5,"Cigna_r":174.31},"E&M":{"mcare":211.27,"Promise":112.5,"Promise_r":237.66,"Blues":177.3,"Blues_r":374.59,"Cigna":221.4,"Cigna_r":467.75},"General Lab":{"mcare":20.23,"Promise":435.5,"Promise_r":88.11,"Blues":345.6,"Blues_r":69.92,"Cigna":539.1,"Cigna_r":109.06},"Imaging":{"mcare":125.16,"Promise":416.2,"Promise_r":520.86,"Blues":211.1,"Blues_r":264.21,"Cigna":457.0,"Cigna_r":572.0},"Other":{"mcare":84.16,"Promise":253.4,"Promise_r":213.25,"Blues":169.1,"Blues_r":142.35,"Cigna":5329.3,"Cigna_r":4485.17},"Post Acute Care":{"mcare":0,"Promise":null,"Promise_r":90.25,"Blues":null,"Blues_r":34.33,"Cigna":null,"Cigna_r":131.86},"Procedure":{"mcare":224.28,"Promise":144.3,"Promise_r":323.64,"Blues":245.3,"Blues_r":550.11,"Cigna":2663.4,"Cigna_r":5973.42},"Test":{"mcare":365.44,"Promise":209.9,"Promise_r":767.24,"Blues":189.3,"Blues_r":691.84,"Cigna":234.1,"Cigna_r":855.53},"Treatment":{"mcare":102.04,"Promise":233.9,"Promise_r":238.68,"Blues":125.4,"Blues_r":128.0,"Cigna":1052.5,"Cigna_r":1074.0}},"Professional":{"DME":{"mcare":147.84,"Promise":88.8,"Promise_r":131.29,"Blues":172.7,"Blues_r":255.28,"Cigna":73.7,"Cigna_r":108.92},"Drugs":{"mcare":31.23,"Promise":196.3,"Promise_r":61.31,"Blues":173.0,"Blues_r":54.04,"Cigna":258.3,"Cigna_r":80.66},"E&M":{"mcare":124.3,"Promise":84.7,"Promise_r":105.23,"Blues":82.6,"Blues_r":102.63,"Cigna":140.5,"Cigna_r":174.65},"General Lab":{"mcare":0,"Promise":null,"Promise_r":80.43,"Blues":null,"Blues_r":62.29,"Cigna":null,"Cigna_r":151.46},"Imaging":{"mcare":231.59,"Promise":176.1,"Promise_r":407.78,"Blues":113.7,"Blues_r":263.21,"Cigna":236.2,"Cigna_r":547.06},"Other":{"mcare":134.89,"Promise":141.1,"Promise_r":190.27,"Blues":107.6,"Blues_r":145.13,"Cigna":192.4,"Cigna_r":259.58},"Procedure":{"mcare":303.2,"Promise":103.4,"Promise_r":313.45,"Blues":170.8,"Blues_r":517.7,"Cigna":881.1,"Cigna_r":2671.61},"Test":{"mcare":95.8,"Promise":225.6,"Promise_r":216.08,"Blues":173.6,"Blues_r":166.26,"Cigna":371.9,"Cigna_r":356.33},"Treatment":{"mcare":63.69,"Promise":157.4,"Promise_r":100.25,"Blues":116.9,"Blues_r":74.45,"Cigna":168.9,"Cigna_r":107.6}}}};
+const HOSPITALS = [{"name":"Baptist Columbia","cohort":"Prisma","msa":"Columbia","records":264783,"ip":241.4,"op":468.2,"pr":151.9},{"name":"Baptist Parkridge","cohort":"Prisma","msa":"Columbia","records":296746,"ip":172.4,"op":526.7,"pr":155.9},{"name":"Richland","cohort":"Prisma","msa":"Columbia","records":296808,"ip":172.4,"op":525.1,"pr":156.7},{"name":"Baptist Easley","cohort":"Prisma","msa":"Greenville","records":364198,"ip":179.9,"op":407.2,"pr":159.6},{"name":"Greenville Memorial","cohort":"Prisma","msa":"Greenville","records":367550,"ip":234.2,"op":402.7,"pr":161.2},{"name":"Greer Memorial","cohort":"Prisma","msa":"Greenville","records":0,"ip":null,"op":null,"pr":null},{"name":"Hillcrest","cohort":"Prisma","msa":"Greenville","records":266969,"ip":281.7,"op":347.6,"pr":145.2},{"name":"Laurens County","cohort":"Prisma","msa":"Greenville","records":238858,"ip":213.2,"op":293.4,"pr":137.2},{"name":"North Greenville","cohort":"Prisma","msa":"Greenville","records":204377,"ip":null,"op":344.7,"pr":139.4},{"name":"Oconee Memorial","cohort":"Prisma","msa":"Greenville","records":265835,"ip":217.2,"op":296.3,"pr":147.3},{"name":"Patewood","cohort":"Prisma","msa":"Greenville","records":264601,"ip":230.2,"op":357.8,"pr":145.7},{"name":"McLeod Carolina Forest","cohort":"Non-Prisma","msa":"Non-Prisma","records":11745,"ip":295.5,"op":null,"pr":null},{"name":"McLeod Clarendon","cohort":"Non-Prisma","msa":"Non-Prisma","records":12127,"ip":198.6,"op":null,"pr":null},{"name":"McLeod Dillon","cohort":"Non-Prisma","msa":"Non-Prisma","records":11939,"ip":192.6,"op":null,"pr":null},{"name":"McLeod Health Cheraw","cohort":"Non-Prisma","msa":"Non-Prisma","records":12510,"ip":211.2,"op":null,"pr":null},{"name":"McLeod Loris","cohort":"Non-Prisma","msa":"Non-Prisma","records":11745,"ip":295.5,"op":null,"pr":null},{"name":"McLeod Regional","cohort":"Non-Prisma","msa":"Non-Prisma","records":12354,"ip":224.1,"op":null,"pr":null},{"name":"McLeod Seacoast","cohort":"Non-Prisma","msa":"Non-Prisma","records":11745,"ip":295.5,"op":null,"pr":null},{"name":"Newberry County Memorial","cohort":"Non-Prisma","msa":"Non-Prisma","records":105306,"ip":null,"op":null,"pr":null}];
+
+const PAYERS = ['Promise','Blues','Cigna'];
+const PC = {
+  Promise: {bg:'rgba(82,170,200,0.85)',b:'#3a8ab0'},
+  Blues:   {bg:'rgba(35,77,139,0.88)',b:'#234D8B'},
+  Cigna:   {bg:'rgba(248,199,98,0.90)',b:'#c49a00'}
+};
+const VIEW_LABELS = {
+  col_prisma: 'Col-Pr', col_nonprisma: 'Col-NP', col_combined: 'Col-All',
+  gvl_prisma: 'GVL-Pr', gvl_nonprisma: 'GVL-NP', gvl_combined: 'GVL-All'
+};
+const ALL_VIEWS = ['col_prisma','col_nonprisma','col_combined','gvl_prisma','gvl_nonprisma','gvl_combined'];
+
+const ST = {
+  columbia: {cohort:'col_prisma', section:'Inpatient', checked:null},
+  greenville: {cohort:'gvl_prisma', section:'Inpatient', checked:null},
+  hospFilter: 'all'
+};
+const chartInstances = {};
+
+function cc(v) {
+  if(v==null) return 'na';
+  if(v>300) return 'hi' + ' ' + (v>400?'style="color:#ef4444"':'');
+  if(v>200) return 'hi';
+  if(v>150) return 'mid';
+  return 'lo';
+}
+function ccStyle(v) {
+  if(v==null) return 'class="na"';
+  if(v>400) return 'class="hi" style="color:#ef4444"';
+  if(v>200) return 'class="hi"';
+  if(v>150) return 'class="mid"';
+  return 'class="lo"';
+}
+function fv(v) { return v==null ? 'n/a' : v+'%'; }
+function fr(v) { return v==null ? 'n/a' : '$'+Number(v).toLocaleString('en',{maximumFractionDigits:0}); }
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function getBarThickness(n){
+  if(n<=1) return 90;
+  if(n<=3) return 70;
+  if(n<=6) return 52;
+  if(n<=10) return 38;
+  return undefined; // let Chart.js auto-size for many items
+}
+
+function getSortedLines(msa){
+  const {cohort,section}=ST[msa];
+  const sd=AGG[cohort]?.[section]||{};
+  return Object.keys(sd).sort((a,b)=>{
+    const pa=sd[a].Promise,pb=sd[b].Promise;
+    if(pa==null&&pb==null)return a.localeCompare(b);
+    if(pa==null)return 1; if(pb==null)return -1; return pb-pa;
+  });
+}
+
+function buildCheckboxList(msa){
+  const {cohort,section}=ST[msa];
+  const sd=AGG[cohort]?.[section]||{};
+  const lines=getSortedLines(msa);
+  if(!ST[msa].checked) ST[msa].checked=new Set(lines);
+  const checked=ST[msa].checked;
+  const picker=document.getElementById(msa+'-sl-picker');
+  if(!picker)return;
+  let h='<div class="sl-picker-actions">'
+    +'<button onclick="selectAllSL(\''+msa+'\',true)">All</button>'
+    +'<button onclick="selectAllSL(\''+msa+'\',false)">None</button>'
+    +'<button onclick="selectTopN(\''+msa+'\',10)">Top 10</button>'
+    +'</div><div class="sl-items">';
+  lines.forEach(sl=>{
+    const pct=sd[sl]?.Promise;
+    const pStr=pct!=null?Math.round(pct)+'%':'n/a';
+    const pCol=pct==null?'#445566':pct>300?'#ffb347':pct>200?'#e0c97a':pct>150?'#e0e6ed':'#7ecf7e';
+    h+='<label class="sl-item">'
+      +'<input type="checkbox" data-msa="'+msa+'" data-sl="'+esc(sl)+'" '+(checked.has(sl)?'checked':'')+' onchange="toggleSL(this)">'
+      +'<span class="sl-name">'+esc(sl)+'</span>'
+      +'<span class="sl-pct" style="color:'+pCol+'">'+pStr+'</span>'
+      +'</label>';
+  });
+  h+='</div><div class="sl-count" id="'+msa+'-sl-count">'+checked.size+' / '+lines.length+' selected</div>';
+  picker.innerHTML=h;
+}
+
+function toggleSL(el){
+  const msa=el.dataset.msa, sl=el.dataset.sl;
+  if(!ST[msa].checked) ST[msa].checked=new Set(getSortedLines(msa));
+  if(el.checked) ST[msa].checked.add(sl); else ST[msa].checked.delete(sl);
+  const cnt=document.getElementById(msa+'-sl-count');
+  if(cnt) cnt.textContent=ST[msa].checked.size+' / '+getSortedLines(msa).length+' selected';
+  drawOverviewChart(msa);
+}
+
+function selectAllSL(msa,select){
+  const lines=getSortedLines(msa);
+  ST[msa].checked=select?new Set(lines):new Set();
+  buildCheckboxList(msa); drawOverviewChart(msa);
+}
+
+function selectTopN(msa,n){
+  const lines=getSortedLines(msa);
+  ST[msa].checked=new Set(lines.slice(0,n));
+  buildCheckboxList(msa); drawOverviewChart(msa);
+}
+
+function drawOverviewChart(msa){
+  const {cohort,section,checked}=ST[msa];
+  const sd=AGG[cohort]?.[section]||{};
+  const allLines=getSortedLines(msa);
+  const lines=checked===null?allLines:(checked.size>0?allLines.filter(sl=>checked.has(sl)):[]);
+
+  // Update title
+  const cLabel=cohort.includes('nonprisma')?'Non-Prisma Tier 1':(cohort.includes('combined')?'Combined':'Prisma Tier 1');
+  const mLabel=msa==='columbia'?'Columbia MSA':'Greenville MSA';
+  const te=document.getElementById(msa+'-chart-title');
+  if(te) te.textContent=mLabel+' \u2014 '+cLabel+' \u2014 '+section;
+
+  // Update drill-down dropdown (always all lines)
+  populateDropdown(msa,allLines);
+
+  const wrap=document.getElementById(msa+'-chart-wrap');
+  if(!wrap)return;
+
+  if(lines.length===0){
+    if(chartInstances[msa]){try{chartInstances[msa].destroy();}catch(e){}}
+    wrap.innerHTML='<div class="chart-empty">Select at least one service line from the list on the left.</div>';
+    return;
+  }
+
+  // Restore canvas if we cleared it
+  if(!wrap.querySelector('canvas')){
+    wrap.innerHTML='<canvas id="'+msa+'-chart"></canvas>';
+  }
+
+  const canvas=document.getElementById(msa+'-chart');
+  if(!canvas)return;
+  if(chartInstances[msa]){try{chartInstances[msa].destroy();}catch(e){}}
+
+  const n=lines.length;
+  const thick=getBarThickness(n);
+  const dsOpts=thick!==undefined?{barThickness:thick}:{};
+
+  const datasets=PAYERS.map(p=>({
+    label:p,
+    data:lines.map(sl=>sd[sl][p]||null),
+    backgroundColor:PC[p].bg,
+    borderColor:PC[p].b,
+    borderWidth:1.5,
+    borderRadius:3,
+    ...dsOpts
+  }));
+
+  chartInstances[msa]=new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{labels:lines,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{color:'#c8d8e8',font:{size:11},padding:16,usePointStyle:true,pointStyle:'rect'}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y?c.parsed.y+'% of Medicare':'n/a')}}
+      },
+      scales:{
+        x:{ticks:{color:'#c8d8e8',font:{size:n>10?9:11},maxRotation:n>12?45:0},grid:{color:'#1a2a3a'}},
+        y:{min:0,suggestedMax:450,
+          ticks:{color:'#8ab4d4',font:{size:10},callback:v=>v+'%'},
+          grid:{color:'#1e3448'},
+          title:{display:true,text:'% of Medicare',color:'#8ab4d4',font:{size:10}}}
+      }
+    },
+    plugins:[{id:'bl3',afterDraw(c){
+      const{ctx,scales:{y}}=c;
+      const y100=y.getPixelForValue(100);
+      ctx.save();ctx.setLineDash([5,4]);
+      ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(c.chartArea.left,y100);ctx.lineTo(c.chartArea.right,y100);ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='10px Segoe UI';
+      ctx.fillText('Medicare=100%',c.chartArea.right-90,y100-4);
+      ctx.restore();
+    }}]
+  });
+}
+
+function populateDropdown(msa, lines) {
+  const sel = document.getElementById(msa+'-sl-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Select a service line to compare across all views --</option>';
+  lines.forEach(sl => {
+    const o = document.createElement('option');
+    o.value = sl; o.textContent = sl;
+    sel.appendChild(o);
+  });
+  if(cur && lines.includes(cur)) sel.value = cur;
+  drawDrillChart(msa);
+}
+
+function drawDrillChart(msa) {
+  const sel = document.getElementById(msa+'-sl-select');
+  const sl = sel.value;
+  const wrap = document.getElementById(msa+'-drill-wrap');
+  
+  if(!sl) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  
+  const section = ST[msa].section;
+  
+  // For each of the 6 views, get this service line's data for the current section
+  const labels = ALL_VIEWS.map(v => VIEW_LABELS[v]);
+  
+  const datasets = PAYERS.map(p => ({
+    label: p,
+    data: ALL_VIEWS.map(v => (AGG[v][section] && AGG[v][section][sl]) ? AGG[v][section][sl][p] : null),
+    backgroundColor: PC[p].bg,
+    borderColor: PC[p].b,
+    borderWidth: 1.5,
+    borderRadius: 3,
+  }));
+  
+  wrap.innerHTML = '<canvas id="'+msa+'-drill-chart"></canvas>';
+  const key = msa+'_drill';
+  if(chartInstances[key]) { try{chartInstances[key].destroy();} catch(e){} }
+  
+  chartInstances[key] = new Chart(document.getElementById(msa+'-drill-chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {position:'top', labels:{color:'#c8d8e8',font:{size:11},padding:14,usePointStyle:true,pointStyle:'rect'}},
+        title: {
+          display: true,
+          text: sl + ' — ' + section + ' — All Views',
+          color: '#F8C762',
+          font: {size:13, weight:'600'}
+        },
+        tooltip: {callbacks: {label: c => ' '+c.dataset.label+': '+(c.parsed.y?c.parsed.y+'% of Medicare':'n/a')}}
+      },
+      scales: {
+        x: {ticks:{color:'#c8d8e8',font:{size:12,weight:'600'}},grid:{color:'#1a2a3a'}},
+        y: {
+          min:0,
+          ticks:{color:'#8ab4d4',font:{size:10},callback:v=>v+'%'},
+          grid:{color:'#1e3448'},
+          title:{display:true,text:'% of Medicare',color:'#8ab4d4',font:{size:10}}
+        }
+      }
+    },
+    plugins: [{
+      id:'bl2',
+      afterDraw(c) {
+        const {ctx, scales:{y,x}} = c;
+        const y100 = y.getPixelForValue(100);
+        ctx.save();
+        ctx.setLineDash([5,4]);
+        ctx.strokeStyle='rgba(255,255,255,0.35)';
+        ctx.lineWidth=1.5;
+        ctx.beginPath();
+        ctx.moveTo(c.chartArea.left,y100);
+        ctx.lineTo(c.chartArea.right,y100);
+        ctx.stroke();
+        ctx.fillStyle='rgba(255,255,255,0.45)';
+        ctx.font='10px Segoe UI';
+        ctx.fillText('Medicare=100%',c.chartArea.right-90,y100-4);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function drawTable(msa) {
+  const {cohort, section} = ST[msa];
+  const secData = AGG[cohort][section] || {};
+  const lines = Object.keys(secData).sort((a,b) => {
+    const pa = secData[a].Promise, pb = secData[b].Promise;
+    if(pa==null && pb==null) return a.localeCompare(b);
+    if(pa==null) return 1;
+    if(pb==null) return -1;
+    return pb-pa;
+  });
+  
+  let html = '<tr><th>Service Line</th>';
+  PAYERS.forEach(p => {
+    const colors = {Promise:'#52AAC8',Blues:'#5b8fd4',Cigna:'#F8C762'};
+    html += `<th style="color:${colors[p]}">${p} % of Medicare</th>`;
+  });
+  html += '</tr>';
+  
+  lines.forEach(sl => {
+    const e = secData[sl];
+    html += `<tr><td>${sl}</td>`;
+    PAYERS.forEach(p => {
+      html += `<td ${ccStyle(e[p])}>${fv(e[p])}</td>`;
+    });
+    html += '</tr>';
+  });
+  
+  document.getElementById(msa+'-table').innerHTML = html;
+}
+
+function refresh(msa) {
+  buildCheckboxList(msa);
+  drawOverviewChart(msa);
+  drawTable(msa);
+}
+
+function setCohort(msa, cohort) {
+  const prefix = msa === 'columbia' ? 'col' : 'gvl';
+  ST[msa].cohort = cohort;
+  ['prisma','nonprisma','combined'].forEach(c => {
+    const el = document.getElementById(prefix+'-c-'+c);
+    if(el) el.classList.toggle('on', cohort === (prefix === 'col' ? 'col_' : 'gvl_')+c);
+  });
+  refresh(msa);
+}
+
+function setSection(msa, section) {
+  const prefix = msa === 'columbia' ? 'col' : 'gvl';
+  const smap = {Inpatient:'ip',Outpatient:'op',Professional:'pr'};
+  ST[msa].section = section;
+  ST[msa].checked = null; // reset when section changes
+  Object.keys(smap).forEach(s => {
+    const el = document.getElementById(prefix+'-s-'+smap[s]);
+    if(el) el.classList.toggle('on', s===section);
+  });
+  refresh(msa);
+}
+
+function setHospFilter(f) {
+  ST.hospFilter = f;
+  ['all','prisma','nonprisma'].forEach(x => {
+    const el = document.getElementById('hf-'+x);
+    if(el) el.classList.toggle('on', x===f);
+  });
+  buildHospGrid();
+}
+
+function buildHospGrid() {
+  const f = ST.hospFilter;
+  const filtered = HOSPITALS.filter(h => {
+    if(f==='all') return true;
+    if(f==='Prisma') return h.cohort==='Prisma';
+    if(f==='Non-Prisma') return h.cohort==='Non-Prisma';
+    return true;
+  });
+  
+  const grid = document.getElementById('hgrid');
+  grid.innerHTML = '';
+  filtered.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'hcard';
+    const badge = h.cohort==='Prisma' ? '<span class="badge bp">Prisma Health</span>' : '<span class="badge bn">Non-Prisma</span>';
+    const meta = `${h.cohort} &middot; ${h.msa} &middot; ${h.records.toLocaleString()} records`;
+    const ipVal = h.ip ? `<span ${ccStyle(h.ip)} style="font-size:13px;font-weight:700">${h.ip}%</span>` : '<span class="na">n/a</span>';
+    const opVal = h.op ? `<span ${ccStyle(h.op)} style="font-size:13px;font-weight:700">${h.op}%</span>` : '<span class="na">n/a</span>';
+    const prVal = h.pr ? `<span ${ccStyle(h.pr)} style="font-size:13px;font-weight:700">${h.pr}%</span>` : '<span class="na">n/a</span>';
+    const warn = h.records===0 ? '<div style="color:#f59e0b;font-size:11px;margin-top:4px">Warning: 0 matched records</div>' : '';
+    card.innerHTML = `<h3>${h.name}</h3>${badge}<div class="hcard-meta">${meta}</div>
+      <div class="hcard-stats">
+        <div class="hcard-stat"><div class="slabel">Inpatient</div><div class="sval">${ipVal}</div></div>
+        <div class="hcard-stat"><div class="slabel">Outpatient</div><div class="sval">${opVal}</div></div>
+        <div class="hcard-stat"><div class="slabel">Professional</div><div class="sval">${prVal}</div></div>
+      </div>${warn}`;
+    grid.appendChild(card);
+  });
+}
+
+function tab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+  if(id==='byhospital') buildHospGrid();
+  if(id==='methodology') { if(typeof renderHospInv === 'function') renderHospInv(); }
+}
+
+// Init
+refresh('columbia');
+refresh('greenville');
+</script>
+</body>
+</html>
