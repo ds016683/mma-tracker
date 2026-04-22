@@ -89,6 +89,12 @@ function AppInner({
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
         {activeView === 'production-networks' && <ProductionNetworksView />}
+        {activeView === 'production-progress' && (
+          <PlaceholderView title="Production Progress" subtitle="Monday.com integration coming soon" />
+        )}
+        {activeView === 'promise-health-plan' && (
+          <PlaceholderView title="1. Promise Health Plan — Rate Analysis" subtitle="Joint project workspace coming soon" />
+        )}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
