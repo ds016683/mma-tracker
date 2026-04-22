@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface InlineDropdownProps<T extends string> {
   options: readonly T[];
@@ -17,15 +18,38 @@ export function InlineDropdown<T extends string>({
 }: InlineDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const [focusIndex, setFocusIndex] = useState(-1);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Position for the portal-rendered menu
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  // Compute menu position when opening
   useEffect(() => {
-    if (!open) return;
+    if (!open || !triggerRef.current) return;
+
     setFocusIndex(options.indexOf(value));
 
+    const rect = triggerRef.current.getBoundingClientRect();
+    const menuHeight = Math.min(options.length * 36 + 8, 200); // estimate
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUpward = spaceBelow < menuHeight + 8 && spaceAbove > spaceBelow;
+
+    setMenuStyle({
+      position: 'fixed',
+      zIndex: 9999,
+      left: rect.left,
+      minWidth: Math.max(rect.width, 180),
+      ...(openUpward
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target as Node) &&
+        listRef.current && !listRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -42,32 +66,17 @@ export function InlineDropdown<T extends string>({
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (!open) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        setOpen(true);
-      }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); }
       return;
     }
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setFocusIndex(i => Math.min(i + 1, options.length - 1));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setFocusIndex(i => Math.max(i - 1, 0));
-        break;
+      case 'ArrowDown': e.preventDefault(); setFocusIndex(i => Math.min(i + 1, options.length - 1)); break;
+      case 'ArrowUp':   e.preventDefault(); setFocusIndex(i => Math.max(i - 1, 0)); break;
       case 'Enter':
         e.preventDefault();
-        if (focusIndex >= 0) {
-          onChange(options[focusIndex]);
-          setOpen(false);
-        }
+        if (focusIndex >= 0) { onChange(options[focusIndex]); setOpen(false); }
         break;
-      case 'Escape':
-        e.preventDefault();
-        setOpen(false);
-        break;
+      case 'Escape': e.preventDefault(); setOpen(false); break;
     }
   }
 
@@ -76,39 +85,45 @@ export function InlineDropdown<T extends string>({
     setOpen(false);
   }
 
+  const menu = open ? (
+    <ul
+      ref={listRef}
+      role="listbox"
+      style={menuStyle}
+      className="max-h-48 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-xl"
+    >
+      {options.map((option, i) => (
+        <li
+          key={option}
+          role="option"
+          aria-selected={option === value}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); select(option); }}
+          className={`cursor-pointer px-3 py-1.5 text-sm ${
+            i === focusIndex ? 'bg-mma-blue/10 text-mma-dark-blue' : 'text-gray-700 hover:bg-gray-50'
+          } ${option === value ? 'font-medium' : ''}`}
+        >
+          {labels?.[option] ?? option}
+        </li>
+      ))}
+    </ul>
+  ) : null;
+
   return (
-    <div ref={containerRef} className="relative inline-block" onKeyDown={handleKeyDown}>
+    <>
       <div
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        ref={triggerRef}
+        className="relative inline-block"
+        onKeyDown={handleKeyDown}
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
         tabIndex={0}
-        className="cursor-pointer"
+        style={{ cursor: 'pointer' }}
       >
         {children}
       </div>
-      {open && (
-        <ul
-          ref={listRef}
-          role="listbox"
-          className="absolute left-0 top-full z-50 mt-1 max-h-48 min-w-[160px] overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
-        >
-          {options.map((option, i) => (
-            <li
-              key={option}
-              role="option"
-              aria-selected={option === value}
-              onClick={(e) => { e.stopPropagation(); select(option); }}
-              className={`cursor-pointer px-3 py-1.5 text-sm ${
-                i === focusIndex ? 'bg-mma-blue/10 text-mma-dark-blue' : 'text-gray-700 hover:bg-gray-50'
-              } ${option === value ? 'font-medium' : ''}`}
-            >
-              {labels?.[option] ?? option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      {menu && createPortal(menu, document.body)}
+    </>
   );
 }
