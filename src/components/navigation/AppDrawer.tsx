@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
-  ChevronDown, ChevronRight, FileText, Activity, Handshake
+  ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -17,7 +17,8 @@ export type AppView =
   | 'regional-map'
   | 'production-networks'
   | 'production-progress'
-  | 'promise-health-plan';
+  | 'promise-health-plan'
+  | 'call-notes';
 
 interface NavItem {
   id: AppView;
@@ -40,6 +41,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'tracker',      label: 'Baseball Cards',        icon: LayoutGrid },
       { id: 'project-plan', label: 'Project Plan',          icon: FileText,  badge: 'Soon' },
       { id: 'timeline',     label: 'Timeline & Milestones', icon: GanttChart },
+      { id: 'call-notes',   label: 'Call Notes',            icon: NotebookPen, badge: 'Soon' },
     ],
   },
   {
