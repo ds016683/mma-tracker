@@ -54,7 +54,7 @@ export function CategorizedBoardView({
             {/* Section header — click to collapse/expand */}
             <button
               onClick={() => toggle(section.id)}
-              className="flex w-full items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors hover:bg-gray-50"
+              className="flex w-full items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors hover:bg-[#E8F0F8]/40"
             >
               <FolderOpen size={15} className={section.iconColor} />
               <span className={`flex-1 text-sm font-bold uppercase tracking-wide ${section.labelColor}`}>
@@ -93,10 +93,11 @@ export function CategorizedBoardView({
                 {/* Unpinned — roster-style list */}
                 {unpinned.length > 0 && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
-                    <div className="border-b border-gray-200 px-4 py-1.5">
+                    <div className="border-b border-gray-200 px-4 py-1.5 flex items-center justify-between">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                         Not Pinned
                       </span>
+                      <span className="text-[10px] text-gray-300">{unpinned.length}</span>
                     </div>
                     {unpinned.map(p => (
                       <RosterRow
