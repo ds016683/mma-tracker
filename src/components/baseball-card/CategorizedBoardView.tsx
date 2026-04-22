@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, FolderOpen, MoveRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderOpen, MoveRight, Pin, PinOff } from 'lucide-react';
 import type { BaseballCardProject, Priority, MMATaskStatus } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
@@ -155,38 +155,39 @@ function CategoryCard({
         isExpanded ? 'col-span-1 md:col-span-2 xl:col-span-3' : ''
       }`}
     >
-      {/* Pin indicator */}
-      {project.pinned && (
-        <span
-          className="absolute right-2 top-2 text-amber-400"
-          title="Pinned"
-        >
-          ★
-        </span>
-      )}
-
       <div className="min-w-0">
         {/* Header row */}
         <div className="mb-2 flex items-start justify-between gap-2">
           <div
-            className="flex cursor-pointer items-center gap-1.5"
+            className="flex cursor-pointer items-center gap-1.5 flex-1 min-w-0"
             onClick={() => onToggleExpand(project.id)}
           >
             <FreshnessDot lastActivityAt={project.last_activity_at} />
-            <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue">
+            <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue truncate">
               {project.name}
             </h3>
             <ChevronDown
-              className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             />
           </div>
 
-          {/* Move-to-category dropdown */}
-          <MoveCategoryButton
-            currentCategory={currentCategory}
-            categoryIds={categoryIds}
-            onMove={(cat) => onMoveCategory(project.id, cat)}
-          />
+          <div className="flex shrink-0 items-center gap-1">
+            {/* Pin / Unpin button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
+              className={`rounded p-1 transition-colors ${project.pinned ? 'text-th-gold hover:text-amber-500' : 'text-gray-300 opacity-0 group-hover:opacity-100 hover:text-th-gold'}`}
+              title={project.pinned ? 'Unpin — move to roster list' : 'Pin — promote to card grid'}
+            >
+              {project.pinned ? <Pin className="h-3.5 w-3.5 fill-current" /> : <Pin className="h-3.5 w-3.5" />}
+            </button>
+
+            {/* Move-to-category dropdown */}
+            <MoveCategoryButton
+              currentCategory={currentCategory}
+              categoryIds={categoryIds}
+              onMove={(cat) => onMoveCategory(project.id, cat)}
+            />
+          </div>
         </div>
 
         {/* Badges */}
@@ -255,8 +256,15 @@ function RosterRow({
           </div>
         </div>
 
-        {/* Move-to-category dropdown */}
-        <div className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
+        {/* Actions: pin + move */}
+        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <button
+            onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
+            className="rounded p-1 text-gray-300 hover:text-th-gold transition-colors"
+            title="Pin — promote to card grid"
+          >
+            <Pin className="h-3.5 w-3.5" />
+          </button>
           <MoveCategoryButton
             currentCategory={currentCategory}
             categoryIds={categoryIds}
