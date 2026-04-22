@@ -18,6 +18,13 @@
   --color-mma-text: #565656;
   --color-mma-blue-gray: #8096B2;
   --color-mma-light-bg: #F7F9FC;
+  /* Third Horizon Brand Colors */
+  --color-th-dark-blue: #224057;
+  --color-th-medium-blue: #234D8B;
+  --color-th-gold: #F8C762;
+  --color-th-gray: #6F7072;
+  --color-th-light-blue-bg: #E8F0F8;
+  --color-th-light-gold-bg: #FDF5E6;
 }
 
 body {
