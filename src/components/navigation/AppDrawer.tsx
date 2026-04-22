@@ -70,7 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Joint Project Work',
     defaultOpen: true,
     items: [
-      { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake, badge: 'Soon' },
+      { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake },
     ],
   },
 ];
