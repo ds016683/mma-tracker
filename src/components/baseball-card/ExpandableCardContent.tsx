@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Pencil, X, Trash2,
   Users, CheckSquare, FileText, Calendar, Tag,
-  ChevronDown, ExternalLink, Printer,
+  ExternalLink, Printer, Plus,
 } from 'lucide-react';
 import type {
   BaseballCardProject, Task, Note, ProjectLink, Person,
@@ -311,24 +311,12 @@ function RACISection({
   onPeopleChange?: (p: Person[]) => void;
 }) {
   const [name, setName] = useState('');
-  const [role, setRole] = useState<RACIRole>('Responsible');
 
   // Group by role
   const byRole: Record<string, Person[]> = {};
   for (const p of people) {
     const r = p.role || 'Contribute';
     (byRole[r] ??= []).push(p);
-  }
-
-  function addPerson() {
-    if (!name.trim() || !onPeopleChange) return;
-    const person: Person = {
-      id: crypto.randomUUID?.() ?? Date.now().toString(36),
-      name: name.trim(),
-      role,
-    };
-    onPeopleChange([...people, person]);
-    setName('');
   }
 
   function removePerson(id: string) {
@@ -408,7 +396,7 @@ function TasksSection({ tasks, onChange }: { tasks: Task[]; onChange: (t: Task[]
 
       {/* Scrollable task list */}
       <div className="max-h-72 overflow-y-auto px-4 py-2">
-        {tasks.length === 0 && !showForm && (
+        {tasks.length === 0 && (
           <p className="py-4 text-center text-xs italic text-gray-300">No tasks yet — add from Monday.com or below</p>
         )}
 
