@@ -6,10 +6,9 @@ import {
 } from 'lucide-react';
 import type {
   BaseballCardProject, Task, Note, ProjectLink, Person,
-  ProjectStatus, MMATaskStatus,
+  ProjectStatus,
 } from '../../lib/baseball-card/types';
 import { MMA_CONTRACT_REF_OPTIONS } from '../../lib/baseball-card/types';
-import { MMAStatusBadge, VersionBadge } from './MMABadges';
 import { InlineDropdown } from './InlineDropdown';
 
 // ── Schedule health ───────────────────────────────────────────────────────────
@@ -153,10 +152,7 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
 
       {/* ── Single badge row (no duplicate) ── */}
       <div className="flex flex-wrap items-center gap-2">
-        <VersionBadge version={project.mma_version} onChange={v => onUpdate(project.id, { mma_version: v })} />
-        <MMAStatusBadge status={project.mma_status} onChange={(s: MMATaskStatus) => onUpdate(project.id, { mma_status: s })} />
-
-        {/* Contract Element */}
+        {/* Contract Element */
         <InlineDropdown
           options={MMA_CONTRACT_REF_OPTIONS as unknown as readonly string[]}
           value={contractRef || 'TBD'}
