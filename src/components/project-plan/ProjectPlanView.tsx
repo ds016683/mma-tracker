@@ -3,7 +3,6 @@ import { ChevronDown, ChevronRight, RefreshCw, ExternalLink, AlertCircle } from 
 import { fetchMondayBoard, GROUP_ORDER } from '../../lib/monday/client';
 import type { MondayItem } from '../../lib/monday/client';
 
-// Status color map (Monday palette)
 const STATUS_STYLES: Record<string, string> = {
   'Working on it': 'bg-[#fdab3d] text-white',
   'Done':          'bg-[#00c875] text-white',
@@ -24,12 +23,15 @@ function fmtDate(d: string) {
 }
 
 function StakesChip({ stakes }: { stakes: string }) {
-  const color = stakes === 'High' ? 'bg-red-50 text-red-700 border-red-200'
-    : stakes === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200'
-    : stakes === 'Low' ? 'bg-gray-50 text-gray-500 border-gray-200'
-    : 'hidden';
-  if (!stakes) return null;
-  return <span className={\`rounded-full border px-2 py-0.5 text-[10px] font-semibold \${color}\`}>{stakes}</span>;
+  const color = stakes === 'High'
+    ? 'bg-red-50 text-red-700 border-red-200'
+    : stakes === 'Medium'
+    ? 'bg-amber-50 text-amber-700 border-amber-200'
+    : stakes === 'Low'
+    ? 'bg-gray-50 text-gray-500 border-gray-200'
+    : '';
+  if (!stakes || !color) return null;
+  return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${color}`}>{stakes}</span>;
 }
 
 export function ProjectPlanView() {
@@ -102,29 +104,26 @@ export function ProjectPlanView() {
               disabled={loading}
               className="flex items-center gap-1.5 rounded-lg bg-[#224057] px-3 py-1.5 text-xs text-white hover:bg-[#234D8B] disabled:opacity-50"
             >
-              <RefreshCw className={`h-3.5 w-3.5 \${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Syncing…' : 'Sync'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* No API key warning */}
       {noApiKey && (
         <div className="mx-6 mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          VITE_MONDAY_API_KEY not configured. Add it to GitHub Actions secrets to enable live sync.
+          VITE_MONDAY_API_KEY not configured — add it to GitHub Actions secrets to enable live sync.
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Sync error: {error}
         </div>
       )}
 
-      {/* Table */}
       <div className="flex-1 overflow-auto px-6 py-4">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
 
@@ -146,7 +145,6 @@ export function ProjectPlanView() {
 
             return (
               <div key={group.id}>
-                {/* Group header */}
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className="flex w-full items-center gap-2 border-b border-gray-100 bg-gray-50/60 px-4 py-2.5 text-left hover:bg-gray-100 transition-colors"
@@ -167,17 +165,16 @@ export function ProjectPlanView() {
                       const isExpanded = expandedItems.has(item.id);
                       return (
                         <div key={item.id}>
-                          {/* Item row */}
                           <div
-                            className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_3fr_1fr_1fr] items-center border-b border-gray-100 px-4 py-2.5 hover:bg-[#E8F0F8]/30 transition-colors cursor-pointer group"
+                            className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_3fr_1fr_1fr] items-center border-b border-gray-100 px-4 py-2.5 hover:bg-[#E8F0F8]/30 transition-colors cursor-pointer"
                             onClick={() => toggleItem(item.id)}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <button className="shrink-0 text-gray-300 hover:text-gray-500">
+                              <span className="shrink-0 text-gray-300">
                                 {isExpanded
                                   ? <ChevronDown className="h-3.5 w-3.5" />
                                   : <ChevronRight className="h-3.5 w-3.5" />}
-                              </button>
+                              </span>
                               <span className="truncate text-sm font-medium text-[#224057]">{item.name}</span>
                               {item.subitems.length > 0 && (
                                 <span className="shrink-0 rounded-full bg-[#224057]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#224057]">
@@ -192,7 +189,7 @@ export function ProjectPlanView() {
                             <span className="truncate text-xs text-gray-500">{item.description || '—'}</span>
                             <span>
                               {item.status && (
-                                <span className={\`rounded px-2 py-0.5 text-[10px] font-semibold \${statusStyle(item.status)}\`}>
+                                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusStyle(item.status)}`}>
                                   {item.status}
                                 </span>
                               )}
@@ -200,10 +197,8 @@ export function ProjectPlanView() {
                             <StakesChip stakes={item.stakes} />
                           </div>
 
-                          {/* Subitems (expanded) */}
                           {isExpanded && item.subitems.length > 0 && (
                             <div className="border-b border-gray-100 bg-gray-50/40">
-                              {/* Subitem column headers */}
                               <div className="grid grid-cols-[2fr_1fr_1fr_1fr_3fr_1fr] border-b border-gray-100 px-8 py-1.5 text-[9px] font-semibold uppercase tracking-widest text-gray-300">
                                 <span>Phase</span>
                                 <span>Responsible</span>
@@ -224,7 +219,7 @@ export function ProjectPlanView() {
                                   <span className="truncate text-xs text-gray-400">{sub.description || '—'}</span>
                                   <span>
                                     {sub.status && (
-                                      <span className={\`rounded px-1.5 py-0.5 text-[9px] font-semibold \${statusStyle(sub.status)}\`}>
+                                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${statusStyle(sub.status)}`}>
                                         {sub.status}
                                       </span>
                                     )}
