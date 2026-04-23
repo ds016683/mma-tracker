@@ -224,7 +224,7 @@ function CategoryCard({
       }`}
     >
       <div className="min-w-0">
-        <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="mb-2 flex items-center justify-between gap-2">
           {/* Clickable title area */}
           <div
             className="flex cursor-pointer items-center gap-1.5 flex-1 min-w-0"
@@ -239,6 +239,18 @@ function CategoryCard({
               className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             />
           </div>
+          {/* % complete pill — only when tasks exist */}
+          {project.tasks.length > 0 && (() => {
+            const done = project.tasks.filter((t: { done: boolean }) => t.done).length;
+            const pct = Math.round((done / project.tasks.length) * 100);
+            return (
+              <span className={`ml-1 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                pct === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {pct}%
+              </span>
+            );
+          })()}
 
           {/* Action bar — isolated from expand clicks */}
           <CardActions
