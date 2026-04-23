@@ -152,7 +152,7 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
 
       {/* ── Single badge row (no duplicate) ── */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Contract Element */
+        {/* Contract Element */}
         <InlineDropdown
           options={MMA_CONTRACT_REF_OPTIONS as unknown as readonly string[]}
           value={contractRef || 'TBD'}
