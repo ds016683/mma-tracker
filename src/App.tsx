@@ -10,6 +10,7 @@ import { ReportingQueriesView } from './components/starset/ReportingQueriesView'
 import { RegionalMapView } from './components/starset/RegionalMapView';
 import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
+import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 
 // Placeholder for views coming soon
@@ -74,9 +75,7 @@ function AppInner({
             />
           </div>
         )}
-        {activeView === 'project-plan' && (
-          <PlaceholderView title="Project Plan" subtitle="Jira / Monday.com integration coming soon" />
-        )}
+        {activeView === 'project-plan' && <ProjectPlanView />}
         {activeView === 'timeline' && (
           <div className="p-4 sm:p-6">
             <BaseballCardLayout
