@@ -128,29 +128,9 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
   }
 
   return (
-    <div ref={cardRef} className="space-y-4 border-t border-gray-100 pt-4" onClick={e => e.stopPropagation()}>
+    <div ref={cardRef} className="space-y-3 border-t border-gray-100 pt-3" onClick={e => e.stopPropagation()}>
 
-      {/* ── Header row: schedule indicator + % complete + PDF ── */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {scheduleHealth !== 'no-date' && <ScheduleIndicator health={scheduleHealth} />}
-          {project.tasks.length > 0 && (
-            <span className="text-xs text-gray-400">
-              {project.tasks.filter(t => t.done).length}/{project.tasks.length} tasks
-            </span>
-          )}
-        </div>
-        <button
-          onClick={handleExportPDF}
-          className="flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700"
-          title="Print / Save as PDF"
-        >
-          <Printer className="h-3.5 w-3.5" />
-          Print
-        </button>
-      </div>
-
-      {/* ── Single badge row (no duplicate) ── */}
+      {/* ── Top bar: badges + schedule + print — sits right under the title ── */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Contract Element */}
         <InlineDropdown
@@ -185,6 +165,24 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
           <option value="on_hold">On Hold</option>
           <option value="archived">Archived</option>
         </select>
+
+        {/* Schedule indicator + task count */}
+        {scheduleHealth !== 'no-date' && <ScheduleIndicator health={scheduleHealth} />}
+        {project.tasks.length > 0 && (
+          <span className="text-xs text-gray-400">
+            {project.tasks.filter(t => t.done).length}/{project.tasks.length} tasks
+          </span>
+        )}
+
+        {/* Print — pushed to right */}
+        <button
+          onClick={handleExportPDF}
+          className="ml-auto flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700"
+          title="Print / Save as PDF"
+        >
+          <Printer className="h-3.5 w-3.5" />
+          Print
+        </button>
       </div>
 
       {/* ── Description ── */}
@@ -214,7 +212,7 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
       </Section>
 
       {/* ── RACI + Dates (2-col) ── */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <RACISection
           people={project.people}
           accountable={project.mma_accountable}
@@ -233,7 +231,7 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
       <TasksSection tasks={project.tasks} onChange={tasks => onUpdate(project.id, { tasks })} />
 
       {/* ── Resources + Notes (2-col) ── */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <ResourcesSection links={project.links} onChange={links => onUpdate(project.id, { links })} />
         <NotesSection notes={project.notes} onChange={notes => onUpdate(project.id, { notes })} />
       </div>
@@ -276,8 +274,8 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
         {icon}{title}
       </div>
       {children}
@@ -318,8 +316,8 @@ function RACISection({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
         <Users className="h-4 w-4" />
         Team (RACI)
       </div>
