@@ -39,7 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'tracker',      label: 'Baseball Cards',        icon: LayoutGrid },
-      { id: 'project-plan', label: 'Project Plan',          icon: FileText,  badge: 'Soon' },
+      { id: 'project-plan', label: 'Project Plan',          icon: FileText },
       { id: 'timeline',     label: 'Timeline & Milestones', icon: GanttChart },
       { id: 'call-notes',   label: 'Call Notes',            icon: NotebookPen, badge: 'Soon' },
     ],
