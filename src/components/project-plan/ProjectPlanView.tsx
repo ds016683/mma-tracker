@@ -130,13 +130,13 @@ export function ProjectPlanView() {
           {/* Column headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_3fr_1fr_1fr] border-b border-gray-200 bg-gray-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
             <span>Project</span>
-            <span>Accountable</span>
-            <span>Responsible</span>
-            <span>Start</span>
-            <span>Target Completion</span>
+            <span className="text-center">Accountable</span>
+            <span className="text-center">Responsible</span>
+            <span className="text-center">Start</span>
+            <span className="text-center">Target Completion</span>
             <span>Description</span>
-            <span>Status</span>
-            <span>Stakes</span>
+            <span className="text-center">Status</span>
+            <span className="text-center">Priority</span>
           </div>
 
           {GROUP_ORDER.map(group => {
@@ -177,24 +177,24 @@ export function ProjectPlanView() {
                               </span>
                               <span className="truncate text-sm font-medium text-[#224057]">{item.name}</span>
                               {item.subitems.length > 0 && (
-                                <span className="shrink-0 rounded-full bg-[#224057]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#224057]">
-                                  {item.subitems.length}
+                                <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400" title={`${item.subitems.length} phases`}>
+                                  {item.subitems.length} phases
                                 </span>
                               )}
                             </div>
-                            <span className="truncate text-xs text-gray-600">{item.accountable || '—'}</span>
-                            <span className="truncate text-xs text-gray-600">{item.responsible || '—'}</span>
-                            <span className="text-xs text-gray-500">{fmtDate(item.startDate)}</span>
-                            <span className="text-xs text-gray-500">{fmtDate(item.targetDate)}</span>
+                            <span className="text-center truncate text-xs text-gray-600">{item.accountable || '—'}</span>
+                            <span className="text-center truncate text-xs text-gray-600">{item.responsible || '—'}</span>
+                            <span className="text-center text-xs text-gray-500">{fmtDate(item.startDate)}</span>
+                            <span className="text-center text-xs text-gray-500">{fmtDate(item.targetDate)}</span>
                             <span className="truncate text-xs text-gray-500">{item.description || '—'}</span>
-                            <span>
+                            <span className="flex justify-center">
                               {item.status && (
                                 <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusStyle(item.status)}`}>
                                   {item.status}
                                 </span>
                               )}
                             </span>
-                            <StakesChip stakes={item.stakes} />
+                            <div className="flex justify-center"><StakesChip stakes={item.stakes} /></div>
                           </div>
 
                           {isExpanded && item.subitems.length > 0 && (
