@@ -1,3 +1,4 @@
+// trigger: monday-api-key-baked
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProjectsProvider, useProjects } from './contexts/ProjectsContext';
