@@ -38,10 +38,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Engagement Manager',
     defaultOpen: true,
     items: [
-      { id: 'tracker',      label: 'Baseball Cards',        icon: LayoutGrid },
-      { id: 'project-plan', label: 'Project Plan',          icon: FileText },
-      { id: 'timeline',     label: 'Timeline & Milestones', icon: GanttChart },
-      { id: 'call-notes',   label: 'Call Notes',            icon: NotebookPen, badge: 'Soon' },
+      { id: 'project-plan', label: 'Project Plan',   icon: ClipboardList },
+      { id: 'timeline',     label: 'Gantt Chart',    icon: GanttChartSquare },
+      { id: 'tracker',      label: 'Baseball Cards', icon: LayoutGrid },
+      { id: 'call-notes',   label: 'Call Notes',     icon: NotebookPen, badge: 'Soon' },
     ],
   },
   {
