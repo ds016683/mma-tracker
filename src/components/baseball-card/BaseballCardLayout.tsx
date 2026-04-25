@@ -18,11 +18,10 @@ export type BoardView = 'board' | 'gantt' | 'schedule-e' | 'schedule-f';
 
 interface BaseballCardLayoutProps {
   onSwitchToGantt?: () => void;
-  onSwitchToBoard?: () => void;
   forceView?: BoardView;
 }
 
-export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView }: BaseballCardLayoutProps) {
+export function BaseballCardLayout({ onSwitchToGantt, forceView }: BaseballCardLayoutProps) {
   const {
     projects, archive,
     loading, error: dataError,
