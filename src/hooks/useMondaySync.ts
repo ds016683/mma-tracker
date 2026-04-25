@@ -11,7 +11,6 @@ const GROUP_TO_CATEGORY: Record<string, string> = {
   'Extraneous':                     'Extraneous',
 };
 
-// Maps Monday status label → mma_status
 function mapStatus(label: string): string {
   if (!label) return 'TBD';
   const l = label.toLowerCase();
@@ -21,7 +20,6 @@ function mapStatus(label: string): string {
   return label || 'TBD';
 }
 
-// Maps Monday stakes/priority → mma_priority
 function mapPriority(val: string): 'High' | 'Medium' | 'Low' {
   const v = (val || '').toLowerCase();
   if (v === 'high') return 'High';
@@ -29,13 +27,12 @@ function mapPriority(val: string): 'High' | 'Medium' | 'Low' {
   return 'Medium';
 }
 
-// Maps mma_status → card status field
 function cardStatus(mmaStatus: string): 'active' | 'completed' | 'archived' {
   if (mmaStatus === 'Done') return 'completed';
   return 'active';
 }
 
-export function useMondaySync() {
+export function useMondaySync(refetch: () => Promise<void>) {
   const syncedRef = useRef(false);
 
   useEffect(() => {
@@ -53,10 +50,9 @@ export function useMondaySync() {
         const now = new Date().toISOString();
 
         const rows = items.map(item => {
-          const category = GROUP_TO_CATEGORY[item.groupTitle] ?? 'production-priorities';
+          const category = GROUP_TO_CATEGORY[item.groupTitle] ?? 'Production Priorities';
           const mmaStatus = mapStatus(item.status);
           return {
-            // Use Monday item ID as stable UUID-like key via upsert
             id: `monday-${item.id}`,
             name: item.name,
             description: item.description || '',
@@ -93,11 +89,13 @@ export function useMondaySync() {
         if (error) {
           console.error('Monday→Supabase sync error:', error.message);
         } else {
-          console.log(`Monday sync: upserted ${rows.length} projects`);
+          console.log(`Monday sync: upserted ${rows.length} projects — triggering refetch`);
+          await refetch();
         }
       } catch (err) {
         console.error('Monday sync failed:', err);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
