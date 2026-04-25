@@ -7,8 +7,8 @@ type UseBaseballCardReturn = ReturnType<typeof useBaseballCard>;
 const ProjectsContext = createContext<UseBaseballCardReturn | null>(null);
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
-  useMondaySync();
   const value = useBaseballCard();
+  useMondaySync(value.refetch);
   return <ProjectsContext.Provider value={value}>{children}</ProjectsContext.Provider>;
 }
 
