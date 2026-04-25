@@ -5,7 +5,6 @@ import type { BaseballCardProject } from '../../lib/baseball-card/types';
 import { BOARD_CATEGORIES } from '../../lib/baseball-card/types';
 import { FreshnessDot } from './FreshnessDot';
 import { ExpandableCardContent } from './ExpandableCardContent';
-import { StatusRollupBadge } from './StatusRollupBadge';
 import { InlineDropdown } from './InlineDropdown';
 
 interface CategorizedBoardViewProps {
@@ -226,8 +225,8 @@ function BaseballCard({
           <div className="flex flex-wrap items-center gap-1.5">
             {project.mma_status && (
               <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                project.mma_status === 'Done' ? 'bg-emerald-100 text-emerald-700' :
-                project.mma_status === 'Stuck' ? 'bg-red-100 text-red-600' :
+                (project.mma_status as string) === 'Done' ? 'bg-emerald-100 text-emerald-700' :
+                (project.mma_status as string) === 'Stuck' ? 'bg-red-100 text-red-600' :
                 'bg-blue-50 text-[#234D8B]'
               }`}>{project.mma_status}</span>
             )}
