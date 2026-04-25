@@ -17,6 +17,15 @@ interface CategorizedBoardViewProps {
   onDelete: (id: string) => void;
 }
 
+// ── Category accent colours (header bar per section) ─────────────────────────
+const SECTION_HEADER_BG: Record<string, string> = {
+  'Production Priorities':          'bg-[#224057]',
+  'Data Enhancements (Schedule E)': 'bg-[#234D8B]',
+  'Innovation Roadmap':             'bg-[#b8972e]',
+  'Completed':                      'bg-emerald-600',
+  'Extraneous':                     'bg-gray-400',
+};
+
 export function CategorizedBoardView({
   projects,
   onProjectUpdate,
@@ -31,77 +40,55 @@ export function CategorizedBoardView({
     onProjectUpdate(projectId, { category: newCategory });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-14">
       {BOARD_CATEGORIES.map(section => {
         const sectionProjects = projects.filter(
           p => p.status !== 'archived' && (p.category || 'Production Priorities') === section.id
         );
-        const pinned = sectionProjects.filter(p => p.pinned);
-        const unpinned = sectionProjects.filter(p => !p.pinned);
         const isCollapsed = !!collapsed[section.id];
+        const headerBg = SECTION_HEADER_BG[section.id] ?? 'bg-[#224057]';
 
         return (
-          <div key={section.id} className={`rounded-xl border bg-white shadow-sm ${section.borderColor}`}>
+          <div key={section.id} className={`overflow-hidden rounded-xl border bg-white shadow-sm ${section.borderColor}`}>
+            {/* Section header — click to collapse */}
             <button
               onClick={() => toggle(section.id)}
-              className="flex w-full items-center gap-3 rounded-xl px-5 py-4 text-left transition-colors hover:bg-[#E8F0F8]/40"
+              className={`flex w-full items-center gap-3 px-5 py-3.5 text-left ${headerBg}`}
             >
-              <FolderOpen size={15} className={section.iconColor} />
-              <span className={`flex-1 text-sm font-bold uppercase tracking-wide ${section.labelColor}`}>
+              <FolderOpen size={14} className="shrink-0 text-white/80" />
+              <span className="flex-1 text-xs font-bold uppercase tracking-widest text-white">
                 {section.label}
               </span>
-              <span className="text-xs text-gray-400">
-                {pinned.length} pinned &mdash; {unpinned.length} other
-                {sectionProjects.length === 0 ? ' (empty)' : ''}
+              <span className="text-[11px] text-white/60">
+                {sectionProjects.length} item{sectionProjects.length !== 1 ? 's' : ''}
               </span>
               {isCollapsed
-                ? <ChevronRight size={14} className="shrink-0 text-gray-300" />
-                : <ChevronDown size={14} className="shrink-0 text-gray-300" />}
+                ? <ChevronRight size={14} className="shrink-0 text-white/60" />
+                : <ChevronDown size={14} className="shrink-0 text-white/60" />}
             </button>
 
             {!isCollapsed && (
-              <div className="px-5 pb-5">
-                {pinned.length > 0 && (
-                  <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {pinned.map(p => (
-                      <CategoryCard
-                        key={p.id}
-                        project={p}
-                        isExpanded={expandedCardId === p.id}
-                        onToggleExpand={onToggleExpand}
-                        onProjectUpdate={onProjectUpdate}
-                        onPin={onPin}
-                        onDelete={onDelete}
-                        onMoveCategory={moveCategory}
-                        currentCategory={section.id}
-                      />
-                    ))}
-                  </div>
-                )}
-                {unpinned.length > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
-                    <div className="border-b border-gray-200 px-4 py-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Not Pinned</span>
-                      <span className="text-[10px] text-gray-300">{unpinned.length}</span>
-                    </div>
-                    {unpinned.map(p => (
-                      <RosterRow
-                        key={p.id}
-                        project={p}
-                        isExpanded={expandedCardId === p.id}
-                        onToggleExpand={onToggleExpand}
-                        onProjectUpdate={onProjectUpdate}
-                        onPin={onPin}
-                        onDelete={onDelete}
-                        onMoveCategory={moveCategory}
-                        currentCategory={section.id}
-                      />
-                    ))}
-                  </div>
-                )}
-                {sectionProjects.length === 0 && (
+              <div className="p-5">
+                {sectionProjects.length === 0 ? (
                   <div className="py-6 text-center">
                     <p className="text-sm text-gray-400">No items in this category.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {sectionProjects.map(p => (
+                      <BaseballCard
+                        key={p.id}
+                        project={p}
+                        isExpanded={expandedCardId === p.id}
+                        onToggleExpand={onToggleExpand}
+                        onProjectUpdate={onProjectUpdate}
+                        onPin={onPin}
+                        onDelete={onDelete}
+                        onMoveCategory={moveCategory}
+                        currentCategory={section.id}
+                        accentBg={headerBg}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -113,22 +100,16 @@ export function CategorizedBoardView({
   );
 }
 
-// ── Card action bar (shared by grid + roster) ────────────────────────────────
+// ── Card action bar ───────────────────────────────────────────────────────────
 
 function CardActions({
-  project,
-  currentCategory,
-  onPin,
-  onDelete,
-  onMoveCategory,
-  alwaysVisible = false,
+  project, currentCategory, onPin, onDelete, onMoveCategory,
 }: {
   project: BaseballCardProject;
   currentCategory: string;
   onPin: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveCategory: (id: string, cat: string) => void;
-  alwaysVisible?: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const categoryIds = BOARD_CATEGORIES.map(c => c.id) as unknown as readonly string[];
@@ -136,72 +117,54 @@ function CardActions({
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (confirmDelete) {
-      onDelete(project.id);
-    } else {
+    if (confirmDelete) { onDelete(project.id); }
+    else {
       setConfirmDelete(true);
-      // Auto-cancel confirm state after 3s
       setTimeout(() => setConfirmDelete(false), 3000);
     }
   }
 
   return (
-    // stopPropagation on the whole action bar — nothing here should expand/collapse the card
     <div
-      className={`flex shrink-0 items-center gap-1 transition-opacity ${alwaysVisible ? '' : 'opacity-0 group-hover:opacity-100'}`}
+      className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
       onClick={e => e.stopPropagation()}
     >
-      {/* Pin / Unpin */}
       <button
-        onClick={(e) => { e.stopPropagation(); onPin(project.id); }}
+        onClick={e => { e.stopPropagation(); onPin(project.id); }}
         className={`rounded p-1 transition-colors ${
-          project.pinned
-            ? 'text-[#F8C762] hover:text-amber-500'
-            : 'text-gray-300 hover:text-[#F8C762]'
+          project.pinned ? 'text-[#F8C762] hover:text-amber-500' : 'text-white/50 hover:text-[#F8C762]'
         }`}
-        title={project.pinned ? 'Unpin — move to roster list' : 'Pin — promote to card grid'}
+        title={project.pinned ? 'Unpin' : 'Pin'}
       >
         <Pin className={`h-3.5 w-3.5 ${project.pinned ? 'fill-current' : ''}`} />
       </button>
-
-      {/* Move category */}
       <InlineDropdown
         options={categoryIds}
         value={currentCategory}
-        onChange={(cat) => onMoveCategory(project.id, cat)}
+        onChange={cat => onMoveCategory(project.id, cat)}
         labels={labels}
       >
-        <span
-          className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-400 hover:border-[#234D8B]/40 hover:text-[#234D8B] transition-colors cursor-pointer"
-          title="Move to another category"
-        >
-          <MoveRight size={11} />
-          Move
+        <span className="flex items-center gap-1 rounded px-1.5 py-1 text-[11px] text-white/50 hover:text-white transition-colors cursor-pointer">
+          <MoveRight size={11} /> Move
         </span>
       </InlineDropdown>
-
-      {/* Hard delete */}
       <button
         onClick={handleDelete}
         className={`rounded p-1 transition-colors ${
-          confirmDelete
-            ? 'bg-red-500 text-white hover:bg-red-600'
-            : 'text-gray-300 hover:text-red-500'
+          confirmDelete ? 'bg-red-500 text-white' : 'text-white/40 hover:text-red-300'
         }`}
-        title={confirmDelete ? 'Click again to confirm delete' : 'Delete card permanently'}
+        title={confirmDelete ? 'Confirm delete' : 'Delete'}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
-      {confirmDelete && (
-        <span className="text-[10px] text-red-500 font-medium">confirm?</span>
-      )}
+      {confirmDelete && <span className="text-[10px] text-red-300">confirm?</span>}
     </div>
   );
 }
 
-// ── Category card (grid tile) ────────────────────────────────────────────────
+// ── Baseball card tile ────────────────────────────────────────────────────────
 
-interface CardProps {
+interface BaseballCardProps {
   project: BaseballCardProject;
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
@@ -210,49 +173,36 @@ interface CardProps {
   onDelete: (id: string) => void;
   onMoveCategory: (id: string, cat: string) => void;
   currentCategory: string;
+  accentBg: string;
 }
 
-function CategoryCard({
+function BaseballCard({
   project, isExpanded, onToggleExpand,
   onProjectUpdate, onPin, onDelete,
-  onMoveCategory, currentCategory,
-}: CardProps) {
+  onMoveCategory, currentCategory, accentBg,
+}: BaseballCardProps) {
+  const taskDone = project.tasks.filter((t: { done: boolean }) => t.done).length;
+  const taskTotal = project.tasks.length;
+  const pct = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : null;
+
   return (
     <div
-      className={`group relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-mma-blue/30 hover:shadow-md ${
+      className={`group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md ${
         isExpanded ? 'col-span-1 md:col-span-2 xl:col-span-3' : ''
-      }`}
+      } ${project.pinned ? 'ring-2 ring-[#F8C762]/60' : ''}`}
     >
-      <div className="min-w-0">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          {/* Clickable title area */}
-          <div
-            className="flex cursor-pointer items-center gap-1.5 flex-1 min-w-0"
-            onClick={() => onToggleExpand(project.id)}
-          >
-            <FreshnessDot lastActivityAt={project.last_activity_at} />
-            <ScheduleIndicator health={computeScheduleHealth(project.target_date, project.tasks)} compact />
-            <h3 className="text-sm font-semibold leading-tight text-mma-dark-blue truncate">
-              {project.name}
-            </h3>
-            <ChevronDown
-              className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            />
-          </div>
-          {/* % complete pill — only when tasks exist */}
-          {project.tasks.length > 0 && (() => {
-            const done = project.tasks.filter((t: { done: boolean }) => t.done).length;
-            const pct = Math.round((done / project.tasks.length) * 100);
-            return (
-              <span className={`ml-1 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                pct === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {pct}%
-              </span>
-            );
-          })()}
-
-          {/* Action bar — isolated from expand clicks */}
+      {/* Card header bar — coloured accent + title */}
+      <div
+        className={`flex cursor-pointer items-start gap-2 px-4 py-3 ${accentBg}`}
+        onClick={() => onToggleExpand(project.id)}
+      >
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold leading-snug text-white line-clamp-2">
+            {project.name}
+          </h3>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 pt-0.5">
+          {project.pinned && <Pin size={11} className="fill-[#F8C762] text-[#F8C762]" />}
           <CardActions
             project={project}
             currentCategory={currentCategory}
@@ -260,67 +210,81 @@ function CategoryCard({
             onDelete={onDelete}
             onMoveCategory={onMoveCategory}
           />
-        </div>
-
-
-        {!isExpanded && project.tasks.length > 0 && (
-          <div className="mb-2"><StatusRollupBadge tasks={project.tasks} compact /></div>
-        )}
-        {!isExpanded && project.description && (
-          <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-gray-500">{project.description}</p>
-        )}
-        {isExpanded && (
-          <ExpandableCardContent
-            project={project}
-            onUpdate={onProjectUpdate}
-            onPin={onPin}
-            onDelete={onDelete}
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-white/70 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           />
-        )}
+        </div>
       </div>
-    </div>
-  );
-}
 
-// ── Roster-style row ─────────────────────────────────────────────────────────
-
-function RosterRow({
-  project, isExpanded, onToggleExpand,
-  onProjectUpdate, onPin, onDelete,
-  onMoveCategory, currentCategory,
-}: CardProps) {
-  return (
-    <div className="group border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white">
-        <FreshnessDot lastActivityAt={project.last_activity_at} />
-        <div className="min-w-0 flex-1">
-          <div className="mb-0.5 flex items-center gap-2">
-            <span
-              className="flex cursor-pointer items-center gap-1.5 truncate text-sm font-medium text-mma-dark-blue"
-              onClick={() => onToggleExpand(project.id)}
-            >
-              <ScheduleIndicator health={computeScheduleHealth(project.target_date, project.tasks)} compact />
-              {project.name}
-              <ChevronDown
-                className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              />
-            </span>
-          </div>
+      {/* Card body — compact meta row */}
+      {!isExpanded && (
+        <div
+          className="flex cursor-pointer flex-col gap-2 px-4 py-3"
+          onClick={() => onToggleExpand(project.id)}
+        >
+          {/* Status + priority badges */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-400">{project.mma_status}</span>
-            {project.mma_contract_ref && <span className="text-xs text-gray-300">· {project.mma_contract_ref}</span>}
+            {project.mma_status && (
+              <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                project.mma_status === 'Done' ? 'bg-emerald-100 text-emerald-700' :
+                project.mma_status === 'Stuck' ? 'bg-red-100 text-red-600' :
+                'bg-blue-50 text-[#234D8B]'
+              }`}>{project.mma_status}</span>
+            )}
+            {project.mma_priority && (
+              <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                project.mma_priority === 'High' ? 'bg-amber-100 text-amber-700' :
+                project.mma_priority === 'Low' ? 'bg-gray-100 text-gray-500' :
+                'bg-slate-100 text-slate-600'
+              }`}>{project.mma_priority}</span>
+            )}
+            <FreshnessDot lastActivityAt={project.last_activity_at} />
+            <ScheduleIndicator health={computeScheduleHealth(project.target_date, project.tasks)} compact />
+          </div>
+
+          {/* Description snippet */}
+          {project.description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">{project.description}</p>
+          )}
+
+          {/* RACI mini-row */}
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            {project.mma_accountable && (
+              <span className="text-[10px] text-gray-400"><span className="font-semibold text-gray-500">A:</span> {project.mma_accountable}</span>
+            )}
+            {project.mma_responsible && (
+              <span className="text-[10px] text-gray-400"><span className="font-semibold text-gray-500">R:</span> {project.mma_responsible}</span>
+            )}
+          </div>
+
+          {/* Progress bar (tasks) */}
+          {pct !== null && (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-500' : 'bg-[#234D8B]'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-gray-400">{pct}%</span>
+            </div>
+          )}
+
+          {/* Contract ref + target date footer */}
+          <div className="flex items-center justify-between border-t border-gray-100 pt-2">
+            {project.mma_contract_ref ? (
+              <span className="text-[10px] text-gray-400">{project.mma_contract_ref}</span>
+            ) : <span />}
+            {project.target_date && (
+              <span className="text-[10px] text-gray-400">
+                Due {new Date(project.target_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
           </div>
         </div>
+      )}
 
-        <CardActions
-          project={project}
-          currentCategory={currentCategory}
-          onPin={onPin}
-          onDelete={onDelete}
-          onMoveCategory={onMoveCategory}
-        />
-      </div>
-
+      {/* Expanded content — unchanged */}
       {isExpanded && (
         <div className="px-4 pb-4">
           <ExpandableCardContent
