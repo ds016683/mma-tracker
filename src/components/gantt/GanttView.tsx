@@ -1,337 +1,255 @@
-import { useState, useRef } from 'react';
-import { ChevronDown, ChevronRight, Download, LayoutGrid } from 'lucide-react';
-import type { BaseballCardProject, Task } from '../../lib/baseball-card/types';
-import { computeRollup } from '../../lib/baseball-card/types';
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { fetchMondayBoard, GROUP_ORDER, type MondayItem } from '../../lib/monday/client';
 
-interface GanttViewProps {
-  projects: BaseballCardProject[];
-  onSwitchToBoard: () => void;
-}
+// ── Colour map matching baseball cards / project plan ─────────────────────────
+const GROUP_BG: Record<string, string> = {
+  'group_title':    '#224057',
+  'group_mm2padc3': '#234D8B',
+  'group_mm2pm585': '#b8972e',
+  'group_mm2pgtvh': '#16a34a',
+  'group_mm2pm9jn': '#9ca3af',
+};
+
+const GROUP_BAR: Record<string, string> = {
+  'group_title':    '#3a6a8c',
+  'group_mm2padc3': '#4a7dcc',
+  'group_mm2pm585': '#d4a830',
+  'group_mm2pgtvh': '#22c55e',
+  'group_mm2pm9jn': '#d1d5db',
+};
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
-
 function parseDate(s: string | null | undefined): Date | null {
   if (!s) return null;
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
-
 function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
 }
-
 function daysDiff(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
-
 function fmtShort(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
-// ── Color logic ───────────────────────────────────────────────────────────────
-
-type BarColor = 'green' | 'yellow' | 'red' | 'gray';
-
-function taskBarColor(task: Task): BarColor {
-  if (task.done) return 'green';
-  const due = parseDate(task.due_date);
-  if (!due) return 'gray';
-  const now = new Date();
-  const diff = daysDiff(now, due);
-  if (diff < 0) return 'red';
-  if (diff <= 3) return 'yellow';
-  return 'green';
-}
-
-function projectBarColor(tasks: Task[]): BarColor {
-  if (tasks.length === 0) return 'gray';
-  const colors = tasks.map(taskBarColor);
-  if (colors.includes('red')) return 'red';
-  if (colors.includes('yellow')) return 'yellow';
-  if (colors.every(c => c === 'green')) return 'green';
-  return 'gray';
-}
-
-const BAR_CLASSES: Record<BarColor, string> = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-400',
-  red: 'bg-red-500',
-  gray: 'bg-gray-400',
-};
-
-// ── Gantt row computation ─────────────────────────────────────────────────────
-
-interface GanttProject {
-  project: BaseballCardProject;
-  start: Date;
-  end: Date;
-  tasks: GanttTask[];
-}
-
-interface GanttTask {
-  task: Task;
-  start: Date;
-  end: Date;
-}
-
-function buildGanttData(projects: BaseballCardProject[]): { items: GanttProject[]; minDate: Date; maxDate: Date } {
-  const today = new Date();
-  const items: GanttProject[] = [];
-
-  for (const p of projects) {
-    if (p.status === 'archived') continue;
-
-    // Build task timeline; each task's default start = previous task's end
-    const ganttTasks: GanttTask[] = [];
-    let cursor = parseDate(p.start_date) ?? parseDate(p.created_at) ?? today;
-
-    for (const t of p.tasks) {
-      const taskStart = parseDate(t.start_date) ?? cursor;
-      const taskEnd = parseDate(t.due_date) ?? addDays(taskStart, 7);
-      ganttTasks.push({ task: t, start: taskStart, end: taskEnd });
-      // Next task defaults to start after this one ends
-      cursor = taskEnd;
-    }
-
-    const projStart = parseDate(p.start_date) ?? (ganttTasks[0]?.start ?? today);
-    const projEnd = parseDate(p.end_date) ?? parseDate(p.target_date) ?? (ganttTasks[ganttTasks.length - 1]?.end ?? addDays(projStart, 30));
-
-    items.push({ project: p, start: projStart, end: projEnd, tasks: ganttTasks });
-  }
-
-  if (items.length === 0) {
-    return { items, minDate: today, maxDate: addDays(today, 30) };
-  }
-
-  const allDates = items.flatMap(i => [i.start, i.end, ...i.tasks.flatMap(t => [t.start, t.end])]);
-  const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-  const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
-
-  // Pad a little
-  minDate.setDate(minDate.getDate() - 2);
-  maxDate.setDate(maxDate.getDate() + 7);
-
-  return { items, minDate, maxDate };
+function fmtMon(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-
-export function GanttView({ projects, onSwitchToBoard }: GanttViewProps) {
+export function GanttView() {
+  const [items, setItems] = useState<MondayItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [exporting, setExporting] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
 
-  const { items, minDate, maxDate } = buildGanttData(projects);
-  const totalDays = daysDiff(minDate, maxDate);
+  async function load() {
+    setLoading(true); setError(null);
+    try {
+      const data = await fetchMondayBoard();
+      setItems(data);
+      setLastSync(new Date());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sync failed');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  function toggleCollapse(id: string) {
+  useEffect(() => { load(); }, []);
+
+  function toggle(id: string) {
     setCollapsed(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }
 
-  function pct(d: Date): number {
-    return Math.max(0, Math.min(100, (daysDiff(minDate, d) / totalDays) * 100));
-  }
-
-  function width(start: Date, end: Date): number {
-    return Math.max(0.5, (daysDiff(start, end) / totalDays) * 100);
-  }
-
-  async function exportPDF() {
-    setExporting(true);
-    try {
-      const { default: jsPDF } = await import('jspdf');
-      const { default: html2canvas } = await import('html2canvas');
-      if (!containerRef.current) return;
-      const canvas = await html2canvas(containerRef.current, { scale: 1.5, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const imgW = pageW - 40;
-      const imgH = (canvas.height / canvas.width) * imgW;
-      pdf.addImage(imgData, 'PNG', 20, 20, imgW, imgH);
-      pdf.save(`gantt-${new Date().toISOString().slice(0, 10)}.pdf`);
-    } catch (e) {
-      console.error('PDF export failed', e);
-    } finally {
-      setExporting(false);
+  // ── Build timeline bounds ─────────────────────────────────────────────────
+  const today = new Date();
+  const allDates: Date[] = [today];
+  for (const item of items) {
+    if (parseDate(item.startDate)) allDates.push(parseDate(item.startDate)!);
+    if (parseDate(item.targetDate)) allDates.push(parseDate(item.targetDate)!);
+    for (const sub of item.subitems) {
+      if (parseDate(sub.startDate)) allDates.push(parseDate(sub.startDate)!);
+      if (parseDate(sub.endDate)) allDates.push(parseDate(sub.endDate)!);
     }
   }
+  const rawMin = new Date(Math.min(...allDates.map(d => d.getTime())));
+  const rawMax = new Date(Math.max(...allDates.map(d => d.getTime())));
+  const minDate = addDays(rawMin, -7);
+  const maxDate = addDays(rawMax, 14);
+  const totalDays = Math.max(1, daysDiff(minDate, maxDate));
 
-  // Build month markers
+  function pct(d: Date) { return Math.max(0, Math.min(100, (daysDiff(minDate, d) / totalDays) * 100)); }
+  function wPct(s: Date, e: Date) { return Math.max(0.8, (daysDiff(s, e) / totalDays) * 100); }
+
+  // Month markers
   const months: { label: string; left: number }[] = [];
-  let cursor = new Date(minDate);
-  cursor.setDate(1);
-  while (cursor <= maxDate) {
-    months.push({
-      label: cursor.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-      left: pct(cursor),
-    });
-    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  let cur = new Date(minDate); cur.setDate(1);
+  while (cur <= maxDate) {
+    months.push({ label: fmtMon(cur), left: pct(cur) });
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+  }
+  const todayPct = pct(today);
+
+  // Group items by group
+  const byGroup: Record<string, MondayItem[]> = {};
+  for (const item of items) {
+    if (!byGroup[item.groupId]) byGroup[item.groupId] = [];
+    byGroup[item.groupId].push(item);
   }
 
-  // Today marker
-  const todayPct = pct(new Date());
+  const LABEL_W = 220;
+
+  if (loading) return (
+    <div className="flex h-64 items-center justify-center text-sm text-gray-400">
+      <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Loading Gantt data…
+    </div>
+  );
+
+  if (error) return (
+    <div className="m-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {error}
+    </div>
+  );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-4">
+    <div className="flex h-screen flex-col bg-[#f5f6f8]">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-mma-dark-blue">Gantt Chart</h1>
-        <div className="flex items-center gap-2">
+      <div className="border-b border-gray-200 bg-white px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-[#224057]">Gantt Chart</h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Live from Monday.com · phases as bars
+              {lastSync && <span> · Synced {lastSync.toLocaleTimeString()}</span>}
+            </p>
+          </div>
           <button
-            onClick={onSwitchToBoard}
-            className="flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-300 hover:text-gray-800"
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-1.5 rounded-lg bg-[#224057] px-3 py-1.5 text-xs text-white hover:bg-[#234D8B] disabled:opacity-50"
           >
-            <LayoutGrid className="h-4 w-4" />
-            Card View
-          </button>
-          <button
-            onClick={exportPDF}
-            disabled={exporting}
-            className="flex items-center gap-1.5 rounded-md bg-mma-dark-blue px-3 py-1.5 text-sm text-white hover:bg-mma-blue disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            {exporting ? 'Exporting…' : 'Export PDF'}
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Sync
           </button>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-        {(['green', 'yellow', 'red', 'gray'] as BarColor[]).map(c => (
-          <span key={c} className="flex items-center gap-1.5">
-            <span className={`h-3 w-3 rounded-sm ${BAR_CLASSES[c]}`} />
-            {{ green: 'On Track', yellow: 'Due ≤3 Days', red: 'Overdue', gray: 'No Date' }[c]}
-          </span>
-        ))}
-      </div>
+      {/* Chart body */}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="space-y-14">
+          {GROUP_ORDER.filter(g => (byGroup[g.id] ?? []).length > 0).map(group => {
+            const groupItems = byGroup[group.id] ?? [];
+            const headerBg = GROUP_BG[group.id] ?? '#224057';
+            const barColor = GROUP_BAR[group.id] ?? '#3a6a8c';
 
-      {/* Chart */}
-      <div ref={containerRef} className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="min-w-[700px]">
-          {/* Month header */}
-          <div className="relative h-8 border-b border-gray-200 bg-gray-50">
-            {months.map((m, i) => (
-              <span
-                key={i}
-                className="absolute top-1 text-xs text-gray-500"
-                style={{ left: `calc(${m.left}% + 180px)` }}
-              >
-                {m.label}
-              </span>
-            ))}
-            {/* Today line label */}
-            <span
-              className="absolute top-1 text-xs font-medium text-mma-blue"
-              style={{ left: `calc(${todayPct}% + 180px)` }}
-            >
-              Today
-            </span>
-          </div>
+            return (
+              <div key={group.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                {/* Group header */}
+                <div className="flex items-center gap-3 px-5 py-3.5" style={{ backgroundColor: headerBg }}>
+                  <span className="flex-1 text-xs font-bold uppercase tracking-widest text-white">{group.label}</span>
+                  <span className="text-[11px] text-white/60">{groupItems.length} project{groupItems.length !== 1 ? 's' : ''}</span>
+                </div>
 
-          {/* Rows */}
-          {items.length === 0 ? (
-            <div className="py-16 text-center text-sm text-gray-400">
-              No active projects with dates. Add start/end dates to projects to see them here.
-            </div>
-          ) : (
-            items.map(({ project, start, end, tasks }) => {
-              const isCollapsed = collapsed.has(project.id);
-              const pColor = projectBarColor(project.tasks);
-              const { pct: rollupPct, status } = computeRollup(project.tasks);
-
-              return (
-                <div key={project.id} className="border-b border-gray-100 last:border-0">
-                  {/* Project row */}
-                  <div className="flex h-10 items-center hover:bg-gray-50">
-                    {/* Label */}
-                    <div className="flex w-44 shrink-0 items-center gap-1.5 px-3">
-                      <button
-                        onClick={() => toggleCollapse(project.id)}
-                        className="shrink-0 text-gray-400 hover:text-gray-600"
-                      >
-                        {isCollapsed
-                          ? <ChevronRight className="h-3.5 w-3.5" />
-                          : <ChevronDown className="h-3.5 w-3.5" />
-                        }
-                      </button>
-                      <span className="truncate text-xs font-semibold text-mma-dark-blue" title={project.name}>
-                        {project.name}
-                      </span>
-                    </div>
-
-                    {/* Timeline area */}
-                    <div className="relative flex-1 pr-3">
-                      {/* Today line */}
-                      <div
-                        className="absolute inset-y-0 w-px bg-mma-blue/40"
-                        style={{ left: `${todayPct}%` }}
-                      />
-                      {/* Project bar */}
-                      <div
-                        className={`absolute top-2 h-6 rounded ${BAR_CLASSES[pColor]} opacity-80`}
-                        style={{ left: `${pct(start)}%`, width: `${width(start, end)}%` }}
-                        title={`${project.name}: ${fmtShort(start)} → ${fmtShort(end)} | ${rollupPct}% (${status})`}
-                      >
-                        <span className="ml-1 truncate text-xs font-medium text-white">
-                          {rollupPct}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Dates */}
-                    <div className="w-36 shrink-0 text-right pr-3">
-                      <span className="text-xs text-gray-400">
-                        {fmtShort(start)} — {fmtShort(end)}
-                      </span>
-                    </div>
+                {/* Timeline header */}
+                <div className="flex border-b border-gray-100 bg-gray-50">
+                  <div style={{ width: LABEL_W, minWidth: LABEL_W }} className="shrink-0 border-r border-gray-100 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Project / Phase</div>
+                  <div className="relative flex-1 py-2 overflow-hidden">
+                    {months.map((m, i) => (
+                      <span key={i} className="absolute text-[10px] text-gray-400 top-2" style={{ left: `${m.left}%` }}>{m.label}</span>
+                    ))}
                   </div>
+                  <div className="shrink-0 w-28 pr-4 py-2 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400">Dates</div>
+                </div>
 
-                  {/* Task rows */}
-                  {!isCollapsed && tasks.map(({ task, start: ts, end: te }) => {
-                    const tc = taskBarColor(task);
+                {/* Project + subitem rows */}
+                <div className="divide-y divide-gray-50">
+                  {groupItems.map(item => {
+                    const isCollapsed = collapsed.has(item.id);
+                    const pStart = parseDate(item.startDate) ?? today;
+                    const pEnd   = parseDate(item.targetDate) ?? addDays(pStart, 30);
+
                     return (
-                      <div key={task.id} className="flex h-8 items-center bg-gray-50/40 hover:bg-gray-50">
-                        <div className="flex w-44 shrink-0 items-center gap-2 pl-8 pr-3">
-                          <span
-                            className={`h-3 w-3 shrink-0 rounded-sm border ${task.done ? 'border-mma-turquoise bg-mma-turquoise' : 'border-gray-300'}`}
-                          />
-                          <span className="truncate text-xs text-gray-600" title={task.task_name || task.text}>
-                            {task.task_name || task.text}
-                          </span>
+                      <div key={item.id}>
+                        {/* Project row */}
+                        <div className="flex h-11 items-center hover:bg-gray-50 transition-colors">
+                          <div style={{ width: LABEL_W, minWidth: LABEL_W }} className="flex shrink-0 items-center gap-2 border-r border-gray-100 px-3">
+                            <button onClick={() => toggle(item.id)} className="shrink-0 text-gray-400 hover:text-gray-600">
+                              {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            </button>
+                            <span className="truncate text-xs font-semibold text-[#224057]" title={item.name}>{item.name}</span>
+                          </div>
+
+                          {/* Bar area */}
+                          <div className="relative flex-1 px-1">
+                            {/* Today line */}
+                            <div className="absolute inset-y-0 w-px bg-[#F8C762]/60 z-10" style={{ left: `${todayPct}%` }} />
+                            {/* Project bar */}
+                            <div
+                              className="absolute top-2.5 h-6 rounded-md opacity-90 flex items-center px-2"
+                              style={{ left: `${pct(pStart)}%`, width: `${wPct(pStart, pEnd)}%`, backgroundColor: barColor }}
+                              title={`${item.name}: ${fmtShort(pStart)} → ${fmtShort(pEnd)}`}
+                            >
+                              <span className="truncate text-[10px] font-semibold text-white">{item.status || 'In progress'}</span>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 w-28 pr-4 text-right">
+                            <span className="text-[10px] text-gray-400">{fmtShort(pStart)} – {fmtShort(pEnd)}</span>
+                          </div>
                         </div>
 
-                        <div className="relative flex-1 pr-3">
-                          <div
-                            className="absolute inset-y-0 w-px bg-mma-blue/40"
-                            style={{ left: `${todayPct}%` }}
-                          />
-                          <div
-                            className={`absolute top-1.5 h-5 rounded ${BAR_CLASSES[tc]} opacity-70`}
-                            style={{ left: `${pct(ts)}%`, width: `${width(ts, te)}%` }}
-                            title={`${task.task_name || task.text}: ${fmtShort(ts)} → ${fmtShort(te)}${task.assigned_to ? ` | ${task.assigned_to}` : ''}`}
-                          />
-                        </div>
+                        {/* Subitem (phase) rows */}
+                        {!isCollapsed && item.subitems.map(sub => {
+                          const sStart = parseDate(sub.startDate) ?? pStart;
+                          const sEnd   = parseDate(sub.endDate)   ?? addDays(sStart, 14);
+                          const isDone = (sub.status || '').toLowerCase().includes('done') || (sub.status || '').toLowerCase().includes('complete');
+                          return (
+                            <div key={sub.id} className="flex h-9 items-center bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                              <div style={{ width: LABEL_W, minWidth: LABEL_W }} className="flex shrink-0 items-center gap-2 border-r border-gray-100 pl-10 pr-3">
+                                <span className={`h-2 w-2 shrink-0 rounded-full ${isDone ? 'bg-emerald-400' : 'bg-gray-300'}`} />
+                                <span className="truncate text-[11px] text-gray-600" title={sub.name}>{sub.name}</span>
+                              </div>
 
-                        <div className="w-36 shrink-0 text-right pr-3">
-                          <span className="text-xs text-gray-400">
-                            {task.due_date ? fmtShort(new Date(task.due_date)) : '—'}
-                          </span>
-                        </div>
+                              <div className="relative flex-1 px-1">
+                                <div className="absolute inset-y-0 w-px bg-[#F8C762]/60 z-10" style={{ left: `${todayPct}%` }} />
+                                <div
+                                  className="absolute top-2 h-5 rounded opacity-75"
+                                  style={{
+                                    left: `${pct(sStart)}%`,
+                                    width: `${wPct(sStart, sEnd)}%`,
+                                    backgroundColor: isDone ? '#22c55e' : barColor,
+                                  }}
+                                  title={`${sub.name}: ${fmtShort(sStart)} → ${fmtShort(sEnd)}`}
+                                />
+                              </div>
+
+                              <div className="shrink-0 w-28 pr-4 text-right">
+                                <span className="text-[10px] text-gray-400">{fmtShort(sStart)} – {fmtShort(sEnd)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
                 </div>
-              );
-            })
-          )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Today marker label */}
+        <div className="mt-4 flex items-center gap-2 text-[11px] text-gray-400">
+          <span className="h-3 w-px bg-[#F8C762]" />
+          Today: {fmtShort(today)}
         </div>
       </div>
     </div>
