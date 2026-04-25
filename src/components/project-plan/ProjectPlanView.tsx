@@ -139,6 +139,7 @@ export function ProjectPlanView() {
             <span className="text-center">Priority</span>
           </div>
 
+          <div className="space-y-14">
           {GROUP_ORDER.map(group => {
             const groupItems = itemsByGroup[group.id] ?? [];
             const isCollapsed = !!collapsed[group.id];
@@ -236,6 +237,7 @@ export function ProjectPlanView() {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>
