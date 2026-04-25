@@ -69,13 +69,7 @@ export function BaseballCardLayout({ onSwitchToGantt, onSwitchToBoard, forceView
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Gantt view */}
       {isGantt && (
-        <GanttView
-          projects={projects}
-          onSwitchToBoard={() => {
-            setLocalView('board');
-            onSwitchToBoard?.();
-          }}
-        />
+        <GanttView />
       )}
 
       {/* Board / Schedule views */}
