@@ -34,6 +34,15 @@ function StakesChip({ stakes }: { stakes: string }) {
   return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${color}`}>{stakes}</span>;
 }
 
+
+const GROUP_HEADER_BG: Record<string, string> = {
+  'group_title':    '#224057',
+  'group_mm2padc3': '#234D8B',
+  'group_mm2pm585': '#b8972e',
+  'group_mm2pgtvh': '#16a34a',
+  'group_mm2pm9jn': '#9ca3af',
+};
+
 export function ProjectPlanView() {
   const [items, setItems] = useState<MondayItem[]>([]);
   const [loading, setLoading] = useState(true);
