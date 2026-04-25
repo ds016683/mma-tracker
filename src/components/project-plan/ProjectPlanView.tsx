@@ -157,13 +157,14 @@ export function ProjectPlanView() {
               <div key={group.id}>
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="flex w-full items-center gap-2 border-b border-gray-100 bg-gray-50/60 px-4 py-2.5 text-left hover:bg-gray-100 transition-colors"
+                  className="flex w-full items-center gap-2 border-b px-4 py-2.5 text-left transition-colors"
+                  style={{ backgroundColor: GROUP_HEADER_BG[group.id] ?? '#224057' }}
                 >
                   {isCollapsed
-                    ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#224057]" />
-                    : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#224057]" />}
-                  <span className="text-xs font-bold text-[#224057] uppercase tracking-wide">{group.label}</span>
-                  <span className="ml-1 text-[10px] text-gray-400">{groupItems.length} item{groupItems.length !== 1 ? 's' : ''}</span>
+                    ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/70" />
+                    : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/70" />}
+                  <span className="text-xs font-bold text-white uppercase tracking-wide">{group.label}</span>
+                  <span className="ml-1 text-[10px] text-white/60">{groupItems.length} item{groupItems.length !== 1 ? 's' : ''}</span>
                 </button>
 
                 {!isCollapsed && (
