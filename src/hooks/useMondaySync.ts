@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react';
 import { fetchMondayBoard } from '../lib/monday/client';
 import { supabase } from '../lib/supabase/client';
 
-// Maps Monday group titles → baseball card categories
+// Maps Monday group titles → baseball card categories (must match BOARD_CATEGORIES ids exactly)
 const GROUP_TO_CATEGORY: Record<string, string> = {
-  'Production Priorities':         'production-priorities',
-  'Data Enhancements (Schedule E)':'data-enhancements',
-  'Innovation Roadmap':            'innovation-roadmap',
-  'Completed':                     'completed',
-  'Extraneous':                    'extraneous',
+  'Production Priorities':          'Production Priorities',
+  'Data Enhancements (Schedule E)': 'Data Enhancements (Schedule E)',
+  'Innovation Roadmap':             'Innovation Roadmap',
+  'Completed':                      'Completed',
+  'Extraneous':                     'Extraneous',
 };
 
 // Maps Monday status label → mma_status
