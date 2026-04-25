@@ -72,7 +72,6 @@ function AppInner({
           <div className="p-4 sm:p-6">
             <BaseballCardLayout
               onSwitchToGantt={() => setActiveView('timeline')}
-              onSwitchToBoard={() => setActiveView('tracker')}
             />
           </div>
         )}
@@ -81,7 +80,6 @@ function AppInner({
           <div className="p-4 sm:p-6">
             <BaseballCardLayout
               onSwitchToGantt={() => setActiveView('timeline')}
-              onSwitchToBoard={() => setActiveView('tracker')}
               forceView="gantt"
             />
           </div>
