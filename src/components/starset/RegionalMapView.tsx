@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { RefreshCw, ExternalLink } from 'lucide-react';
 import { USMap, REGIONS } from './USMap';
 import { RegionPanel } from './RegionPanel';
 import { fetchAllRegions, upsertRegion } from '../../lib/supabase/regionQueries';
@@ -6,22 +7,34 @@ import type { RegionRow } from '../../lib/supabase/regionQueries';
 
 export function RegionalMapView() {
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [regionData, setRegionData] = useState<Record<number, RegionRow>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAllRegions()
-      .then((rows) => {
-        const map: Record<number, RegionRow> = {};
-        for (const row of rows) {
-          map[row.region_id] = row;
-        }
-        setRegionData(map);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+  const syncFromNotion = useCallback(async () => {
+    setSyncing(true);
+    setError(null);
+    try {
+      const rows = await fetchAllRegions();
+      const map: Record<number, RegionRow> = {};
+      for (const row of rows) {
+        map[row.region_id] = row;
+      }
+      setRegionData(map);
+      setLastSync(new Date());
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSyncing(false);
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    syncFromNotion();
+  }, [syncFromNotion]);
 
   const handleSave = useCallback(
     async (regionId: number, updates: Partial<RegionRow>) => {
@@ -46,10 +59,34 @@ export function RegionalMapView() {
     <div className="flex h-screen flex-col bg-mma-light-bg">
       {/* Page header */}
       <div className="border-b border-gray-200 bg-white px-6 py-4">
-        <h1 className="text-lg font-bold text-[#001A41]">Regional Map</h1>
-        <p className="text-sm text-gray-500">
-          MMA Network Navigator coverage by sales region. Click a region to view details.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-[#001A41]">Regional Map</h1>
+            <p className="text-sm text-gray-500">
+              MMA Network Navigator coverage by sales region · Notion-synced
+              {lastSync && <span className="text-xs text-gray-400"> · Last synced {lastSync.toLocaleTimeString()}</span>}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.notion.so/34f750fa613d8088b5ccc54a6efd5799"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:border-gray-300 hover:text-gray-700"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open in Notion
+            </a>
+            <button
+              onClick={syncFromNotion}
+              disabled={syncing}
+              className="flex items-center gap-1.5 rounded-lg bg-[#224057] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1a3245] disabled:opacity-60 transition-colors"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : 'Sync Notion'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main content */}
