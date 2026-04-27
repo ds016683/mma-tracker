@@ -13,14 +13,38 @@ export function RegionalMapView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Initial load: just fetch from Supabase (HTTPS, no sync server)
+  const loadFromSupabase = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const rows = await fetchAllRegions();
+      const map: Record<number, RegionRow> = {};
+      for (const row of rows) {
+        map[row.region_id] = row;
+      }
+      setRegionData(map);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Button click: trigger Notion→Supabase sync, then re-fetch
   const syncFromNotion = useCallback(async () => {
     setSyncing(true);
     setError(null);
     try {
-      // Step 1: trigger Notion → Supabase sync on the server
-      const syncRes = await fetch("http://2.24.193.160:8421/sync", { method: "POST" });
-      if (!syncRes.ok) throw new Error(`Sync server error: ${syncRes.status}`);
-      // Step 2: re-fetch updated data from Supabase
+      // Trigger server-side Notion→Supabase sync
+      // Note: HTTP endpoint — browser will block if mixed content policy is strict
+      // Falls back to Supabase-only fetch if sync server unreachable
+      try {
+        await fetch("http://2.24.193.160:8421/sync", { method: "POST" });
+      } catch {
+        // Sync server unreachable (mixed content or network) — skip, still re-fetch Supabase
+        console.warn("Notion sync server unreachable — showing cached Supabase data");
+      }
       const rows = await fetchAllRegions();
       const map: Record<number, RegionRow> = {};
       for (const row of rows) {
@@ -32,13 +56,12 @@ export function RegionalMapView() {
       setError((e as Error).message);
     } finally {
       setSyncing(false);
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    syncFromNotion();
-  }, [syncFromNotion]);
+    loadFromSupabase();
+  }, [loadFromSupabase]);
 
   const handleSave = useCallback(
     async (regionId: number, updates: Partial<RegionRow>) => {
