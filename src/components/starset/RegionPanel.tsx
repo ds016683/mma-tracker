@@ -5,6 +5,7 @@ import type { Region } from './USMap';
 import { useAuth } from '../../contexts/AuthContext';
 
 const ADMIN_EMAIL = 'david.smith@thirdhorizon.com';
+const NOTION_NARRATIVE_URL = 'https://www.notion.so/34f750fa613d813980a7f50e249be477';
 const NOTION_OPP_URL = 'https://www.notion.so/34f750fa613d813d8bf7c3578c5f2cfb';
 const NOTION_NET_URL = 'https://www.notion.so/34f750fa613d81b6aef1e85b58ffe7dc';
 
@@ -32,6 +33,10 @@ interface NetworkEntry {
 
 interface V9Candidate {
   name: string; carrier: string; states: string[]; status: string; notes: string;
+}
+
+interface NarrativeData {
+  narrative: string; notion_url: string; region_num: number;
 }
 
 interface CoverageData {
@@ -118,6 +123,7 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
   });
 
   const opportunities = parseJSON<Opportunity[]>(data?.areas_of_opportunity ?? '', '__json__');
+  const narrativeData = parseJSON<NarrativeData>(data?.networks_of_interest ?? '', '__narrative__');
   const coverageData = parseJSON<CoverageData>(data?.v8_coverage ?? '', '__json__');
 
   const handleEdit = () => {
@@ -173,6 +179,20 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {saved && <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm font-medium text-green-700">Saved</div>}
+
+        {/* Opportunity Narrative */}
+        <CollapsibleSection title="Opportunity Narrative" notionUrl={NOTION_NARRATIVE_URL} defaultOpen={true}>
+          {narrativeData?.narrative ? (
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{narrativeData.narrative}</p>
+          ) : (
+            <p className="text-sm text-gray-400 italic">
+              No narrative yet.{' '}
+              <a href={NOTION_NARRATIVE_URL} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                Add one in Notion →
+              </a>
+            </p>
+          )}
+        </CollapsibleSection>
 
         {/* Networks of Interest */}
         <CollapsibleSection title="Networks of Interest">
