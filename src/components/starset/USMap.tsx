@@ -12,15 +12,15 @@ export interface Region {
 
 export const REGIONS: Region[] = [
   { id: 1,  name: 'Northwest',         color: '#7EC8E3', states: ['WA','OR','ID','MT','AK','HI'] },
-  { id: 2,  name: 'West',              color: '#4A90D9', states: ['CA','NV','CO','AZ'] },
-  { id: 3,  name: 'Non-Region',        color: '#2C5F8A', states: ['UT','WY','NM'] },
-  { id: 4,  name: 'Southwest',         color: '#3DAA8C', states: ['TX','OK','AR','LA','MO'] },
-  { id: 5,  name: 'Midwest',           color: '#E8739A', states: ['IL','IN','OH','MI','KY','WV','ND','SD','MN','WI','IA','NE'] },
-  { id: 6,  name: 'Upper Midwest',     color: '#F5B731', states: ['KS'] },
+  { id: 2,  name: 'West',              color: '#4A90D9', states: ['CA','NV','AZ','CO'] },
+  { id: 3,  name: 'Non-Region',        color: '#2C5F8A', states: ['UT','WY'] },
+  { id: 4,  name: 'Southwest',         color: '#3DAA8C', states: ['NM','TX','OK','LA','AR'] },
+  { id: 5,  name: 'Midwest',           color: '#E8739A', states: ['IL','IN','OH'] },
+  { id: 6,  name: 'Upper Midwest',     color: '#F5B731', states: ['KS','MO','IA','NE','MN','SD','ND','WI','MI'] },
   { id: 7,  name: 'Florida',           color: '#5BBFA8', states: ['FL'] },
-  { id: 8,  name: 'Greater Northeast', color: '#F5A623', states: ['NY','ME','VT','NH','MA','RI','CT','PA'] },
-  { id: 9,  name: 'East',              color: '#2E7D8C', states: ['GA','TN','AL','SC','MS','VA','NC'] },
-  { id: 10, name: 'Mid-Atlantic',      color: '#7B68EE', states: ['MD','DE','NJ','DC'] },
+  { id: 8,  name: 'Greater Northeast', color: '#F5A623', states: ['ME','VT','NH','MA','RI','CT','NY','NJ','PA'] },
+  { id: 9,  name: 'East',              color: '#2E7D8C', states: ['KY','TN','AL','MS','GA'] },
+  { id: 10, name: 'Mid-Atlantic',      color: '#7B68EE', states: ['WV','MD','NC','SC','VA','DE','DC'] },
 ];
 
 // FIPS code -> state abbreviation
