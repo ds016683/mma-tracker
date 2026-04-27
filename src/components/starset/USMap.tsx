@@ -122,18 +122,18 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
       }
     }
 
-    // Manual overrides — tuned to sit inside each region's colored area
+    // Manual overrides — tuned to geographic center of each region's states
     const OVERRIDES: Record<number, {x: number, y: number}> = {
-      1:  { x: 110, y: 155 },  // Northwest — center of WA/OR/ID/MT
-      2:  { x: 100, y: 370 },  // West — center of CA/NV/AZ/CO
-      3:  { x: 225, y: 275 },  // Non-Region — UT/WY
-      4:  { x: 380, y: 460 },  // Southwest — TX center
-      5:  { x: 685, y: 325 },  // Midwest — IL/IN/OH
-      6:  { x: 530, y: 210 },  // Upper Midwest — MN/ND/SD/WI/MI
-      7:  { x: 735, y: 500 },  // Florida
-      8:  { x: 855, y: 145 },  // Greater Northeast — ME/VT/NH/MA/CT/RI/NY/NJ/PA
-      9:  { x: 665, y: 435 },  // East — KY/TN/AL/MS/GA
-      10: { x: 790, y: 360 },  // Mid-Atlantic — WV/VA/MD/NC/SC/DE/DC
+      1:  { x:  95, y: 165 },  // Northwest — WA/OR/ID/MT: Cascade/northern Rockies
+      2:  { x: 155, y: 235 },  // West — CA/NV border, upper third of CA
+      3:  { x: 220, y: 265 },  // Non-Region — UT/WY: center between the two
+      4:  { x: 370, y: 445 },  // Southwest — TX center (not NM)
+      5:  { x: 672, y: 318 },  // Midwest — IL/IN/OH center
+      6:  { x: 520, y: 175 },  // Upper Midwest — MN/ND/WI cluster, push north
+      7:  { x: 730, y: 505 },  // Florida
+      8:  { x: 840, y: 160 },  // Greater Northeast — NY/NE corner
+      9:  { x: 645, y: 430 },  // East — TN/AL center (KY/TN/AL/MS/GA)
+      10: { x: 770, y: 345 },  // Mid-Atlantic — WV/VA center
     };
     for (const [id, pos] of Object.entries(OVERRIDES)) {
       centroids[Number(id)] = pos;
@@ -185,7 +185,7 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
               y={c.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={18}
+              fontSize={28}
               fontWeight="700"
               fontFamily="inherit"
               fill="rgba(255,255,255,0.85)"
