@@ -122,18 +122,18 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
       }
     }
 
-    // Manual overrides — corrected round 2
+    // Manual overrides — round 3 nudges
     const OVERRIDES: Record<number, {x: number, y: number}> = {
       1:  { x: 105, y: 178 },  // Northwest — WA/ID/MT center
       2:  { x: 118, y: 295 },  // West — CA center
       3:  { x: 222, y: 272 },  // Non-Region — UT center
       4:  { x: 445, y: 427 },  // Southwest — TX/OK
-      5:  { x: 668, y: 308 },  // Midwest — IL/IN/OH (drop from MI)
-      6:  { x: 490, y: 175 },  // Upper Midwest — ND/MN (push north)
+      5:  { x: 668, y: 290 },  // Midwest — up 18
+      6:  { x: 490, y: 195 },  // Upper Midwest — down 20
       7:  { x: 725, y: 490 },  // Florida
       8:  { x: 824, y: 191 },  // Greater Northeast
       9:  { x: 672, y: 398 },  // East — KY/TN/AL/GA
-      10: { x: 770, y: 355 },  // Mid-Atlantic — VA/WV/NC center
+      10: { x: 800, y: 355 },  // Mid-Atlantic — right 30
     };
     for (const [id, pos] of Object.entries(OVERRIDES)) {
       centroids[Number(id)] = pos;
@@ -185,7 +185,7 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
               y={c.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={35}
+              fontSize={44}
               fontWeight="700"
               fontFamily="inherit"
               fill="rgba(255,255,255,0.85)"
