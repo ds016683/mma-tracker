@@ -17,6 +17,10 @@ export function RegionalMapView() {
     setSyncing(true);
     setError(null);
     try {
+      // Step 1: trigger Notion → Supabase sync on the server
+      const syncRes = await fetch("http://2.24.193.160:8421/sync", { method: "POST" });
+      if (!syncRes.ok) throw new Error(`Sync server error: ${syncRes.status}`);
+      // Step 2: re-fetch updated data from Supabase
       const rows = await fetchAllRegions();
       const map: Record<number, RegionRow> = {};
       for (const row of rows) {
