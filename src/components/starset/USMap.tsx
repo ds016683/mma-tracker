@@ -121,6 +121,24 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
         centroids[region.id] = { x: totalX / count, y: totalY / count };
       }
     }
+
+    // Manual overrides for regions where averaging skews the label off-center
+    const OVERRIDES: Record<number, {x: number, y: number}> = {
+      1:  { x: 155, y: 180 },  // Northwest — WA/OR/ID/MT block
+      2:  { x: 135, y: 340 },  // West — CA/NV/AZ/CO
+      3:  { x: 220, y: 310 },  // Non-Region — UT/WY
+      4:  { x: 390, y: 430 },  // Southwest — NM/TX/OK/LA/AR
+      5:  { x: 680, y: 310 },  // Midwest — IL/IN/OH
+      6:  { x: 520, y: 250 },  // Upper Midwest — KS/MO/IA/NE/MN/SD/ND/WI/MI
+      7:  { x: 720, y: 490 },  // Florida
+      8:  { x: 830, y: 175 },  // Greater Northeast
+      9:  { x: 680, y: 420 },  // East — KY/TN/AL/MS/GA
+      10: { x: 790, y: 330 },  // Mid-Atlantic — WV/MD/NC/SC/VA/DE/DC
+    };
+    for (const [id, pos] of Object.entries(OVERRIDES)) {
+      centroids[Number(id)] = pos;
+    }
+
     return centroids;
   }, [features]);
 
