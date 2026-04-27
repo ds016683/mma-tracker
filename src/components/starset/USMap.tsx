@@ -122,18 +122,18 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
       }
     }
 
-    // Manual overrides — derived from state geographic centroids in Albers USA 975x610
+    // Manual overrides — tuned per David's directional feedback
     const OVERRIDES: Record<number, {x: number, y: number}> = {
-      1:  { x: 166, y: 162 },  // Northwest — WA/MT center
-      2:  { x: 165, y: 282 },  // West — CA/NV center
-      3:  { x: 245, y: 262 },  // Non-Region — UT/WY center
-      4:  { x: 445, y: 402 },  // Southwest — TX/OK center
-      5:  { x: 662, y: 290 },  // Midwest — IL/IN/OH center
-      6:  { x: 530, y: 182 },  // Upper Midwest — MN/ND/WI center
-      7:  { x: 725, y: 490 },  // Florida
-      8:  { x: 799, y: 211 },  // Greater Northeast — NY/PA/ME center
-      9:  { x: 672, y: 398 },  // East — TN/AL/GA center
-      10: { x: 750, y: 332 },  // Mid-Atlantic — WV/VA/NC center
+      1:  { x: 166, y: 142 },  // Northwest — up 20
+      2:  { x: 140, y: 282 },  // West — left 25
+      3:  { x: 245, y: 262 },  // Non-Region — unchanged
+      4:  { x: 445, y: 427 },  // Southwest — down 25
+      5:  { x: 662, y: 275 },  // Midwest — up 15
+      6:  { x: 500, y: 202 },  // Upper Midwest — left 30, down 20
+      7:  { x: 725, y: 490 },  // Florida — unchanged
+      8:  { x: 824, y: 191 },  // Greater Northeast — up 20, right 25
+      9:  { x: 672, y: 398 },  // East — unchanged
+      10: { x: 800, y: 332 },  // Mid-Atlantic — right 50
     };
     for (const [id, pos] of Object.entries(OVERRIDES)) {
       centroids[Number(id)] = pos;
