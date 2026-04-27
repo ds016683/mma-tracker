@@ -122,18 +122,18 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
       }
     }
 
-    // Manual overrides — tuned to geographic center of each region's states
+    // Manual overrides — positions from David's arrowhead annotations
     const OVERRIDES: Record<number, {x: number, y: number}> = {
-      1:  { x:  95, y: 165 },  // Northwest — WA/OR/ID/MT: Cascade/northern Rockies
-      2:  { x: 155, y: 235 },  // West — CA/NV border, upper third of CA
-      3:  { x: 220, y: 265 },  // Non-Region — UT/WY: center between the two
-      4:  { x: 370, y: 445 },  // Southwest — TX center (not NM)
-      5:  { x: 672, y: 318 },  // Midwest — IL/IN/OH center
-      6:  { x: 520, y: 175 },  // Upper Midwest — MN/ND/WI cluster, push north
+      1:  { x: 244, y: 107 },  // Northwest — WA/MT
+      2:  { x: 162, y: 223 },  // West — CA/NV border
+      3:  { x: 317, y: 192 },  // Non-Region — UT/WY
+      4:  { x: 469, y: 356 },  // Southwest — TX
+      5:  { x: 685, y: 314 },  // Midwest — IL/IN/OH
+      6:  { x: 534, y: 192 },  // Upper Midwest — ND/MN
       7:  { x: 730, y: 505 },  // Florida
-      8:  { x: 840, y: 160 },  // Greater Northeast — NY/NE corner
-      9:  { x: 645, y: 430 },  // East — TN/AL center (KY/TN/AL/MS/GA)
-      10: { x: 770, y: 345 },  // Mid-Atlantic — WV/VA center
+      8:  { x: 838, y: 171 },  // Greater Northeast — ME/VT
+      9:  { x: 793, y: 436 },  // East — TN/AL/GA
+      10: { x: 817, y: 269 },  // Mid-Atlantic — VA/WV/MD
     };
     for (const [id, pos] of Object.entries(OVERRIDES)) {
       centroids[Number(id)] = pos;
@@ -185,7 +185,7 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
               y={c.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={28}
+              fontSize={35}
               fontWeight="700"
               fontFamily="inherit"
               fill="rgba(255,255,255,0.85)"
