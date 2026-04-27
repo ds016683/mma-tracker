@@ -1,25 +1,17 @@
 import { useState } from 'react';
-import { X, Pencil, Save, XCircle, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
 import type { Region } from './USMap';
-import { useAuth } from '../../contexts/AuthContext';
 
-const ADMIN_EMAIL = 'david.smith@thirdhorizon.com';
-const NOTION_NARRATIVE_URL = 'https://www.notion.so/34f750fa613d813980a7f50e249be477';
 const NOTION_OPP_URL = 'https://www.notion.so/34f750fa613d813d8bf7c3578c5f2cfb';
 const NOTION_NET_URL = 'https://www.notion.so/34f750fa613d81b6aef1e85b58ffe7dc';
+const NOTION_NARRATIVE_URL = 'https://www.notion.so/34f750fa613d813980a7f50e249be477';
 
 interface RegionPanelProps {
   region: Region;
   data: RegionRow | null;
   onClose: () => void;
   onSave: (regionId: number, updates: Partial<RegionRow>) => Promise<void>;
-}
-
-interface EditState {
-  networks_of_interest: string;
-  v8_coverage: string;
-  areas_of_opportunity: string;
 }
 
 interface Opportunity {
@@ -35,13 +27,13 @@ interface V9Candidate {
   name: string; carrier: string; states: string[]; status: string; notes: string;
 }
 
-interface NarrativeData {
-  narrative: string; notion_url: string; region_num: number;
-}
-
 interface CoverageData {
   state_networks: Record<string, NetworkEntry[]>;
   v9_candidates: V9Candidate[];
+}
+
+interface NarrativeData {
+  narrative: string; notion_url: string; region_num: number;
 }
 
 function parseJSON<T>(raw: string, prefix: string): T | null {
@@ -49,11 +41,10 @@ function parseJSON<T>(raw: string, prefix: string): T | null {
   try { return JSON.parse(raw.slice(prefix.length)) as T; } catch { return null; }
 }
 
-// Collapsible section wrapper
-function CollapsibleSection({ title, badge, notionUrl, children, defaultOpen = false }: {
-  title: string; badge?: string; notionUrl?: string; children: React.ReactNode; defaultOpen?: boolean;
+function CollapsibleSection({ title, badge, notionUrl, children }: {
+  title: string; badge?: string; notionUrl?: string; children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
   return (
     <div className="border border-gray-100 rounded-lg overflow-hidden">
       <button
@@ -77,7 +68,6 @@ function CollapsibleSection({ title, badge, notionUrl, children, defaultOpen = f
   );
 }
 
-// State → networks collapsible
 function StateNetworkRow({ state, networks }: { state: string; networks: NetworkEntry[] }) {
   const [open, setOpen] = useState(false);
   return (
@@ -109,51 +99,17 @@ function StateNetworkRow({ state, networks }: { state: string; networks: Network
   );
 }
 
-export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps) {
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [editState, setEditState] = useState<EditState>({
-    networks_of_interest: data?.networks_of_interest ?? '',
-    v8_coverage: data?.v8_coverage ?? '',
-    areas_of_opportunity: data?.areas_of_opportunity ?? '',
-  });
-
+export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
   const opportunities = parseJSON<Opportunity[]>(data?.areas_of_opportunity ?? '', '__json__');
-  const narrativeData = parseJSON<NarrativeData>(data?.networks_of_interest ?? '', '__narrative__');
   const coverageData = parseJSON<CoverageData>(data?.v8_coverage ?? '', '__json__');
+  const narrativeData = parseJSON<NarrativeData>(data?.networks_of_interest ?? '', '__narrative__');
 
-  const handleEdit = () => {
-    setEditState({
-      networks_of_interest: data?.networks_of_interest ?? '',
-      v8_coverage: data?.v8_coverage ?? '',
-      areas_of_opportunity: data?.areas_of_opportunity ?? '',
-    });
-    setEditing(true);
-    setSaved(false);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onSave(region.id, editState);
-      setEditing(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const stateEntries = coverageData ? Object.entries(coverageData.state_networks) : [];
+  const v9Candidates = coverageData?.v9_candidates ?? [];
 
   const updatedDate = data?.updated_at
     ? new Date(data.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
-
-  const stateEntries = coverageData ? Object.entries(coverageData.state_networks) : [];
-  const v9Candidates = coverageData?.v9_candidates ?? [];
 
   return (
     <div className="flex h-full flex-col bg-white shadow-xl" style={{ width: 400, minWidth: 400 }}>
@@ -164,29 +120,21 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
           <h2 className="text-lg font-bold text-white">{region.name}</h2>
           <p className="text-xs text-white/60 mt-0.5">{stateEntries.map(([s]) => s).join(', ')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && !editing && (
-            <button onClick={handleEdit} className="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/30 transition-colors">
-              <Pencil className="h-3.5 w-3.5" /> Edit
-            </button>
-          )}
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {saved && <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-2.5 text-sm font-medium text-green-700">Saved</div>}
 
         {/* Opportunity Narrative */}
-        <CollapsibleSection title="Opportunity Narrative" notionUrl={NOTION_NARRATIVE_URL} defaultOpen={true}>
+        <CollapsibleSection title="Opportunity Narrative" notionUrl={NOTION_NARRATIVE_URL}>
           {narrativeData?.narrative ? (
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{narrativeData.narrative}</p>
           ) : (
             <p className="text-sm text-gray-400 italic">
-              No narrative yet.{' '}
+              No narrative yet.{" "}
               <a href={NOTION_NARRATIVE_URL} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
                 Add one in Notion →
               </a>
@@ -194,25 +142,11 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
           )}
         </CollapsibleSection>
 
-        {/* Networks of Interest */}
-        <CollapsibleSection title="Networks of Interest">
-          {editing ? (
-            <textarea value={editState.networks_of_interest} onChange={e => setEditState(s => ({...s, networks_of_interest: e.target.value}))}
-              rows={3} placeholder="Networks currently active..."
-              className="w-full rounded border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400 resize-y" />
-          ) : (
-            <div className="text-sm text-gray-700">
-              {data?.networks_of_interest || <span className="text-gray-300 italic">Not configured</span>}
-            </div>
-          )}
-        </CollapsibleSection>
-
-        {/* v8 Coverage */}
+        {/* v8 Regional Coverage */}
         <CollapsibleSection
           title="v8 Regional Coverage"
           badge={stateEntries.length > 0 ? `${stateEntries.length} states` : undefined}
           notionUrl={NOTION_NET_URL}
-          defaultOpen={false}
         >
           {coverageData && stateEntries.length > 0 ? (
             <div className="space-y-0 -mx-1">
@@ -253,7 +187,6 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
           title="Current Areas of Opportunity"
           badge={opportunities ? `${opportunities.length}` : undefined}
           notionUrl={NOTION_OPP_URL}
-          defaultOpen={true}
         >
           {opportunities ? (
             opportunities.length === 0 ? (
@@ -295,22 +228,9 @@ export function RegionPanel({ region, data, onClose, onSave }: RegionPanelProps)
       </div>
 
       {/* Footer */}
-      {editing ? (
-        <div className="border-t border-gray-100 px-5 py-4 flex gap-3">
-          <button onClick={handleSave} disabled={saving}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#001A41] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#002C5F] disabled:opacity-50 transition-colors">
-            <Save className="h-4 w-4" />{saving ? 'Saving...' : 'Save Changes'}
-          </button>
-          <button onClick={() => setEditing(false)} disabled={saving}
-            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-            <XCircle className="h-4 w-4" />Cancel
-          </button>
-        </div>
-      ) : (
-        <div className="border-t border-gray-100 px-5 py-3">
-          <p className="text-xs text-gray-400">{updatedDate ? `Last updated: ${updatedDate}` : 'No data yet'}</p>
-        </div>
-      )}
+      <div className="border-t border-gray-100 px-5 py-3">
+        <p className="text-xs text-gray-400">{updatedDate ? `Last synced: ${updatedDate}` : 'No data yet'}</p>
+      </div>
     </div>
   );
 }
