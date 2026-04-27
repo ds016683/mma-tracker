@@ -122,18 +122,18 @@ export function USMap({ selectedRegionId, onRegionSelect, onDeselect }: USMapPro
       }
     }
 
-    // Manual overrides — tuned per David's directional feedback
+    // Manual overrides — corrected round 2
     const OVERRIDES: Record<number, {x: number, y: number}> = {
-      1:  { x: 166, y: 142 },  // Northwest — up 20
-      2:  { x: 140, y: 282 },  // West — left 25
-      3:  { x: 245, y: 262 },  // Non-Region — unchanged
-      4:  { x: 445, y: 427 },  // Southwest — down 25
-      5:  { x: 662, y: 275 },  // Midwest — up 15
-      6:  { x: 500, y: 202 },  // Upper Midwest — left 30, down 20
-      7:  { x: 725, y: 490 },  // Florida — unchanged
-      8:  { x: 824, y: 191 },  // Greater Northeast — up 20, right 25
-      9:  { x: 672, y: 398 },  // East — unchanged
-      10: { x: 800, y: 332 },  // Mid-Atlantic — right 50
+      1:  { x: 105, y: 178 },  // Northwest — WA/ID/MT center
+      2:  { x: 118, y: 295 },  // West — CA center
+      3:  { x: 222, y: 272 },  // Non-Region — UT center
+      4:  { x: 445, y: 427 },  // Southwest — TX/OK
+      5:  { x: 668, y: 308 },  // Midwest — IL/IN/OH (drop from MI)
+      6:  { x: 490, y: 175 },  // Upper Midwest — ND/MN (push north)
+      7:  { x: 725, y: 490 },  // Florida
+      8:  { x: 824, y: 191 },  // Greater Northeast
+      9:  { x: 672, y: 398 },  // East — KY/TN/AL/GA
+      10: { x: 770, y: 355 },  // Mid-Atlantic — VA/WV/NC center
     };
     for (const [id, pos] of Object.entries(OVERRIDES)) {
       centroids[Number(id)] = pos;
