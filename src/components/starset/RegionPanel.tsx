@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Pencil, Save, XCircle, ExternalLink, AlertCircle } from 'lucide-react';
+import { X, Pencil, Save, XCircle, ExternalLink } from 'lucide-react';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
 import type { Region } from './USMap';
 import { useAuth } from '../../contexts/AuthContext';
