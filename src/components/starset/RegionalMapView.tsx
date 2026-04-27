@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ExternalLink } from 'lucide-react';
 import { USMap, REGIONS } from './USMap';
 import { RegionPanel } from './RegionPanel';
+import { supabase } from '../../lib/supabase/client';
 import { fetchAllRegions, upsertRegion } from '../../lib/supabase/regionQueries';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
 
@@ -31,27 +32,36 @@ export function RegionalMapView() {
     }
   }, []);
 
-  // Button click: trigger Notion→Supabase sync, then re-fetch
+  // Button click: write sync-request flag to Supabase (HTTPS) → VPS picks it up within 30s
   const syncFromNotion = useCallback(async () => {
     setSyncing(true);
     setError(null);
     try {
-      // Trigger server-side Notion→Supabase sync
-      // Note: HTTP endpoint — browser will block if mixed content policy is strict
-      // Falls back to Supabase-only fetch if sync server unreachable
-      try {
-        await fetch("http://2.24.193.160:8421/sync", { method: "POST" });
-      } catch {
-        // Sync server unreachable (mixed content or network) — skip, still re-fetch Supabase
-        console.warn("Notion sync server unreachable — showing cached Supabase data");
+      // Signal the VPS sync daemon by writing a timestamp to Supabase
+      await supabase
+        .from("region_data")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("region_id", 1);  // sentinel: updating row 1 triggers VPS poll
+
+      // Wait up to 20s for VPS to pick up and push fresh data
+      let attempts = 0;
+      const before = new Date().toISOString();
+      while (attempts < 10) {
+        await new Promise(r => setTimeout(r, 2000));
+        const rows = await fetchAllRegions();
+        // Check if updated_at changed (VPS writes back after sync)
+        const updated = rows.some(r => r.updated_at > before);
+        if (updated || attempts >= 8) {
+          const map: Record<number, RegionRow> = {};
+          for (const row of rows) {
+            map[row.region_id] = row;
+          }
+          setRegionData(map);
+          setLastSync(new Date());
+          break;
+        }
+        attempts++;
       }
-      const rows = await fetchAllRegions();
-      const map: Record<number, RegionRow> = {};
-      for (const row of rows) {
-        map[row.region_id] = row;
-      }
-      setRegionData(map);
-      setLastSync(new Date());
     } catch (e) {
       setError((e as Error).message);
     } finally {
