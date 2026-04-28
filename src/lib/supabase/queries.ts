@@ -35,7 +35,7 @@ interface ProjectRow {
 export async function fetchAllProjects(): Promise<BaseballCardProject[]> {
   const [projectsRes, tasksRes, notesRes, linksRes, peopleRes] = await Promise.all([
     supabase.from('projects').select('*'),
-    supabase.from('project_tasks').select('*'),
+    supabase.from('project_tasks').select('*').order('created_at', { ascending: true }),
     supabase.from('project_notes').select('*'),
     supabase.from('project_links').select('*'),
     supabase.from('project_people').select('*'),
