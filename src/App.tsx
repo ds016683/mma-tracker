@@ -13,6 +13,7 @@ import { ProductionNetworksView } from './components/starset/ProductionNetworksV
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
+import { HospitalCoverageView } from './components/hospitals/HospitalCoverageView';
 import { ProductionProgressView } from './components/production/ProductionProgressView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
 
@@ -79,6 +80,7 @@ function AppInner({
         {activeView === 'regional-map' && <RegionalMapView />}
         {activeView === 'payer-networks' && <ProductionNetworksView />}
         {activeView === 'hospital-mrf-pipeline' && <ProductionProgressView />}
+        {activeView === 'hospital-coverage' && <HospitalCoverageView />}
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && <CallNotesView />}
       </main>
