@@ -115,15 +115,7 @@ function NoteCard({ note, expanded, onToggle }: { note: CallNote; expanded: bool
               return <p key={i} className="text-xs text-gray-600">{trimmed}</p>;
             })}
           </div>
-          {note.granola_web_url && (
-            <a href={note.granola_web_url} target="_blank" rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#234D8B] hover:underline">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3h3v3M13 3l-6 6M6 4H4a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Open in Granola
-            </a>
-          )}
+
         </div>
       )}
     </div>
