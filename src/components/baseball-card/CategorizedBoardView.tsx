@@ -283,9 +283,9 @@ function BaseballCard({
         </div>
       )}
 
-      {/* Expanded content — unchanged */}
+      {/* Expanded content — stop clicks from bubbling to card header toggle */}
       {isExpanded && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4" onClick={e => e.stopPropagation()}>
           <ExpandableCardContent
             project={project}
             onUpdate={onProjectUpdate}
