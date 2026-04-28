@@ -204,7 +204,7 @@ const PENDING_CARRIERS: PendingCarrier[] = [
     name: 'Healthcare Highways',
     region: 'Southwest',
     states: ['TX'],
-    agentNote: 'Regional TPA network concentrated in Texas. Not in TH dataset. Evaluate whether MRF filing exists and whether volume in MMA employer portfolio justifies addition.',
+    agentNote: 'UPDATE 2026-04-28: Healthcare Highways reached out proactively to Peter Schultz (MMA) after learning about the TiC-based network comparison tool. Steven Euler (AVP, Healthcare Economics) confirmed two TPA partners — 90 Degree Benefits and WebTPA — that publish plan-specific MRF rates on HCH\'s behalf. MRF links provided directly. This significantly advances their ingestion path: MRF sources are known and accessible. Next step: Peter or David to reply to Steven Euler, confirm network inclusion timeline, and hand off MRF URLs to Chris Hart for v9 data orders.',
   },
   {
     name: 'Geisinger Health Plan',
