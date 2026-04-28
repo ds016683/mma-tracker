@@ -74,11 +74,26 @@ export function ProjectPlanView() {
     setSyncing(true);
     setError(null);
     try {
-      // Signal VPS daemon via Supabase sentinel write
       const { supabase } = await import('../../lib/supabase/client');
-      await supabase.from('region_data').update({ updated_at: new Date().toISOString() }).eq('region_id', NOTION_SYNC_SENTINEL_REGION);
-      // Wait for daemon to complete full sync (~14s), then do a single clean fetch
-      await new Promise(r => setTimeout(r, 18000));
+      const triggerTime = new Date();
+      // Signal daemon to run sync
+      await supabase.from('region_data').update({ updated_at: triggerTime.toISOString() }).eq('region_id', NOTION_SYNC_SENTINEL_REGION);
+      // Poll sync control row until daemon marks sync_completed > sync_started (max 45s)
+      const deadline = Date.now() + 45000;
+      let done = false;
+      while (Date.now() < deadline && !done) {
+        await new Promise(r => setTimeout(r, 2500));
+        const { data } = await supabase.from('region_data').select('v7_coverage').eq('region_id', 0).single();
+        if (data?.v7_coverage) {
+          try {
+            const status = JSON.parse(data.v7_coverage as string);
+            const completed = new Date(status.sync_completed);
+            const started = new Date(status.sync_started);
+            if (completed > started && completed >= triggerTime) done = true;
+          } catch { /* continue polling */ }
+        }
+      }
+      // Sync is done (or timed out) — do one clean fetch
       const fresh = await fetchProjectsWithTasks();
       setProjects(fresh);
       setLastSync(new Date());
