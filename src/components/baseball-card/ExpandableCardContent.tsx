@@ -366,97 +366,52 @@ function RACISection({
   );
 }
 
-// ── Tasks (Monday-style board, scrollable) ────────────────────────────────────
+// ── Tasks / Phases (read-only — edit via Notion) ─────────────────────────────
 
-function TasksSection({ tasks, onChange }: { tasks: Task[]; onChange: (t: Task[]) => void }) {
-
-  function toggleDone(id: string) {
-    onChange(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  }
-
-  function removeTask(id: string) {
-    onChange(tasks.filter(t => t.id !== id));
-  }
-
+function TasksSection({ tasks }: { tasks: Task[] }) {
+  if (tasks.length === 0) return null;
+  const doneCount = tasks.filter(t => t.done).length;
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
         <CheckSquare className="h-4 w-4 text-gray-400" />
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Tasks</span>
-        <span className="ml-auto text-[10px] text-gray-300">{tasks.filter(t => t.done).length}/{tasks.length} done</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Phases</span>
+        <span className="ml-auto text-[10px] text-gray-300">{doneCount}/{tasks.length} complete</span>
       </div>
-
-      {/* Scrollable task list */}
-      <div className="max-h-72 overflow-y-auto px-4 py-2">
-        {tasks.length === 0 && (
-          <p className="py-4 text-center text-xs italic text-gray-300">No tasks yet — add from Monday.com or below</p>
-        )}
-
-        {/* Column headers */}
-        {tasks.length > 0 && (
-          <div className="mb-1 grid grid-cols-[1fr_auto_auto_auto] gap-2 border-b border-gray-100 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-300">
-            <span>Task</span>
-            <span className="w-20 text-center">Responsible</span>
-            <span className="w-20 text-center">Start</span>
-            <span className="w-20 text-center">Due</span>
-          </div>
-        )}
-
+      <div className="max-h-72 overflow-y-auto px-4 py-2 divide-y divide-gray-50">
         {tasks.map(task => (
-          <div
-            key={task.id}
-            className="group/task border-b border-gray-50 py-2 last:border-0"
-          >
-            <div className="grid grid-cols-[1fr_auto_auto_auto] items-start gap-2">
-              {/* Name + description */}
-              <div className="flex items-start gap-2 min-w-0">
-                <div
-                  className={`mt-0.5 h-4 w-4 shrink-0 rounded border ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
-                  title={task.done ? 'Complete (edit in Notion)' : 'In progress (edit in Notion)'}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-medium leading-tight ${task.done ? 'text-gray-300 line-through' : 'text-gray-700'}`}>
-                    {task.task_name || task.text}
-                  </p>
-                  {task.description && (
-                    <p className="mt-0.5 text-xs text-gray-400">{task.description}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => removeTask(task.id)}
-                  className="shrink-0 text-gray-200 opacity-0 hover:text-red-400 group-hover/task:opacity-100"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+          <div key={task.id} className="flex items-start gap-2 py-2">
+            {/* Read-only status indicator */}
+            <div
+              className={`mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
+              title="Edit phase status in Notion"
+            >
+              {task.done && (
+                <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`text-sm font-medium leading-tight ${task.done ? 'text-gray-300 line-through' : 'text-gray-700'}`}>
+                {task.task_name || task.text}
+              </p>
+              {task.description && (
+                <p className="mt-0.5 text-xs text-gray-400">{task.description}</p>
+              )}
+              <div className="mt-1 flex items-center gap-3 text-[10px] text-gray-400">
+                {task.assigned_to && <span>👤 {task.assigned_to}</span>}
+                {task.start_date && <span>📅 {task.start_date}</span>}
+                {task.due_date && <span>🏁 {task.due_date}</span>}
               </div>
-
-              {/* Responsible */}
-              <span className="w-20 truncate text-center text-xs text-gray-500">
-                {task.assigned_to || <span className="text-gray-200">—</span>}
-              </span>
-
-              {/* Start date */}
-              <span className="w-20 text-center text-xs text-gray-400">
-                {task.start_date ? formatDate(task.start_date) : <span className="text-gray-200">—</span>}
-              </span>
-
-              {/* Due date */}
-              <span className={`w-20 text-center text-xs font-medium ${getDueDateClass(task.due_date, task.done)}`}>
-                {task.due_date ? formatDate(task.due_date) : <span className="text-gray-200 font-normal">—</span>}
-              </span>
             </div>
           </div>
         ))}
-
-
-      </div>
-
-      <div className="border-t border-gray-100 px-4 py-2">
-        <p className="text-[10px] italic text-gray-300">Tasks sync from Monday.com</p>
       </div>
     </div>
   );
 }
+
 
 // ── Resources (formerly Links) ────────────────────────────────────────────────
 
