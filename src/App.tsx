@@ -14,6 +14,7 @@ import { HaikuAssistant } from './components/ai/HaikuAssistant';
 import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 import { ProductionProgressView } from './components/production/ProductionProgressView';
+import { CallNotesView } from './components/call-notes/CallNotesView';
 
 // Placeholder for views coming soon
 function PlaceholderView({ title, subtitle }: { title: string; subtitle: string }) {
@@ -97,9 +98,7 @@ function AppInner({
         {activeView === 'production-networks' && <ProductionNetworksView />}
         {activeView === 'production-progress' && <ProductionProgressView />}
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
-        {activeView === 'call-notes' && (
-          <PlaceholderView title="Call Notes" subtitle="Granola integration wired — sync coming soon" />
-        )}
+        {activeView === 'call-notes' && <CallNotesView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
