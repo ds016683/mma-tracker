@@ -62,16 +62,10 @@ export function GanttView() {
     try {
       const { supabase } = await import('../../lib/supabase/client');
       await supabase.from('region_data').update({ updated_at: new Date().toISOString() }).eq('region_id', 1);
-      let attempts = 0;
-      const before = new Date().toISOString();
-      while (attempts < 10) {
-        await new Promise(r => setTimeout(r, 2000));
-        const fresh = await fetchProjectsWithTasks();
-        if (fresh.some(p => p.last_activity_at > before) || attempts >= 8) {
-          setProjects(fresh); setLastSync(new Date()); break;
-        }
-        attempts++;
-      }
+      await new Promise(r => setTimeout(r, 18000));
+      const fresh = await fetchProjectsWithTasks();
+      setProjects(fresh);
+      setLastSync(new Date());
     } catch (e) { setError((e as Error).message); }
     finally { setSyncing(false); }
   }, []);
