@@ -72,6 +72,7 @@ export function HospitalCoverageView() {
   const [cbsaSearch, setCbsaSearch] = useState('');
   const [nameSearch, setNameSearch] = useState('');
   const [activeMrfOnly, setActiveMrfOnly] = useState(false);
+  const [noMrfOnly, setNoMrfOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState('');
   const [sortField, setSortField] = useState<SortField>('net_patient_revenue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -88,6 +89,7 @@ export function HospitalCoverageView() {
 
     if (stateFilter) q = q.eq('state', stateFilter);
     if (activeMrfOnly) q = q.eq('active_mrf', true);
+    if (noMrfOnly) q = q.eq('active_mrf', false);
     if (typeFilter) q = q.eq('facility_type', typeFilter);
     if (nameSearch.trim()) q = q.ilike('facility_name', `%${nameSearch.trim()}%`);
     if (cbsaSearch.trim()) q = q.ilike('cbsa_name', `%${cbsaSearch.trim()}%`);
@@ -100,10 +102,17 @@ export function HospitalCoverageView() {
       setTotal(count ?? 0);
     }
     setLoading(false);
-  }, [page, stateFilter, cbsaSearch, nameSearch, activeMrfOnly, typeFilter, sortField, sortDir]);
+  }, [page, stateFilter, cbsaSearch, nameSearch, activeMrfOnly, noMrfOnly, typeFilter, sortField, sortDir]);
 
-  useEffect(() => { fetchData(true); }, [stateFilter, cbsaSearch, nameSearch, activeMrfOnly, typeFilter, sortField, sortDir]);
+  useEffect(() => { fetchData(true); }, [stateFilter, cbsaSearch, nameSearch, activeMrfOnly, noMrfOnly, typeFilter, sortField, sortDir]);
   useEffect(() => { fetchData(); }, [page]);
+
+  const toggleActiveMrf = () => {
+    setActiveMrfOnly(v => { if (!v) setNoMrfOnly(false); return !v; });
+  };
+  const toggleNoMrf = () => {
+    setNoMrfOnly(v => { if (!v) setActiveMrfOnly(false); return !v; });
+  };
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
@@ -115,6 +124,7 @@ export function HospitalCoverageView() {
     let q = supabase.from('hospital_directory').select('*').limit(10000);
     if (stateFilter) q = q.eq('state', stateFilter);
     if (activeMrfOnly) q = q.eq('active_mrf', true);
+    if (noMrfOnly) q = q.eq('active_mrf', false);
     if (typeFilter) q = q.eq('facility_type', typeFilter);
     if (nameSearch.trim()) q = q.ilike('facility_name', `%${nameSearch.trim()}%`);
     if (cbsaSearch.trim()) q = q.ilike('cbsa_name', `%${cbsaSearch.trim()}%`);
@@ -198,14 +208,24 @@ export function HospitalCoverageView() {
           </select>
 
           {/* Active MRF toggle */}
-          <button onClick={() => setActiveMrfOnly(v => !v)}
+          <button onClick={toggleActiveMrf}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
               activeMrfOnly
-                ? 'border-[#009DE0] bg-[#009DE0]/10 text-[#009DE0]'
+                ? 'border-green-500 bg-green-50 text-green-700'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
             }`}>
             <Filter className="h-4 w-4" />
-            Active MRF Only
+            Active MRF
+          </button>
+
+          <button onClick={toggleNoMrf}
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              noMrfOnly
+                ? 'border-red-400 bg-red-50 text-red-600'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+            }`}>
+            <Filter className="h-4 w-4" />
+            No Hospital MRF
           </button>
 
           {/* Stats */}
