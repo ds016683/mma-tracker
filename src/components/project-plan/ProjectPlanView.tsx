@@ -59,7 +59,12 @@ export function ProjectPlanView() {
     setError(null);
     try {
       const data = await fetchProjectsWithTasks();
-      setProjects(data);
+      // Normalize: projects with no category fall into Extraneous
+      const normalized = data.map(p => ({
+        ...p,
+        category: p.category?.trim() || 'Extraneous',
+      }));
+      setProjects(normalized);
       setLastSync(new Date());
     } catch (e) {
       setError((e as Error).message);
@@ -95,7 +100,7 @@ export function ProjectPlanView() {
       }
       // Sync is done (or timed out) — do one clean fetch
       const fresh = await fetchProjectsWithTasks();
-      setProjects(fresh);
+      setProjects(fresh.map(p => ({ ...p, category: p.category?.trim() || 'Extraneous' })));
       setLastSync(new Date());
     } catch (e) {
       setError((e as Error).message);
@@ -118,7 +123,7 @@ export function ProjectPlanView() {
           <div>
             <h1 className="text-lg font-bold text-[#224057]">Project Plan</h1>
             <p className="text-xs text-gray-400 mt-0.5">
-              Live from Notion · MMA Project Plan
+              Live from Notion · {projects.length} projects
               {lastSync && <span> · Synced {lastSync.toLocaleTimeString()}</span>}
             </p>
           </div>
