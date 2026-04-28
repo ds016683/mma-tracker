@@ -13,6 +13,8 @@ interface NetworkEntry {
   lastUpdated: string;
   version: string;
   isMMA?: boolean;
+  states?: string[];
+  color?: string;
 }
 
 interface CarrierGroup {
@@ -61,18 +63,10 @@ export function ProductionNetworksView() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
-        {activeTab === 'mma' && (
-          <Tab1MMANetworks />
-        )}
-        {activeTab === 'full' && (
-          <Tab2FullList />
-        )}
-        {activeTab === 'v9' && (
-          <Tab3V9Networks />
-        )}
-        {activeTab === 'v10' && (
-          <EmptyTab label="Networks for v10 Production" />
-        )}
+        {activeTab === 'mma' && <Tab1MMANetworks />}
+        {activeTab === 'full' && <Tab2FullList />}
+        {activeTab === 'v9' && <Tab3V9Networks />}
+        {activeTab === 'v10' && <EmptyTab label="Networks for v10 Production" />}
       </div>
     </div>
   );
@@ -128,7 +122,6 @@ function Tab2FullList() {
         ))}
       </div>
 
-      {/* Footnote */}
       <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-500">
         <span className="font-semibold text-[#001A41]">*</span> Networks marked with an asterisk are currently in MMA Network Navigator production (v8, Feb 2026).
       </div>
@@ -155,7 +148,6 @@ function CarrierCard({ carrier, showMMABadge }: { carrier: CarrierGroup & { netw
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      {/* Carrier header */}
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50"
@@ -180,26 +172,24 @@ function CarrierCard({ carrier, showMMABadge }: { carrier: CarrierGroup & { netw
         </span>
       </button>
 
-      {/* Network rows */}
       {open && (
         <div className="border-t border-gray-100">
           {/* Column headers */}
           <div className="grid grid-cols-12 gap-2 border-b border-gray-50 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            <div className="col-span-4">Network Name</div>
+            <div className="col-span-3">Network Name</div>
             <div className="col-span-3">Plan ID</div>
             <div className="col-span-2">Type</div>
             <div className="col-span-2">Last Updated</div>
             <div className="col-span-1">Version</div>
+            <div className="col-span-1">States</div>
           </div>
 
           {carrier.networks.map((network) => (
             <div
               key={network.name}
-              className={`grid grid-cols-12 gap-2 border-b border-gray-50 px-4 py-2.5 text-sm last:border-0 ${
-                showMMABadge && network.isMMA ? 'bg-white' : 'bg-white'
-              }`}
+              className="grid grid-cols-12 gap-2 border-b border-gray-50 px-4 py-2.5 text-sm last:border-0 bg-white"
             >
-              <div className="col-span-4 flex items-center gap-1.5 font-medium text-gray-800">
+              <div className="col-span-3 flex items-center gap-1.5 font-medium text-gray-800">
                 {showMMABadge && network.isMMA && (
                   <span className="font-bold text-[#009DE0]">*</span>
                 )}
@@ -221,6 +211,11 @@ function CarrierCard({ carrier, showMMABadge }: { carrier: CarrierGroup & { netw
               <div className="col-span-1 self-center text-xs text-gray-400">
                 {network.version || <span className="text-gray-300">—</span>}
               </div>
+              <div className="col-span-1 self-center">
+                {network.states && network.states.length > 0 ? (
+                  <span className="text-xs text-gray-500">{network.states.join(', ')}</span>
+                ) : <span className="text-gray-300 text-xs">—</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -229,42 +224,67 @@ function CarrierCard({ carrier, showMMABadge }: { carrier: CarrierGroup & { netw
   );
 }
 
-interface V9Carrier {
+// ─── Tab 3: v9 Production Networks ────────────────────────────────────────────
+
+interface V9NetworkEntry {
   name: string;
-  region: string;
+  planId: string;
+  networkType: string;
+  lastUpdated: string;
+  version: string;
   states: string[];
-  status: string;
-  networks: { name: string; planId: string; networkType: string; lastUpdated: string; version: string }[];
+  color: string;
 }
 
+interface V9CarrierGroup {
+  name: string;
+  networks: V9NetworkEntry[];
+}
+
+const COLOR_LABELS: Record<string, { label: string; bg: string; text: string }> = {
+  green:  { label: 'New Addition — Data Enhancement', bg: 'bg-green-50',  text: 'text-green-700'  },
+  purple: { label: 'New Addition — Schedule E',       bg: 'bg-purple-50', text: 'text-purple-700' },
+  orange: { label: 'Expanded BUCA File',              bg: 'bg-orange-50', text: 'text-orange-700' },
+};
+
 function Tab3V9Networks() {
-  const carriers = tab3Data as V9Carrier[];
+  const carriers = tab3Data as V9CarrierGroup[];
+  const totalNetworks = carriers.reduce((s, c) => s + c.networks.length, 0);
+  const greenCount  = carriers.reduce((s, c) => s + c.networks.filter(n => n.color === 'green').length, 0);
+  const purpleCount = carriers.reduce((s, c) => s + c.networks.filter(n => n.color === 'purple').length, 0);
+  const orangeCount = carriers.reduce((s, c) => s + c.networks.filter(n => n.color === 'orange').length, 0);
+
   return (
     <div className="max-w-5xl">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <span className="rounded-full bg-[#001A41] px-3 py-1 text-xs font-semibold text-white">
-          {carriers.length} payers under evaluation
+          {carriers.length} carriers
         </span>
-        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-          Network names TBD — pending MRF sourcing
+        <span className="rounded-full bg-[#009DE0]/10 px-3 py-1 text-xs font-semibold text-[#009DE0]">
+          {totalNetworks} networks
+        </span>
+        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+          {greenCount} new additions (data enh.)
+        </span>
+        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
+          {purpleCount} new additions (Schedule E)
+        </span>
+        <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+          {orangeCount} expanded BUCA files
         </span>
       </div>
+
       <div className="space-y-2">
         {carriers.map((carrier) => (
           <V9CarrierCard key={carrier.name} carrier={carrier} />
         ))}
       </div>
-      <div className="mt-6 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-        <span className="font-semibold">Note:</span> Network product names (PPO, HMO, POS, etc.) are pending confirmation from MMA regional leads and Chris Hart. Specific network files must be identified before MRF data orders can be placed for v9 processing.
-      </div>
     </div>
   );
 }
 
-function V9CarrierCard({ carrier }: { carrier: V9Carrier }) {
+function V9CarrierCard({ carrier }: { carrier: V9CarrierGroup }) {
   const [open, setOpen] = useState(false);
-  const isTHDataset = carrier.status.includes('TH dataset');
-  const isConditional = carrier.status.includes('TBD') || carrier.status.includes('Chris Hart');
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -278,43 +298,62 @@ function V9CarrierCard({ carrier }: { carrier: V9Carrier }) {
             : <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
           }
           <span className="font-semibold text-[#001A41]">{carrier.name}</span>
-          {isTHDataset && (
-            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
-              In TH dataset
-            </span>
-          )}
-          {isConditional && (
-            <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600">
-              Conditional
-            </span>
-          )}
         </div>
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span>{carrier.region}</span>
-          <span>{carrier.states.join(', ')}</span>
-        </div>
+        <span className="text-xs text-gray-400">
+          {carrier.networks.length} network{carrier.networks.length !== 1 ? 's' : ''}
+        </span>
       </button>
+
       {open && (
         <div className="border-t border-gray-100">
-          <div className="px-4 py-2.5 bg-gray-50 text-xs text-gray-500 italic">
-            {carrier.status}
-          </div>
+          {/* Column headers */}
           <div className="grid grid-cols-12 gap-2 border-b border-gray-50 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            <div className="col-span-4">Network Name</div>
+            <div className="col-span-3">Network Name</div>
             <div className="col-span-3">Plan ID</div>
             <div className="col-span-2">Type</div>
             <div className="col-span-2">Last Updated</div>
             <div className="col-span-1">Version</div>
+            <div className="col-span-1">States</div>
           </div>
-          {carrier.networks.map((network, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 border-b border-gray-50 px-4 py-2.5 text-sm last:border-0">
-              <div className="col-span-4 font-medium text-amber-600 italic">{network.name}</div>
-              <div className="col-span-3 text-gray-300 text-xs self-center">—</div>
-              <div className="col-span-2 text-gray-300 text-xs self-center">—</div>
-              <div className="col-span-2 text-gray-300 text-xs self-center">—</div>
-              <div className="col-span-1 text-gray-300 text-xs self-center">—</div>
-            </div>
-          ))}
+
+          {carrier.networks.map((network) => {
+            const colorMeta = COLOR_LABELS[network.color] ?? null;
+            return (
+              <div
+                key={network.planId}
+                className="border-b border-gray-50 px-4 py-2.5 last:border-0 bg-white"
+              >
+                <div className="grid grid-cols-12 gap-2 text-sm">
+                  <div className="col-span-3 font-medium text-gray-800 flex flex-col gap-1">
+                    {network.name}
+                    {colorMeta && (
+                      <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${colorMeta.bg} ${colorMeta.text} w-fit`}>
+                        {colorMeta.label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="col-span-3 font-mono text-xs text-gray-500 self-center">
+                    {network.planId || <span className="text-gray-300">—</span>}
+                  </div>
+                  <div className="col-span-2 self-center">
+                    {network.networkType
+                      ? <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{network.networkType}</span>
+                      : <span className="text-gray-300 text-xs">—</span>
+                    }
+                  </div>
+                  <div className="col-span-2 self-center text-xs text-gray-500">
+                    {network.lastUpdated}
+                  </div>
+                  <div className="col-span-1 self-center text-xs text-gray-400">
+                    {network.version}
+                  </div>
+                  <div className="col-span-1 self-center text-xs text-gray-500">
+                    {network.states.length > 0 ? network.states.join(', ') : <span className="text-gray-300">—</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
