@@ -228,7 +228,7 @@ export function ExpandableCardContent({ project, onUpdate, onPin, onDelete, read
       </div>
 
       {/* ── Tasks (full width, scrollable Monday-style board) ── */}
-      <TasksSection tasks={project.tasks} onChange={tasks => onUpdate(project.id, { tasks })} />
+      <TasksSection tasks={project.tasks} />
 
       {/* ── Resources + Notes (2-col) ── */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
