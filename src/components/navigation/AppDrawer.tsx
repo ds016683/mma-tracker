@@ -15,8 +15,10 @@ export type AppView =
   | 'data-intelligence'
   | 'reporting-queries'
   | 'regional-map'
-  | 'production-networks'
-  | 'production-progress'
+  | 'payer-networks'
+  | 'payer-mrf-pipeline'
+  | 'hospital-mrf-pipeline'
+  | 'hospital-coverage'
   | 'promise-health-plan'
   | 'call-notes';
 
@@ -59,12 +61,26 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Production & Region Engagement',
+    label: 'Region Engagement',
     defaultOpen: true,
     items: [
-      { id: 'regional-map',          label: 'Regional Map',        icon: Map },
-      { id: 'production-networks',   label: 'Production Networks', icon: Network },
-      { id: 'production-progress',   label: 'Production Progress', icon: Activity },
+      { id: 'regional-map', label: 'Regional Map', icon: Map },
+    ],
+  },
+  {
+    label: 'Payer MRF Processing Details',
+    defaultOpen: true,
+    items: [
+      { id: 'payer-networks',      label: 'Payer Networks',    icon: Network },
+      { id: 'payer-mrf-pipeline',  label: 'Payer MRF Pipeline', icon: BarChart2, badge: 'Soon' },
+    ],
+  },
+  {
+    label: 'Hospital MRF Processing Details',
+    defaultOpen: true,
+    items: [
+      { id: 'hospital-mrf-pipeline', label: 'Hospital MRF Pipeline', icon: Activity },
+      { id: 'hospital-coverage',     label: 'Hospital Coverage',      icon: Map, badge: 'Soon' },
     ],
   },
   {
