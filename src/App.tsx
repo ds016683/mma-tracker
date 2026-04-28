@@ -77,8 +77,8 @@ function AppInner({
         {activeView === 'data-intelligence' && <DataIntelligenceView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
-        {activeView === 'production-networks' && <ProductionNetworksView />}
-        {activeView === 'production-progress' && <ProductionProgressView />}
+        {activeView === 'payer-networks' && <ProductionNetworksView />}
+        {activeView === 'hospital-mrf-pipeline' && <ProductionProgressView />}
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && <CallNotesView />}
       </main>
