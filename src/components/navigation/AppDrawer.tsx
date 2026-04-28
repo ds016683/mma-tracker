@@ -41,7 +41,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'project-plan', label: 'Project Plan',   icon: FileText },
       { id: 'timeline',     label: 'Gantt Chart',    icon: GanttChart },
       { id: 'tracker',      label: 'Baseball Cards', icon: LayoutGrid },
-      { id: 'call-notes',   label: 'Call Notes',     icon: NotebookPen, badge: 'Soon' },
+      { id: 'call-notes',   label: 'Call Notes',     icon: NotebookPen },
     ],
   },
   {
