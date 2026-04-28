@@ -16,6 +16,24 @@ import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanVie
 import { ProductionProgressView } from './components/production/ProductionProgressView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
 
+/ trigger: monday-api-key-baked
+import { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ProjectsProvider, useProjects } from './contexts/ProjectsContext';
+import { AuthPage } from './components/auth/AuthPage';
+import { BaseballCardLayout } from './components/baseball-card/BaseballCardLayout';
+import { AppDrawer } from './components/navigation/AppDrawer';
+import type { AppView } from './components/navigation/AppDrawer';
+import { DataIntelligenceView } from './components/starset/DataIntelligenceView';
+import { ReportingQueriesView } from './components/starset/ReportingQueriesView';
+import { RegionalMapView } from './components/starset/RegionalMapView';
+import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
+import { HaikuAssistant } from './components/ai/HaikuAssistant';
+import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
+import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
+import { ProductionProgressView } from './components/production/ProductionProgressView';
+import { CallNotesView } from './components/call-notes/CallNotesView';
+
 // Placeholder for views coming soon
 function PlaceholderView({ title, subtitle }: { title: string; subtitle: string }) {
   return (
