@@ -25,6 +25,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: string;
+  href?: string;
 }
 
 interface NavGroup {
@@ -70,7 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Joint Project Work',
     defaultOpen: true,
     items: [
-      { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake },
+      { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake, href: 'https://promise-rate-intelligence.vercel.app' },
     ],
   },
 ];
