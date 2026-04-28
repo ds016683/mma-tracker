@@ -43,7 +43,7 @@ export interface ProjectWithTasks extends SupabaseProject {
 export async function fetchProjectsWithTasks(): Promise<ProjectWithTasks[]> {
   const [projRes, taskRes] = await Promise.all([
     supabase.from('projects').select('*').order('manual_rank', { ascending: true }),
-    supabase.from('project_tasks').select('*'),
+    supabase.from('project_tasks').select('*').order('created_at', { ascending: true }),
   ]);
   if (projRes.error) throw projRes.error;
   if (taskRes.error) throw taskRes.error;
