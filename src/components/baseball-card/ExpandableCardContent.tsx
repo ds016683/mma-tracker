@@ -596,18 +596,6 @@ function EditableField({ label, value, type = 'text', onSave }: { label: string;
   );
 }
 
-function getDueDateClass(dueDate: string | null | undefined, done: boolean): string {
-  if (!dueDate || done) return 'text-gray-400';
-  const now = Date.now();
-  const due = new Date(dueDate).getTime();
-  if (due < now) return 'text-red-500';
-  if (due - now <= 3 * 86_400_000) return 'text-amber-500';
-  return 'text-gray-400';
-}
 
-function formatDate(dateStr: string): string {
-  try { return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
-  catch { return dateStr; }
-}
 
 
