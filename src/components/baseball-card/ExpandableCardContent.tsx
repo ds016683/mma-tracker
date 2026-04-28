@@ -372,7 +372,7 @@ function TasksSection({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) return null;
   const doneCount = tasks.filter(t => t.done).length;
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm select-none">
       <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
         <CheckSquare className="h-4 w-4 text-gray-400" />
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Phases</span>
@@ -383,7 +383,7 @@ function TasksSection({ tasks }: { tasks: Task[] }) {
           <div key={task.id} className="flex items-start gap-2 py-2">
             {/* Read-only status indicator */}
             <div
-              className={`mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
+              className={`mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center pointer-events-none cursor-default ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
               title="Edit phase status in Notion"
             >
               {task.done && (
