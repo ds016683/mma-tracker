@@ -74,19 +74,14 @@ export function ProjectPlanView() {
     setSyncing(true);
     setError(null);
     try {
-      // Signal VPS daemon via Supabase sentinel write (HTTPS, no mixed content)
+      // Signal VPS daemon via Supabase sentinel write
       const { supabase } = await import('../../lib/supabase/client');
       await supabase.from('region_data').update({ updated_at: new Date().toISOString() }).eq('region_id', NOTION_SYNC_SENTINEL_REGION);
-      // Poll for fresh data
-      let attempts = 0;
-      const before = new Date().toISOString();
-      while (attempts < 10) {
-        await new Promise(r => setTimeout(r, 2000));
-        const fresh = await fetchProjectsWithTasks();
-        const updated = fresh.some(p => p.last_activity_at > before);
-        if (updated || attempts >= 8) { setProjects(fresh); setLastSync(new Date()); break; }
-        attempts++;
-      }
+      // Wait for daemon to complete full sync (~14s), then do a single clean fetch
+      await new Promise(r => setTimeout(r, 18000));
+      const fresh = await fetchProjectsWithTasks();
+      setProjects(fresh);
+      setLastSync(new Date());
     } catch (e) {
       setError((e as Error).message);
     } finally {
