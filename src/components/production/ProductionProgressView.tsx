@@ -93,14 +93,19 @@ function PipelineGauge({ data, source }: { data: PipelineData; source: number })
 
       {/* Tick labels — main pipeline */}
       <div className="relative mt-2" style={{ height: 40 }}>
-        {mainTicks.map(tick => (
-          <div key={tick.label}
-            className="absolute flex flex-col items-center"
-            style={{ left: `${tick.position}%`, transform: 'translateX(-50%)' }}>
-            <span className="text-[10px] font-semibold text-[#224057] whitespace-nowrap">{tick.label}</span>
-            <span className="text-[11px] font-bold text-gray-700">{fmt(tick.count)}</span>
-          </div>
-        ))}
+        {mainTicks.map(tick => {
+          const isFirst = tick.position === 0;
+          const isLast = tick.position === 100;
+          const transform = isFirst ? 'translateX(0)' : isLast ? 'translateX(-100%)' : 'translateX(-50%)';
+          return (
+            <div key={tick.label}
+              className="absolute flex flex-col items-center"
+              style={{ left: `${tick.position}%`, transform }}>
+              <span className="text-[10px] font-semibold text-[#224057] whitespace-nowrap">{tick.label}</span>
+              <span className="text-[11px] font-bold text-gray-700">{fmt(tick.count)}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Branch indicators */}
