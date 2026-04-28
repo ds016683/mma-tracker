@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight, RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
 import { fetchProjectsWithTasks, type ProjectWithTasks } from '../../lib/supabase/notionProjectQueries';
+import { useProjects } from '../../contexts/ProjectsContext';
 
 const NOTION_DB_URL = 'https://www.notion.so/34f750fa613d811d9455c9d4916b8483';
 const NOTION_SYNC_SENTINEL_REGION = 1;
@@ -51,6 +52,7 @@ export function ProjectPlanView() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const { refetch: refetchBaseballCards } = useProjects();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
@@ -102,12 +104,14 @@ export function ProjectPlanView() {
       const fresh = await fetchProjectsWithTasks();
       setProjects(fresh.map(p => ({ ...p, category: p.category?.trim() || 'Extraneous' })));
       setLastSync(new Date());
+      // Refresh baseball cards too so they get the new sort order
+      await refetchBaseballCards();
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setSyncing(false);
     }
-  }, []);
+  }, [refetchBaseballCards]);
 
   // Group by category
   const grouped = CATEGORY_ORDER.reduce<Record<string, ProjectWithTasks[]>>((acc, cat) => {
