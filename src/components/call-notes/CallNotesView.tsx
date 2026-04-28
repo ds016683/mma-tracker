@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
-import ReactMarkdown from 'react-markdown';
 
 interface CallNote {
   id: string;
@@ -108,8 +107,22 @@ function NoteCard({ note, expanded, onToggle }: { note: CallNote; expanded: bool
       {expanded && hasSummary && (
         <div className="px-5 pb-5">
           <div className="w-full h-px bg-gray-100 mb-4" />
-          <div className="prose prose-sm max-w-none prose-headings:text-[#224057] prose-headings:font-semibold prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1 prose-p:text-gray-600 prose-li:text-gray-600 prose-li:text-xs prose-p:text-xs">
-            <ReactMarkdown>{note.summary_markdown || ''}</ReactMarkdown>
+          <div className="space-y-1">
+            {(note.summary_markdown || '').split('\n').map((line, i) => {
+              const trimmed = line.trim();
+              if (!trimmed) return <div key={i} className="h-2" />;
+              if (trimmed.startsWith('### ')) return <h3 key={i} className="text-xs font-bold text-[#224057] mt-3 mb-1">{trimmed.replace(/^### /, '')}</h3>;
+              if (trimmed.startsWith('## ')) return <h2 key={i} className="text-sm font-bold text-[#224057] mt-4 mb-1">{trimmed.replace(/^## /, '')}</h2>;
+              if (trimmed.startsWith('# ')) return <h1 key={i} className="text-sm font-bold text-[#224057] mt-4 mb-1">{trimmed.replace(/^# /, '')}</h1>;
+              if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                const depth = (line.match(/^(\s+)/) || ['',''])[1].length;
+                return <div key={i} className="flex gap-2 text-xs text-gray-600" style={{paddingLeft: depth * 8 + 8}}>
+                  <span className="text-gray-400 mt-0.5 flex-shrink-0">•</span>
+                  <span>{trimmed.replace(/^[-*] /, '')}</span>
+                </div>;
+              }
+              return <p key={i} className="text-xs text-gray-600">{trimmed}</p>;
+            })}
           </div>
           {note.granola_web_url && (
             <a href={note.granola_web_url} target="_blank" rel="noopener noreferrer"
