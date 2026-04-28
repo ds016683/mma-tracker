@@ -80,7 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'hospital-mrf-pipeline', label: 'Hospital MRF Pipeline', icon: Activity },
-      { id: 'hospital-coverage',     label: 'Hospital Coverage',      icon: Map, badge: 'Soon' },
+      { id: 'hospital-coverage',     label: 'Hospital Coverage',      icon: Map },
     ],
   },
   {
