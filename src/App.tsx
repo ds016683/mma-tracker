@@ -34,7 +34,13 @@ function PlaceholderView({ title, subtitle }: { title: string; subtitle: string 
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const [activeView, setActiveView] = useState<AppView>('tracker');
+  const [activeView, setActiveViewRaw] = useState<AppView>(
+    () => (localStorage.getItem('mma-active-view') as AppView) ?? 'tracker'
+  );
+  const setActiveView = (view: AppView) => {
+    setActiveViewRaw(view);
+    localStorage.setItem('mma-active-view', view);
+  };;
 
   if (loading) {
     return (
