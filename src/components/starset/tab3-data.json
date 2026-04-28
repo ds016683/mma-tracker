@@ -1,114 +1,1118 @@
 [
   {
-    "name": "PacificSource Health Plans",
-    "region": "Northwest",
-    "states": ["OR", "ID", "MT"],
-    "mmaRegion": 1,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "name": "Anthem BC CA",
+    "networks": [
+      {
+        "name": "Anthem Blue Cross CA Blue High Performance",
+        "planId": "BCBS_040_05X0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "CA"
+        ],
+        "color": "purple"
+      }
+    ]
   },
   {
-    "name": "Providence Health",
-    "region": "Northwest",
-    "states": ["OR", "WA"],
-    "mmaRegion": 1,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "name": "Anthem BCBS CO",
+    "networks": [
+      {
+        "name": "Anthem BCBS CO Blue High Performance",
+        "planId": "BCBS_051_06X0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "CO"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS CT",
+    "networks": [
+      {
+        "name": "Anthem BCBS CT Blue High Performance",
+        "planId": "BCBS_062_07T0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "CT"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS Central",
+    "networks": [
+      {
+        "name": "Anthem BCBS IN HPN",
+        "planId": "BCBS_131_18P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "IN"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS KY Blue HIgh Performance",
+        "planId": "BCBS_161_21Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "KY"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS MO Blue HIgh Performance",
+        "planId": "BCBS_748_29S0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MO"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS OH HPN",
+        "planId": "BCBS_330_45P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OH"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS WI Blue High Performance",
+        "planId": "BCBS_458_68T0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WI"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS WI Blue Preferred POS",
+        "planId": "BCBS_458_68P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WI"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS GA",
+    "networks": [
+      {
+        "name": "Anthem BCBS GA Blue High Performance",
+        "planId": "BCBS_102_11R0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "GA"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS GA Blue Open Access POS",
+        "planId": "BCBS_102_11M0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "GA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS NH",
+    "networks": [
+      {
+        "name": "Anthem BCBS NH Blue Choice Open Access POS",
+        "planId": "BCBS_GHHSMEDNH01",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NH"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "Anthem BCBS NH HPN",
+        "planId": "BCBS_271_35U0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NH"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS NV",
+    "networks": [
+      {
+        "name": "Anthem BCBS NV HPN",
+        "planId": "BCBS_266_38P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NV"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS NY",
+    "networks": [
+      {
+        "name": "Empire BCBS NY Blue High Performance",
+        "planId": "BCBS_254_39X0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NY"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Anthem BCBS VA",
+    "networks": [
+      {
+        "name": "Anthem BCBS VA Blue High Performance",
+        "planId": "BCBS_425_61Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "VA"
+        ],
+        "color": "purple"
+      }
+    ]
   },
   {
     "name": "Asuris Northwest Health",
-    "region": "Northwest",
-    "states": ["WA", "ID", "OR"],
-    "mmaRegion": 1,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "networks": [
+      {
+        "name": "Asuris Preferred",
+        "planId": "ASUR_PREF_LZ",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "ID"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "BC Premera",
+    "networks": [
+      {
+        "name": "Premera BC WA Blue High Performance State-Wide",
+        "planId": "BCBS_430_65J1",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS AL",
+    "networks": [
+      {
+        "name": "BCBS AL Blue High Performance",
+        "planId": "BCBS_510_01I0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "AL"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS AZ",
+    "networks": [
+      {
+        "name": "BCBS AZ Alliance HPN",
+        "planId": "BCBS_030_03M0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "AZ"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Capital PA",
+    "networks": [
+      {
+        "name": "Capital BC PA Blue High Performance",
+        "planId": "BCBS_361_50Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS CareFirst",
+    "networks": [
+      {
+        "name": "CareFirst BCBS DC BlueChoice Alternate Network",
+        "planId": "BCBS_690_08N0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "DC"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "CareFirst BCBS DC HPN",
+        "planId": "BCBS_690_08Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "DC"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS FL",
+    "networks": [
+      {
+        "name": "BCBS FL NetworkBlue",
+        "planId": "BCBS_590_10P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "FL"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Highmark PA",
+    "networks": [
+      {
+        "name": "Highmark BCBS PA HPN",
+        "planId": "BCBS_378_49T0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Horizon NJ",
+    "networks": [
+      {
+        "name": "Horizon BCBS NJ HPN",
+        "planId": "BCBS_280_36R0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NJ"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS IL",
+    "networks": [
+      {
+        "name": "BCBS IL Blue High Performance",
+        "planId": "BCBS_121_16P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "IL"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Independence PA",
+    "networks": [
+      {
+        "name": "Independence BC PA HPN",
+        "planId": "BCBS_362_52V0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS KC",
+    "networks": [
+      {
+        "name": "BCBS KC Blue High Performance",
+        "planId": "BCBS_240_28Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MO"
+        ],
+        "color": "purple"
+      },
+      {
+        "name": "BCBS KC Preferred Care Blue PPO",
+        "planId": "BCBS_240_28G0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MO"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS LA",
+    "networks": [
+      {
+        "name": "BCBS LA HPN",
+        "planId": "BCBS_170_22T0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "LA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS MA",
+    "networks": [
+      {
+        "name": "BCBS MA Advantage Blue Performance",
+        "planId": "BCBS_700_23P0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS MI",
+    "networks": [
+      {
+        "name": "BCBS MI Blue High Performance",
+        "planId": "BCBS_710_26R0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MI"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS MN",
+    "networks": [
+      {
+        "name": "BCBS MN Blue High Performance",
+        "planId": "BCBS_720_27Q2",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MN"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS MS",
+    "networks": [
+      {
+        "name": "BCBS MS Blue Performance",
+        "planId": "BCBS_230_30G0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MS"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS NC",
+    "networks": [
+      {
+        "name": "BCBS NC Blue High Performance",
+        "planId": "BCBS_310_32Z0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NC"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS OK",
+    "networks": [
+      {
+        "name": "BCBS OK Blue High Performance",
+        "planId": "BCBS_340_46F0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OK"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS RI",
+    "networks": [
+      {
+        "name": "BCBS RI Blue High Performance",
+        "planId": "BCBS_370_55K0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "RI"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Regence OR",
+    "networks": [
+      {
+        "name": "Regence BCBS OR Oregon HPN",
+        "planId": "BCBS_850_47W0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OR"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS Regence UT",
+    "networks": [
+      {
+        "name": "Regence BCBS UT HPN",
+        "planId": "BCBS_410_60J0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "UT"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS SC",
+    "networks": [
+      {
+        "name": "BCBS SC HPN",
+        "planId": "BCBS_380_56H1",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "SC"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS TN",
+    "networks": [
+      {
+        "name": "BCBS TN Blue High Performance",
+        "planId": "BCBS_890_58A0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "TN"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BCBS TX",
+    "networks": [
+      {
+        "name": "BCBS TX Blue High Performance",
+        "planId": "BCBS_400_59T0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "TX"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BS CA",
+    "networks": [
+      {
+        "name": "BS CA Blue High Performance",
+        "planId": "BCBS_042_04Q0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "CA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "BS Regence WA",
+    "networks": [
+      {
+        "name": "Regence BS WA HPN",
+        "planId": "BCBS__932_67N0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WA"
+        ],
+        "color": "purple"
+      }
+    ]
+  },
+  {
+    "name": "Cigna",
+    "networks": [
+      {
+        "name": "Cigna LocalPlus",
+        "planId": "CIGNA_LP_PATH",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "US"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "Cigna MVP",
+        "planId": "CIGNA_MVP_MV",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NY"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "Cigna MVP",
+        "planId": "CIGNA_MVP",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NY"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "Cigna OAP",
+        "planId": "CIGNA_OAP_PATH",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "US"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "Cigna Sagamore Health Network",
+        "planId": "CIGNA_SAG",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "IN"
+        ],
+        "color": "orange"
+      }
+    ]
   },
   {
     "name": "First Choice Health",
-    "region": "Northwest",
-    "states": ["WA", "MT", "ID", "WY"],
-    "mmaRegion": 1,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "networks": [
+      {
+        "name": "First Choice Health",
+        "planId": "FCH_TPA",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "ID",
+          "MT",
+          "WA",
+          "WY"
+        ],
+        "color": "green"
+      }
+    ]
   },
   {
-    "name": "HAP (Health Alliance Plan)",
-    "region": "Midwest",
-    "states": ["MI"],
-    "mmaRegion": 5,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "name": "Health Alliance Plan",
+    "networks": [
+      {
+        "name": "Health Alliance Plan AHLD PPO",
+        "planId": "HAP_AHLD_PPO",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MI"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "Health Alliance Plan HPOS POS",
+        "planId": "HAP_HPOS_POS",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MI"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "Health Alliance Plan OPEN HMO",
+        "planId": "HAP_OPEN_HMO",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MI"
+        ],
+        "color": "green"
+      }
+    ]
   },
   {
-    "name": "Cofinity",
-    "region": "Midwest",
-    "states": ["MI"],
-    "mmaRegion": 5,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
-  },
-  {
-    "name": "Healthcare Highways",
-    "region": "Southwest",
-    "states": ["TX"],
-    "mmaRegion": 4,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
-  },
-  {
-    "name": "Geisinger Health Plan",
-    "region": "Greater Northeast",
-    "states": ["PA"],
-    "mmaRegion": 8,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
-  },
-  {
-    "name": "UPMC Health Plan",
-    "region": "Greater Northeast",
-    "states": ["PA"],
-    "mmaRegion": 8,
-    "status": "v9 candidate",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
-  },
-  {
-    "name": "UHC Florida (NHP)",
-    "region": "Florida",
-    "states": ["FL"],
-    "mmaRegion": 7,
-    "status": "v9 candidate — clarify specific network",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
-  },
-  {
-    "name": "Sentara",
-    "region": "Mid-Atlantic",
-    "states": ["VA", "NC", "WV", "MD"],
-    "mmaRegion": 10,
-    "status": "In TH dataset (Not Included for MMA) — verify MRF currency",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "name": "Health Care Service Corporation",
+    "networks": [
+      {
+        "name": "HCSC BCBS of Oklahoma Blue Preferred PPO",
+        "planId": "HCSC_BCBS_340_46F0",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OK"
+        ],
+        "color": "purple"
+      }
+    ]
   },
   {
     "name": "Medcost",
-    "region": "Mid-Atlantic",
-    "states": ["NC", "SC"],
-    "mmaRegion": 10,
-    "status": "Not in MRF — pilot data usability TBD (Chris Hart to advise)",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "networks": [
+      {
+        "name": "Medcost Preferred",
+        "planId": "MED_PREF",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NC"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "Midlands Choice",
+    "networks": [
+      {
+        "name": "Midlands Choice with Mayo",
+        "planId": "MID_2E",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MN"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "PacificSource Health Plans",
+    "networks": [
+      {
+        "name": "PacificSource ID Navigator",
+        "planId": "PS_NAV_ID",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "ID"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource ID Voyager",
+        "planId": "PS_VOY_ID",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "ID"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource MT Navigator",
+        "planId": "PS_NAV_MT",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MT"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource MT Voyager",
+        "planId": "PS_VOY_MT",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MT"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource OR Navigator",
+        "planId": "PS_NAV_OR",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OR"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource OR Voyager",
+        "planId": "PS_VOY_OR",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OR"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource WA Navigator",
+        "planId": "PS_NAV_WA",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WA"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "PacificSource WA Voyager",
+        "planId": "PS_VOY_WA",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WA"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "Providence Health Plan",
+    "networks": [
+      {
+        "name": "Providence Health Plan Option Advantage",
+        "planId": "PHP_OPTIONADV_PREM",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OR",
+          "WA"
+        ],
+        "color": "green"
+      }
+    ]
   },
   {
     "name": "Sanford Health Plan",
-    "region": "Upper Midwest",
-    "states": ["ND", "SD", "MN", "WI"],
-    "mmaRegion": 6,
-    "status": "In TH dataset (Not Included for MMA) — SHP Health Plan. Confirm WI/Eau Claire coverage scope.",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "networks": [
+      {
+        "name": "Sanford Health Plan",
+        "planId": "SAN_SHP",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MN",
+          "ND",
+          "SD",
+          "WI"
+        ],
+        "color": "green"
+      }
+    ]
   },
   {
-    "name": "Security Health Plan of Wisconsin",
-    "region": "Upper Midwest",
-    "states": ["WI"],
-    "mmaRegion": 6,
-    "status": "v9 candidate — Marshfield Clinic affiliate; covers Eau Claire market. Not in TH dataset. New MRF order required.",
-    "networks": [{"name": "TBD", "planId": "", "networkType": "", "lastUpdated": "", "version": ""}]
+    "name": "Security Health Plan",
+    "networks": [
+      {
+        "name": "SHP HMO NetworkX",
+        "planId": "SEC_HMO_X",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WI"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "Sentara",
+    "networks": [
+      {
+        "name": "Sentara HMO",
+        "planId": "SEN_HMO",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MD",
+          "NC",
+          "VA",
+          "WV"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "Sentara OHIC PPO",
+        "planId": "SEN_OHIC_PPO",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "MD",
+          "NC",
+          "VA",
+          "WV"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "UPMC Health Plan",
+    "networks": [
+      {
+        "name": "UPMC Premium",
+        "planId": "UPMC_PRE",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "UPMC Standard",
+        "planId": "UPMC_STD",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "green"
+      },
+      {
+        "name": "UPMC Total Advantage",
+        "planId": "UPMC_ADV",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "PA"
+        ],
+        "color": "green"
+      }
+    ]
+  },
+  {
+    "name": "United Healthcare (UHC)",
+    "networks": [
+      {
+        "name": "UHC Choice POS Plus",
+        "planId": "UHC_PS1_NY",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "NY"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "UHC Choice POS Plus",
+        "planId": "UHC_PS1_IL",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "IL"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "UHC Choice POS Plus",
+        "planId": "UHC_PS1_CA",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "CA"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "UHC Choice POS Plus",
+        "planId": "UHC_PS1_OR",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "OR"
+        ],
+        "color": "orange"
+      },
+      {
+        "name": "UHC Choice POS Plus",
+        "planId": "UHC_PS1_WA",
+        "networkType": "",
+        "lastUpdated": "2026-04-20",
+        "version": "v9",
+        "states": [
+          "WA"
+        ],
+        "color": "orange"
+      }
+    ]
   }
 ]
