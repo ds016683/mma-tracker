@@ -34,8 +34,7 @@ import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanVie
 import { ProductionProgressView } from './components/production/ProductionProgressView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
 
-// Placeholder for views coming soon
-function PlaceholderView({ title, subtitle }: { title: string; subtitle: string }) {
+: { title: string; subtitle: string }) {
   return (
     <div className="flex h-screen flex-col bg-mma-light-bg">
       <div className="border-b border-gray-200 bg-white px-6 py-4">
@@ -130,3 +129,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+
