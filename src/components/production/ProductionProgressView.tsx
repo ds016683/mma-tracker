@@ -39,25 +39,38 @@ interface PipelineStats {
 }
 
 // ── Fallback synthetic data (shown when live=false or fetch fails) ─────────────
+// Pipeline stages that exist vs pending per version
+// v9: Source + Staging are real BQ data. PP0+ not yet available (pipeline in build).
+// v8: Staging data exists in BQ (Region 2 only transferred). PP0+ not tracked.
+const STAGE_AVAILABILITY: Record<string, { staging: boolean; pp0: boolean; postProcessing: boolean }> = {
+  'v9 (Active)':   { staging: true,  pp0: false, postProcessing: false },
+  'v8 (Baseline)': { staging: true,  pp0: false, postProcessing: false },
+};
+
 const SYNTHETIC: Record<string, PipelineStats> = {
   'v9 (Active)': {
+    // Real: from mrf_hospital_metadata_data_orders_2026_04v9 in BQ
     source_total: 4868,
     staging_passed: 1571,
     staging_rejected: 3,
-    pp0_passed: 4827,
-    rescue_queue: 33,
-    post_processing_passed: 4827,
-    qa_needs_review: 33,
+    // Pending: v9 PP0/post-processing pipeline tables not yet built (target 5/4)
+    pp0_passed: 0,
+    rescue_queue: 0,
+    post_processing_passed: 0,
+    qa_needs_review: 0,
     not_started: 134,
   },
   'v8 (Baseline)': {
-    source_total: 2614,
-    staging_passed: 2401,
-    staging_rejected: 213,
-    pp0_passed: 2289,
-    rescue_queue: 112,
-    post_processing_passed: 2184,
-    qa_needs_review: 45,
+    // Real: ~4,500 distinct hospital NPIs per Chris Hart (MMA Production meeting 2026-04-27)
+    // Staging data in BQ (Region 2 transferred); full national not yet in Lumen BQ
+    source_total: 4500,
+    staging_passed: 4500,
+    staging_rejected: 0,
+    // PP0+ not tracked for v8
+    pp0_passed: 0,
+    rescue_queue: 0,
+    post_processing_passed: 0,
+    qa_needs_review: 0,
     not_started: 0,
   },
 };
@@ -70,7 +83,14 @@ function fmt(n: number) { return n.toLocaleString(); }
 // ── Pipeline gauge ─────────────────────────────────────────────────────────────
 function PipelineGauge({ stats }: { stats: PipelineStats }) {
   const source = stats.source_total;
-  const fillPct = pct(stats.post_processing_passed, source);
+  // Fill only to the last stage that has real data
+  const availability = STAGE_AVAILABILITY[Object.keys(STAGE_AVAILABILITY).find(k =>
+    stats.source_total === SYNTHETIC[k]?.source_total) ?? ''] ?? { staging: false, pp0: false, postProcessing: false };
+  const lastRealCount = availability.postProcessing ? stats.post_processing_passed
+    : availability.pp0 ? stats.pp0_passed
+    : availability.staging ? stats.staging_passed
+    : stats.source_total;
+  const fillPct = pct(lastRealCount, source);
 
   const mainTicks = [
     { label: 'Source',           position: 0,   count: source },
@@ -91,8 +111,14 @@ function PipelineGauge({ stats }: { stats: PipelineStats }) {
         <div className="h-full rounded-full transition-all duration-700"
           style={{ width: `${fillPct}%`, background: 'linear-gradient(90deg, #224057 0%, #234D8B 60%, #F8C762 100%)' }} />
         {mainTicks.map(tick => (
-          <div key={tick.label} className="absolute top-1/2 -translate-y-1/2"
-            style={{ left: `${tick.position}%`, transform: `translateX(-50%) translateY(-50%)` }}>
+          <div key={tick.label}
+            className="absolute flex items-center justify-center"
+            style={{
+              left: `${tick.position}%`,
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 12, height: 12,
+            }}>
             <div className={`w-3 h-3 rounded-full border-2 border-white shadow-sm ${
               tick.position === 0 ? 'bg-[#224057]' :
               tick.position <= fillPct ? 'bg-[#234D8B]' : 'bg-gray-300'}`} />
