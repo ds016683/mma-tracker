@@ -103,8 +103,12 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
 
   const drawerVisible = open || isDesktop;
 
-  const handleNavClick = (view: AppView) => {
-    onViewChange(view);
+  const handleNavClick = (item: NavItem) => {
+    if (item.href) {
+      window.open(item.href, '_blank', 'noopener,noreferrer');
+    } else {
+      onViewChange(item.id);
+    }
     if (!isDesktop) setOpen(false);
   };
 
@@ -177,7 +181,7 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
                       return (
                         <button
                           key={item.id}
-                          onClick={() => !isDisabled && handleNavClick(item.id)}
+                          onClick={() => !isDisabled && handleNavClick(item)}
                           disabled={isDisabled}
                           className={`flex w-full items-center gap-3 border-none bg-transparent px-5 py-3 text-left font-medium transition-all ${
                             isActive
