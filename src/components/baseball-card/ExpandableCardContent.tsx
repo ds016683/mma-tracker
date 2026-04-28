@@ -410,10 +410,9 @@ function TasksSection({ tasks, onChange }: { tasks: Task[]; onChange: (t: Task[]
             <div className="grid grid-cols-[1fr_auto_auto_auto] items-start gap-2">
               {/* Name + description */}
               <div className="flex items-start gap-2 min-w-0">
-                <button
-                  onClick={() => toggleDone(task.id)}
-                  className={`mt-0.5 h-4 w-4 shrink-0 rounded border transition-colors ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300 hover:border-[#224057]'}`}
-                  title={task.done ? 'Mark incomplete' : 'Mark complete'}
+                <div
+                  className={`mt-0.5 h-4 w-4 shrink-0 rounded border ${task.done ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
+                  title={task.done ? 'Complete (edit in Notion)' : 'In progress (edit in Notion)'}
                 />
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm font-medium leading-tight ${task.done ? 'text-gray-300 line-through' : 'text-gray-700'}`}>
