@@ -63,7 +63,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'regional-map',          label: 'Regional Map',        icon: Map },
       { id: 'production-networks',   label: 'Production Networks', icon: Network },
-      { id: 'production-progress',   label: 'Production Progress', icon: Activity, badge: 'Soon' },
+      { id: 'production-progress',   label: 'Production Progress', icon: Activity },
     ],
   },
   {
