@@ -8,6 +8,7 @@ export interface RegionRow {
   v8_coverage: string;
   areas_of_opportunity: string;
   updated_at: string;
+  last_synced_at: string | null;
 }
 
 export async function fetchAllRegions(): Promise<RegionRow[]> {

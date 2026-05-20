@@ -6,6 +6,17 @@ import { supabase } from '../../lib/supabase/client';
 import { fetchAllRegions, upsertRegion } from '../../lib/supabase/regionQueries';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
 
+function formatRelativeTime(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
 export function RegionalMapView() {
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -14,17 +25,23 @@ export function RegionalMapView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial load: just fetch from Supabase (HTTPS, no sync server)
+  // Initial load: fetch from Supabase and read last_synced_at
   const loadFromSupabase = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const rows = await fetchAllRegions();
       const map: Record<number, RegionRow> = {};
+      let maxSynced: Date | null = null;
       for (const row of rows) {
         map[row.region_id] = row;
+        if (row.last_synced_at) {
+          const d = new Date(row.last_synced_at);
+          if (!maxSynced || d > maxSynced) maxSynced = d;
+        }
       }
       setRegionData(map);
+      if (maxSynced) setLastSync(maxSynced);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -101,7 +118,7 @@ export function RegionalMapView() {
             <h1 className="text-lg font-bold text-[#001A41]">Regional Map</h1>
             <p className="text-sm text-gray-500">
               MMA Network Navigator coverage by sales region · Notion-synced
-              {lastSync && <span className="text-xs text-gray-400"> · Last synced {lastSync.toLocaleTimeString()}</span>}
+              {lastSync && <span className="text-xs text-gray-400"> · Last sync: {formatRelativeTime(lastSync)}</span>}
             </p>
           </div>
           <div className="flex items-center gap-3">
