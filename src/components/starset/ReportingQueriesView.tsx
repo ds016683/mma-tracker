@@ -1,5 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react';
-import { Send, ChevronDown, ChevronUp, Settings, CheckCircle, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase/client';
+import { Send, Loader2 } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -113,12 +114,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
 }
 
 export function ReportingQueriesView() {
-  const defaultKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-  const [apiKey, setApiKey] = useState<string>(() => {
-    return defaultKey || localStorage.getItem('mma_anthropic_key') || '';
-  });
-  const [apiKeyInput, setApiKeyInput] = useState(apiKey);
-  const [settingsOpen, setSettingsOpen] = useState(!apiKey);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -130,19 +126,8 @@ export function ReportingQueriesView() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const saveApiKey = () => {
-    const trimmed = apiKeyInput.trim();
-    setApiKey(trimmed);
-    localStorage.setItem('mma_anthropic_key', trimmed);
-    setSettingsOpen(false);
-  };
-
   const sendMessage = async (question: string) => {
     if (!question.trim() || loading) return;
-    if (!apiKey) {
-      setSettingsOpen(true);
-      return;
-    }
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
@@ -157,28 +142,15 @@ export function ReportingQueriesView() {
     setError(null);
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5',
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT,
+      const { data, error: fnError } = await supabase.functions.invoke('haiku-chat', {
+        body: {
           messages: [{ role: 'user', content: question.trim() }],
-        }),
+          systemPrompt: SYSTEM_PROMPT,
+        },
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `API error ${response.status}`);
-      }
-
-      const data = await response.json();
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error.message || 'Unknown error from haiku-chat');
       const assistantContent = data.content?.[0]?.text || '(No response)';
 
       const assistantMsg: Message = {
@@ -221,50 +193,6 @@ export function ReportingQueriesView() {
 
         {/* Left: Chat */}
         <div className="flex flex-1 flex-col gap-3 lg:min-w-0">
-
-          {/* Settings Panel */}
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <button
-              onClick={() => setSettingsOpen(!settingsOpen)}
-              className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                <Settings className="h-4 w-4 text-gray-400" />
-                API Settings
-                {apiKey && (
-                  <span className="ml-1 flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
-                    <CheckCircle className="h-3 w-3" />
-                    Key set
-                  </span>
-                )}
-              </span>
-              {settingsOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-            </button>
-            {settingsOpen && (
-              <div className="border-t border-gray-100 px-4 py-3">
-                {!apiKey && (
-                  <p className="mb-2 text-xs text-amber-600">
-                    Enter your Anthropic API key to enable queries
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={apiKeyInput}
-                    onChange={e => setApiKeyInput(e.target.value)}
-                    placeholder="sk-ant-api03-..."
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-[#009DE0] focus:outline-none focus:ring-1 focus:ring-[#009DE0]"
-                  />
-                  <button
-                    onClick={saveApiKey}
-                    className="rounded-lg bg-[#009DE0] px-4 py-2 text-sm font-medium text-white hover:bg-[#007bb5] transition-colors"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Chat messages */}
           <div className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -329,12 +257,12 @@ export function ReportingQueriesView() {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask a question about the reporting data..."
                   rows={2}
-                  disabled={loading || !apiKey}
+                  disabled={loading}
                   className="flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-[#009DE0] focus:outline-none focus:ring-1 focus:ring-[#009DE0] disabled:opacity-50"
                 />
                 <button
                   type="submit"
-                  disabled={loading || !input.trim() || !apiKey}
+                  disabled={loading || !input.trim()}
                   className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#009DE0] text-white transition-colors hover:bg-[#007bb5] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -389,7 +317,7 @@ export function ReportingQueriesView() {
                 <button
                   key={query}
                   onClick={() => sendMessage(query)}
-                  disabled={loading || !apiKey}
+                  disabled={loading}
                   className="rounded-lg border border-[#009DE0]/30 bg-[#009DE0]/5 px-3 py-2 text-left text-xs text-[#009DE0] hover:bg-[#009DE0]/10 hover:border-[#009DE0]/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {query}
