@@ -2,13 +2,12 @@
  * HaikuAssistant — Claude Haiku powered project intelligence
  *
  * Context: all projects + tasks (with dates/assignees) + recent activity
- * Requires: VITE_ANTHROPIC_API_KEY in environment
- *
- * NOTE: For production use, proxy calls through a Supabase Edge Function
- * to avoid exposing the API key in the browser bundle.
+ * API calls are proxied through the haiku-chat Supabase Edge Function
+ * so that ANTHROPIC_API_KEY never touches the browser.
  */
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Loader2, Bot } from 'lucide-react';
+import { supabase } from '../../lib/supabase/client';
 import type { BaseballCardProject } from '../../lib/baseball-card/types';
 import { computeRollup } from '../../lib/baseball-card/types';
 
@@ -73,8 +72,6 @@ export function HaikuAssistant({ projects }: HaikuAssistantProps) {
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
@@ -82,10 +79,6 @@ export function HaikuAssistant({ projects }: HaikuAssistantProps) {
   async function sendMessage() {
     const text = input.trim();
     if (!text || loading) return;
-    if (!apiKey) {
-      setError('VITE_ANTHROPIC_API_KEY is not configured. Add it to your GitHub Secrets.');
-      return;
-    }
     setError(null);
     setInput('');
 
@@ -96,28 +89,16 @@ export function HaikuAssistant({ projects }: HaikuAssistantProps) {
     setLoading(true);
 
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5',
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT + '\n\n' + context,
+      const { data, error: fnError } = await supabase.functions.invoke('haiku-chat', {
+        body: {
           messages: updated.map(m => ({ role: m.role, content: m.content })),
-        }),
+          systemPrompt: SYSTEM_PROMPT,
+          projectContext: context,
+        },
       });
 
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? `HTTP ${resp.status}`);
-      }
-
-      const data = await resp.json();
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error.message ?? 'Unknown error from haiku-chat');
       const reply = data.content?.[0]?.text ?? '(empty response)';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (e) {
