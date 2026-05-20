@@ -2,7 +2,7 @@
 
 Production task and budget tracker for the Marsh McLennan Agency / Third Horizon engagement. Built with React, TypeScript, Vite, and Tailwind CSS.
 
-**Live:** [thtopher.github.io/mma-tracker](https://thtopher.github.io/mma-tracker/)
+**Live:** [ds016683.github.io/mma-tracker](https://ds016683.github.io/mma-tracker/)
 
 ## Features
 
