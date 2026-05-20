@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase/client';
+import { ResetPassword } from './ResetPassword';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 
@@ -8,6 +9,11 @@ export function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReset, setShowReset] = useState(false);
+
+  if (showReset) {
+    return <ResetPassword onBack={() => setShowReset(false)} />;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +78,16 @@ export function AuthPage() {
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setShowReset(true)}
+              className="text-xs text-white/40 hover:text-white/70 transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
         </form>
       </div>
     </div>
