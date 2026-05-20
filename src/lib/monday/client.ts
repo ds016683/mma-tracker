@@ -1,7 +1,10 @@
 // Monday.com API client for MMA Tracker
 // Board ID: 18409785203
+// API calls are proxied through the monday-sync Supabase Edge Function
+// so that MONDAY_API_KEY never touches the browser.
 
-const MONDAY_API_URL = 'https://api.monday.com/v2';
+import { supabase } from '../supabase/client';
+
 const BOARD_ID = '18409785203';
 
 // Column ID map (canonical order set 2026-04-23)
@@ -62,14 +65,6 @@ function getColText(columnValues: { id: string; text: string }[], colId: string)
 }
 
 export async function fetchMondayBoard(): Promise<MondayItem[]> {
-  // We call our Supabase edge function proxy to avoid CORS + keep API key server-side
-  // For now, use the direct API with the key embedded (client-side, acceptable for private app)
-  const apiKey = import.meta.env.VITE_MONDAY_API_KEY;
-  if (!apiKey) {
-    console.warn('VITE_MONDAY_API_KEY not set — Monday sync disabled');
-    return [];
-  }
-
   const query = `{
     boards(ids: [${BOARD_ID}]) {
       groups { id title }
@@ -87,18 +82,15 @@ export async function fetchMondayBoard(): Promise<MondayItem[]> {
     }
   }`;
 
-  const res = await fetch(MONDAY_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': apiKey,
-      'Content-Type': 'application/json',
-      'API-Version': '2024-01',
-    },
-    body: JSON.stringify({ query }),
+  const { data, error } = await supabase.functions.invoke('monday-sync', {
+    body: { query },
   });
 
-  if (!res.ok) throw new Error(`Monday API error: ${res.status}`);
-  const data = await res.json();
+  if (error) throw new Error(`monday-sync Edge Function error: ${error.message}`);
+  if (data.errors) {
+    console.error('Monday GraphQL errors:', data.errors);
+    return [];
+  }
 
   if (data.errors) {
     console.error('Monday GraphQL errors:', data.errors);
