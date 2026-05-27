@@ -61,20 +61,10 @@ function AppInner({
       <main className="min-h-screen flex-1 transition-[margin] duration-300">
         {activeView === 'tracker' && (
           <div className="p-4 sm:p-6">
-            <BaseballCardLayout
-              onSwitchToGantt={() => setActiveView('timeline')}
-            />
+            <BaseballCardLayout />
           </div>
         )}
         {activeView === 'project-plan' && <ProjectPlanView />}
-        {activeView === 'timeline' && (
-          <div className="p-4 sm:p-6">
-            <BaseballCardLayout
-              onSwitchToGantt={() => setActiveView('timeline')}
-              forceView="gantt"
-            />
-          </div>
-        )}
         {activeView === 'data-intelligence' && <DataIntelligenceView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
-  GanttChart, Map, Network, FlaskConical, BarChart2,
+  Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
@@ -11,7 +11,6 @@ import { useAuth } from '../../contexts/AuthContext';
 export type AppView =
   | 'tracker'
   | 'project-plan'
-  | 'timeline'
   | 'data-intelligence'
   | 'reporting-queries'
   | 'regional-map'
@@ -42,8 +41,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'project-plan', label: 'Project Plan',   icon: FileText },
-      { id: 'timeline',     label: 'Gantt Chart',    icon: GanttChart },
-      { id: 'tracker',      label: 'Baseball Cards', icon: LayoutGrid },
+      { id: 'tracker',      label: 'Work Orders',    icon: LayoutGrid },
       { id: 'call-notes',   label: 'Call Notes',     icon: NotebookPen },
     ],
   },
