@@ -12,6 +12,7 @@ import { RegionalMapView } from './components/starset/RegionalMapView';
 import { ProductionNetworksView } from './components/starset/ProductionNetworksView';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
+import { GanttView } from './components/gantt/GanttView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 import { HospitalCoverageView } from './components/hospitals/HospitalCoverageView';
 import { ProductionProgressView } from './components/production/ProductionProgressView';
@@ -65,6 +66,11 @@ function AppInner({
           </div>
         )}
         {activeView === 'project-plan' && <ProjectPlanView />}
+        {activeView === 'timeline' && (
+          <div className="p-4 sm:p-6">
+            <GanttView />
+          </div>
+        )}
         {activeView === 'data-intelligence' && <DataIntelligenceView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
