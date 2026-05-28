@@ -17,6 +17,7 @@ import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanVie
 import { HospitalCoverageView } from './components/hospitals/HospitalCoverageView';
 import { ProductionProgressView } from './components/production/ProductionProgressView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
+import { ReportsAndReleaseNotesView } from './components/reports/ReportsAndReleaseNotesView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -79,6 +80,7 @@ function AppInner({
         {activeView === 'hospital-coverage' && <HospitalCoverageView />}
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && <CallNotesView />}
+        {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>

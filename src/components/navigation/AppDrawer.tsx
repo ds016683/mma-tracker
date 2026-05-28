@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
-  ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen
+  ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -20,7 +20,8 @@ export type AppView =
   | 'hospital-mrf-pipeline'
   | 'hospital-coverage'
   | 'promise-health-plan'
-  | 'call-notes';
+  | 'call-notes'
+  | 'reports-release-notes';
 
 interface NavItem {
   id: AppView;
@@ -49,8 +50,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Engagement Documentation',
-    defaultOpen: false,
-    items: [],
+    defaultOpen: true,
+    items: [
+      { id: 'reports-release-notes', label: 'Reports & Release Notes', icon: BookOpen },
+    ],
   },
   {
     label: 'Network Navigator Deployment',
