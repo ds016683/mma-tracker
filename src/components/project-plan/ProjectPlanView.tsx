@@ -105,7 +105,7 @@ export function ProjectPlanView() {
     } finally {
       setSyncing(false);
     }
-  }, [refetchBaseballCards]);
+  }, [refetchBaseballCards, dirtyComments]);
 
   // Build children map: parentId → sub-items
   const childrenByParent = projects.reduce<Record<string, ProjectWithTasks[]>>((acc, p) => {
