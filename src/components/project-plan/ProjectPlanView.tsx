@@ -54,6 +54,9 @@ export function ProjectPlanView() {
   const { refetch: refetchBaseballCards } = useProjects();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  // Comments editing: dirtyComments tracks unsaved edits keyed by project id
+  const [dirtyComments, setDirtyComments] = useState<Record<string, string>>({});
+  const dirtyCount = Object.keys(dirtyComments).length;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,9 +86,15 @@ export function ProjectPlanView() {
     setError(null);
     try {
       const { supabase } = await import('../../lib/supabase/client');
-      // Invoke edge function — runs server-side, no daemon required
-      const { error: fnErr } = await supabase.functions.invoke('notion-project-sync');
+      // Build comment update payload from any dirty edits
+      const commentUpdates = Object.entries(dirtyComments).map(([pageId, comments]) => ({ pageId, comments }));
+      // Invoke edge function — passes comment edits so they're pushed to Notion first
+      const { error: fnErr } = await supabase.functions.invoke('notion-project-sync', {
+        body: commentUpdates.length > 0 ? { commentUpdates } : undefined,
+      });
       if (fnErr) throw new Error(fnErr.message);
+      // Clear dirty state after successful sync
+      setDirtyComments({});
       // Re-fetch the now-updated projects from Supabase
       const fresh = await fetchProjectsWithTasks();
       setProjects(fresh.map(p => ({ ...p, category: p.parent_id ? (p.category?.trim() || '') : (p.category?.trim() || 'Extraneous') })));
@@ -131,9 +140,11 @@ export function ProjectPlanView() {
               <ExternalLink className="h-3.5 w-3.5" /> Open in Notion
             </a>
             <button onClick={syncNotion} disabled={syncing || loading}
-              className="flex items-center gap-1.5 rounded-lg bg-[#224057] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1a3245] disabled:opacity-60 transition-colors">
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors ${
+                dirtyCount > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#224057] hover:bg-[#1a3245]'
+              }`}>
               <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing...' : 'Sync Notion'}
+              {syncing ? 'Syncing...' : dirtyCount > 0 ? `Sync Notion (${dirtyCount} edit${dirtyCount > 1 ? 's' : ''})` : 'Sync Notion'}
             </button>
           </div>
         </div>
@@ -171,13 +182,14 @@ export function ProjectPlanView() {
                   <div className="rounded-b-lg border border-t-0 border-gray-200 bg-white overflow-hidden">
                     {/* Column headers */}
                     <div className="grid text-[10px] font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 px-4 py-2"
-                      style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr' }}>
+                      style={{ gridTemplateColumns: 'minmax(180px,3fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(110px,1.2fr) minmax(72px,0.8fr) minmax(72px,0.8fr) minmax(140px,2fr)' }}>
                       <span>Project</span>
                       <span>Status</span>
                       <span>Priority</span>
                       <span>Accountable</span>
                       <span>Start</span>
                       <span>Target</span>
+                      <span>Comments</span>
                     </div>
 
                     {items.map(project => {
@@ -187,9 +199,15 @@ export function ProjectPlanView() {
                       return (
                         <div key={project.id} className="border-b border-gray-50 last:border-0">
                           {/* Parent row */}
-                          <div className="grid items-center px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
-                            style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr' }}
-                            onClick={() => setExpandedItems(s => { const n = new Set(s); n.has(project.id) ? n.delete(project.id) : n.add(project.id); return n; })}>
+                          <div
+                            className="grid items-center px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer group"
+                            style={{ gridTemplateColumns: 'minmax(180px,3fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(110px,1.2fr) minmax(72px,0.8fr) minmax(72px,0.8fr) minmax(140px,2fr)' }}
+                            title={project.name}
+                            onClick={(e) => {
+                              // Don't collapse/expand when clicking inside the comments cell
+                              if ((e.target as HTMLElement).closest('[data-comment-cell]')) return;
+                              setExpandedItems(s => { const n = new Set(s); n.has(project.id) ? n.delete(project.id) : n.add(project.id); return n; });
+                            }}>
                             <div className="flex items-center gap-2 min-w-0">
                               {hasChildren
                                 ? (isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />)
@@ -204,12 +222,28 @@ export function ProjectPlanView() {
                             <div className="truncate text-xs text-gray-600">{project.mma_accountable || '—'}</div>
                             <div className="text-xs text-gray-500">{fmtDate(project.start_date)}</div>
                             <div className="text-xs text-gray-500">{fmtDate(project.target_date)}</div>
+                            {/* Comments — editable inline */}
+                            <div data-comment-cell className="relative" onClick={e => e.stopPropagation()}>
+                              <textarea
+                                rows={1}
+                                value={dirtyComments[project.id] !== undefined ? dirtyComments[project.id] : (project.mma_comments || '')}
+                                placeholder="Add a comment…"
+                                onChange={e => setDirtyComments(prev => ({ ...prev, [project.id]: e.target.value }))}
+                                className="w-full resize-none rounded border border-transparent bg-transparent px-1.5 py-0.5 text-xs text-gray-600 placeholder-gray-300 hover:border-gray-200 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-200 transition-colors"
+                                style={{ minHeight: '1.6rem', maxHeight: '4rem' }}
+                              />
+                              {dirtyComments[project.id] !== undefined && (
+                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500" title="Unsaved — click Sync Notion to save" />
+                              )}
+                            </div>
                           </div>
 
                           {/* Notion sub-items */}
                           {isExpanded && subItems.map(child => (
-                            <div key={child.id} className="grid items-center pl-10 pr-4 py-2 bg-gray-50/60 border-t border-gray-100"
-                              style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr' }}>
+                            <div key={child.id}
+                              className="grid items-center pl-10 pr-4 py-2 bg-gray-50/60 border-t border-gray-100"
+                              style={{ gridTemplateColumns: 'minmax(180px,3fr) minmax(90px,1fr) minmax(70px,0.8fr) minmax(110px,1.2fr) minmax(72px,0.8fr) minmax(72px,0.8fr) minmax(140px,2fr)' }}
+                              title={child.name}>
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-gray-300 text-xs flex-shrink-0">└</span>
                                 <span className="truncate text-xs text-gray-700">{child.name}</span>
@@ -219,6 +253,7 @@ export function ProjectPlanView() {
                               <div className="truncate text-xs text-gray-500">{child.mma_accountable || child.mma_responsible || '—'}</div>
                               <div className="text-xs text-gray-400">{fmtDate(child.start_date)}</div>
                               <div className="text-xs text-gray-400">{fmtDate(child.target_date)}</div>
+                              <div className="text-xs text-gray-400 truncate px-1.5">{child.mma_comments || ''}</div>
                             </div>
                           ))}
                         </div>

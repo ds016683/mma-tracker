@@ -141,8 +141,8 @@ function mapProject(page: any): Record<string, any> {
     category,
     priority: allowedPriority,
     start_date: getDate(p, "Start Date") || getDate(p, "Start"),
-    target_date: getDate(p, "Target Date") || getDate(p, "Target") || getDate(p, "End Date"),
-    end_date: getDate(p, "End Date") || getDate(p, "Target Date") || getDate(p, "Target"),
+    target_date: getDate(p, "Target Completion Date") || getDate(p, "Target Date") || getDate(p, "Target") || getDate(p, "End Date"),
+    end_date: getDate(p, "End Date") || getDate(p, "Target Completion Date") || getDate(p, "Target Date") || getDate(p, "Target"),
     mma_status: mmaStat,
     mma_priority: getSelect(p, "Priority") || getSelect(p, "MMA Priority") || "Medium",
     mma_contract_ref: getSelect(p, "Contract Ref") || getRichText(p, "Contract Ref") || "",
@@ -177,6 +177,48 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
 
   try {
+    // ── Optional: push comment edits FROM the frontend TO Notion first ──────
+    let commentsPushed = 0;
+    let bodyPayload: any = null;
+    try {
+      const contentType = req.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        bodyPayload = await req.json();
+      }
+    } catch { /* no body — that's fine */ }
+
+    const commentUpdates: Array<{ pageId: string; comments: string }> =
+      bodyPayload?.commentUpdates ?? [];
+
+    if (commentUpdates.length > 0) {
+      const notionTokenEarly = Deno.env.get("NOTION_TOKEN");
+      if (notionTokenEarly) {
+        await Promise.allSettled(
+          commentUpdates.map(({ pageId, comments }) =>
+            fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${notionTokenEarly}`,
+                "Content-Type": "application/json",
+                "Notion-Version": NOTION_VERSION,
+              },
+              body: JSON.stringify({
+                properties: {
+                  Comments: {
+                    rich_text: comments
+                      ? [{ type: "text", text: { content: comments } }]
+                      : [],
+                  },
+                },
+              }),
+            })
+          )
+        );
+        commentsPushed = commentUpdates.length;
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const notionToken = Deno.env.get("NOTION_TOKEN");
     if (!notionToken) throw new Error("NOTION_TOKEN secret not set on this function.");
 
@@ -304,6 +346,7 @@ Deno.serve(async (req) => {
         ok: true,
         synced_projects: projectRows.length,
         synced_tasks: taskRows.length,
+        comments_pushed: commentsPushed,
         elapsed_ms: elapsed,
       }),
       {
