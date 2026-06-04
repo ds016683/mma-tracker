@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { regionHospitals } from '../../data/regionalHospitals';
 import { X, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
 import type { Region } from './USMap';
 
+const NOTION_HOSPITALS_URL = 'https://www.notion.so/375750fa613d817faacef2e5bed9b830';
 const NOTION_OPP_URL = 'https://www.notion.so/34f750fa613d813d8bf7c3578c5f2cfb';
 const NOTION_NET_URL = 'https://www.notion.so/34f750fa613d81b6aef1e85b58ffe7dc';
 const NOTION_NARRATIVE_URL = 'https://www.notion.so/34f750fa613d813980a7f50e249be477';
@@ -64,6 +66,32 @@ function CollapsibleSection({ title, badge, notionUrl, children }: {
         )}
       </button>
       {open && <div className="px-4 py-3">{children}</div>}
+    </div>
+  );
+}
+
+function StateHospitalRow({ state, hospitals }: { state: string; hospitals: { npi: string; name: string }[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between py-2 text-left hover:bg-gray-50 px-1 rounded transition-colors">
+        <div className="flex items-center gap-2">
+          {open ? <ChevronDown className="h-3 w-3 text-gray-400" /> : <ChevronRight className="h-3 w-3 text-gray-400" />}
+          <span className="text-sm font-semibold text-gray-700">{state}</span>
+        </div>
+        <span className="text-xs text-gray-400">{hospitals.length} hospital{hospitals.length !== 1 ? 's' : ''}</span>
+      </button>
+      {open && (
+        <div className="ml-5 mb-2 space-y-1">
+          {hospitals.map((h, i) => (
+            <div key={i} className="flex items-start justify-between py-1 px-2 rounded bg-gray-50">
+              <div className="text-xs font-medium text-gray-700">{h.name}</div>
+              <span className="text-xs text-gray-400 font-mono ml-2 flex-shrink-0">{h.npi}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -181,6 +209,30 @@ export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
             <p className="text-sm text-gray-400 italic">No v9 candidates for this region</p>
           )}
         </CollapsibleSection>
+
+        {/* Regional Hospitals */}
+        {(() => {
+          const hospitalsByState = regionHospitals[region.id] ?? {};
+          const stateEntries2 = Object.entries(hospitalsByState).sort(([a], [b]) => a.localeCompare(b));
+          const totalHospitals = stateEntries2.reduce((sum, [, h]) => sum + h.length, 0);
+          return (
+            <CollapsibleSection
+              title="Regional Hospitals"
+              badge={totalHospitals > 0 ? `${totalHospitals} hospitals` : undefined}
+              notionUrl={NOTION_HOSPITALS_URL}
+            >
+              {stateEntries2.length > 0 ? (
+                <div className="space-y-0 -mx-1">
+                  {stateEntries2.map(([state, hospitals]) => (
+                    <StateHospitalRow key={state} state={state} hospitals={hospitals} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">No hospital data for this region</p>
+              )}
+            </CollapsibleSection>
+          );
+        })()}
 
         {/* Areas of Opportunity */}
         <CollapsibleSection
