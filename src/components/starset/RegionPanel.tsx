@@ -68,7 +68,6 @@ function CollapsibleSection({ title, badge, notionUrl, children }: {
       </button>
       {open && <div className="px-4 py-3">{children}</div>}
     </div>
-    </>
   );
 }
 
@@ -244,7 +243,7 @@ export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
       {selectedHospital && (
         <HospitalPopup hospital={selectedHospital} onClose={() => setSelectedHospital(null)} />
       )}
-    <div className="flex h-full flex-col bg-white shadow-xl" style={{ width: 400, minWidth: 400 }}>
+      <div className="flex h-full flex-col bg-white shadow-xl" style={{ width: 400, minWidth: 400 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4" style={{ background: region.color }}>
         <div>
@@ -387,6 +386,7 @@ export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
       <div className="border-t border-gray-100 px-5 py-3">
         <p className="text-xs text-gray-400">{updatedDate ? `Last synced: ${updatedDate}` : 'No data yet'}</p>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
