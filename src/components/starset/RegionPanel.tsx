@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { regionHospitals } from '../../data/regionalHospitals';
 import { X, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RegionRow } from '../../lib/supabase/regionQueries';
@@ -67,10 +68,104 @@ function CollapsibleSection({ title, badge, notionUrl, children }: {
       </button>
       {open && <div className="px-4 py-3">{children}</div>}
     </div>
+    </>
   );
 }
 
-function StateHospitalRow({ state, hospitals }: { state: string; hospitals: { npi: string; name: string }[] }) {
+// --- Donut chart (SVG, no deps) ---
+function DonutChart({ pct, label, color }: { pct: number; label: string; color: string }) {
+  const r = 36;
+  const circ = 2 * Math.PI * r;
+  const filled = (pct / 100) * circ;
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative" style={{ width: 88, height: 88 }}>
+        <svg width={88} height={88} style={{ transform: 'rotate(-90deg)' }}>
+          {/* track */}
+          <circle cx={44} cy={44} r={r} fill="none" stroke="#e5e7eb" strokeWidth={10} />
+          {/* fill */}
+          <circle
+            cx={44} cy={44} r={r} fill="none"
+            stroke={color} strokeWidth={10}
+            strokeDasharray={`${filled} ${circ - filled}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold text-gray-800">{pct}%</span>
+        </div>
+      </div>
+      <span className="text-xs font-medium text-gray-600 text-center leading-tight">{label}</span>
+    </div>
+  );
+}
+
+// --- Hospital coverage popup ---
+const COVERAGE_DATA = [
+  { label: 'BCBS Coverage',   pct: 33, color: '#1e40af' },
+  { label: 'United Coverage', pct: 67, color: '#0369a1' },
+  { label: 'Cigna Coverage',  pct: 52, color: '#065f46' },
+  { label: 'Aetna Coverage',  pct: 80, color: '#7c3aed' },
+];
+
+function HospitalPopup({ hospital, onClose }: { hospital: { npi: string; name: string }; onClose: () => void }) {
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.35)' }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        ref={popupRef}
+        className="relative bg-white rounded-2xl shadow-2xl px-8 py-7 flex flex-col items-center"
+        style={{ width: 420, maxWidth: '95vw' }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Header */}
+        <h2 className="text-base font-bold text-[#001A41] text-center mb-1 pr-4">
+          Coverage for {hospital.name}
+        </h2>
+        <p className="text-xs text-gray-400 font-mono mb-6">NPI {hospital.npi}</p>
+
+        {/* Donuts */}
+        <div className="grid grid-cols-2 gap-6 w-full justify-items-center mb-6">
+          {COVERAGE_DATA.map((d) => (
+            <DonutChart key={d.label} pct={d.pct} label={d.label} color={d.color} />
+          ))}
+        </div>
+
+        {/* Disclaimer */}
+        <p className="text-xs text-amber-600 text-center italic border-t border-gray-100 pt-4 w-full">
+          This is example data and not representative of this hospital's actual coverage.
+        </p>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// --- State hospital row (with popup trigger) ---
+function StateHospitalRow({ state, hospitals, onSelectHospital }: {
+  state: string;
+  hospitals: { npi: string; name: string }[];
+  onSelectHospital: (h: { npi: string; name: string } | null) => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-gray-100 last:border-0">
@@ -85,10 +180,14 @@ function StateHospitalRow({ state, hospitals }: { state: string; hospitals: { np
       {open && (
         <div className="ml-5 mb-2 space-y-1">
           {hospitals.map((h, i) => (
-            <div key={i} className="flex items-start justify-between py-1 px-2 rounded bg-gray-50">
-              <div className="text-xs font-medium text-gray-700">{h.name}</div>
+            <button
+              key={i}
+              onClick={() => onSelectHospital(h)}
+              className="w-full flex items-start justify-between py-1 px-2 rounded bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors text-left group"
+            >
+              <div className="text-xs font-medium text-gray-700 group-hover:text-blue-800">{h.name}</div>
               <span className="text-xs text-gray-400 font-mono ml-2 flex-shrink-0">{h.npi}</span>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -128,6 +227,7 @@ function StateNetworkRow({ state, networks }: { state: string; networks: Network
 }
 
 export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
+  const [selectedHospital, setSelectedHospital] = useState<{ npi: string; name: string } | null>(null);
   const opportunities = parseJSON<Opportunity[]>(data?.areas_of_opportunity ?? '', '__json__');
   const coverageData = parseJSON<CoverageData>(data?.v8_coverage ?? '', '__json__');
   const narrativeData = parseJSON<NarrativeData>(data?.networks_of_interest ?? '', '__narrative__');
@@ -140,6 +240,10 @@ export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
     : null;
 
   return (
+    <>
+      {selectedHospital && (
+        <HospitalPopup hospital={selectedHospital} onClose={() => setSelectedHospital(null)} />
+      )}
     <div className="flex h-full flex-col bg-white shadow-xl" style={{ width: 400, minWidth: 400 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4" style={{ background: region.color }}>
@@ -224,7 +328,7 @@ export function RegionPanel({ region, data, onClose }: RegionPanelProps) {
               {stateEntries2.length > 0 ? (
                 <div className="space-y-0 -mx-1">
                   {stateEntries2.map(([state, hospitals]) => (
-                    <StateHospitalRow key={state} state={state} hospitals={hospitals} />
+                    <StateHospitalRow key={state} state={state} hospitals={hospitals} onSelectHospital={setSelectedHospital} />
                   ))}
                 </div>
               ) : (
