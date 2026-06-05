@@ -1,0 +1,22 @@
+name: Horizon Signal — Digest Trigger
+
+# Runs Mon & Thu at 5:30 AM EST (10:30 UTC)
+on:
+  schedule:
+    - cron: '30 10 * * 1'   # Monday
+    - cron: '30 10 * * 4'   # Thursday
+  workflow_dispatch:          # manual trigger for testing
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post digest trigger to #mr-mma
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.HORIZON_SIGNAL_DISCORD_WEBHOOK }}
+        run: |
+          curl -s -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "🔔 **Horizon Signal Trigger** — `'"$(date -u +%Y-%m-%d)"'`\n\nTime to run the weekly digest. Mr. MMA: please search for the latest US healthcare news (contract negotiations, mergers, price transparency, carrier network changes) from the past 7 days, write the digest, and post it here for approval before publishing to the tracker."
+            }'

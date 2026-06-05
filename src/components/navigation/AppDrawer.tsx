@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
-  ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen
+  ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -15,6 +15,7 @@ export type AppView =
   | 'data-intelligence'
   | 'reporting-queries'
   | 'regional-map'
+  | 'horizon-signal'
   | 'payer-networks'
   | 'payer-mrf-pipeline'
   | 'hospital-mrf-pipeline'
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'regional-map', label: 'Regional Map', icon: Map },
+      { id: 'horizon-signal', label: 'The Horizon Signal', icon: Radio },
     ],
   },
   {

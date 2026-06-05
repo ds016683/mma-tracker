@@ -18,6 +18,7 @@ import { HospitalCoverageView } from './components/hospitals/HospitalCoverageVie
 import { ProductionProgressView } from './components/production/ProductionProgressView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
 import { ReportsAndReleaseNotesView } from './components/reports/ReportsAndReleaseNotesView';
+import { HorizonSignalView } from './components/horizon-signal/HorizonSignalView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -81,6 +82,7 @@ function AppInner({
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && <CallNotesView />}
         {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
+        {activeView === 'horizon-signal' && <HorizonSignalView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
