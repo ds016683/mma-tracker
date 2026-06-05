@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Radio, ExternalLink, RefreshCw, CalendarDays } from 'lucide-react';
+import { Radio, ExternalLink, RefreshCw, CalendarDays, Archive, ChevronDown, ChevronRight } from 'lucide-react';
 
 export interface HorizonArticleLink {
   title: string;
@@ -13,6 +13,12 @@ export interface HorizonDigest {
   body: string[]; // paragraphs
   articles: HorizonArticleLink[];
 }
+
+// Archive of past digests — newest first (current digest excluded)
+const ARCHIVE: HorizonDigest[] = [
+  // Digests will accumulate here each Mon/Thu cycle
+  // Example structure kept for reference — will populate after first published run
+];
 
 // The digest content — updated by Mr. MMA on Mon/Thu cadence, pending approval
 const DIGEST: HorizonDigest = {
@@ -180,6 +186,105 @@ export function HorizonSignalView() {
           Published Mon & Thu · 5:30 AM EST · Sources limited to past 30 days · Curated by Mr. MMA
         </p>
       </div>
+
+      {/* Archive */}
+      <div className="max-w-4xl mt-12">
+        <div className="flex items-center gap-2 mb-5 border-t border-[#001A41]/10 pt-8">
+          <Archive className="h-4 w-4 text-mma-blue-gray" />
+          <h2 className="text-xs font-bold uppercase tracking-widest text-mma-blue-gray">
+            Past Editions · {ARCHIVE.length} {ARCHIVE.length === 1 ? 'entry' : 'entries'}
+          </h2>
+        </div>
+
+        {ARCHIVE.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[#001A41]/15 bg-white/50 px-6 py-8 text-center">
+            <p className="text-sm text-mma-blue-gray/60">Past editions will appear here after each published cycle.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {ARCHIVE.map((entry, i) => (
+              <ArchiveEntry key={i} digest={entry} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ArchiveEntry({ digest }: { digest: HorizonDigest }) {
+  const [open, setOpen] = useState(false);
+  const sorted = [...digest.articles].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  return (
+    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden transition-all ${
+      open ? 'border-[#009DE0]/30' : 'border-[#001A41]/8'
+    }`}>
+      {/* Accordion header */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-[#001A41]/[0.02] transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          {open
+            ? <ChevronDown className="h-4 w-4 text-[#009DE0] flex-shrink-0" />
+            : <ChevronRight className="h-4 w-4 text-mma-blue-gray/50 flex-shrink-0" />}
+          <div>
+            <span className="text-sm font-semibold text-[#001A41]">
+              Week of {formatDate(digest.publishedAt)}
+            </span>
+            <span className="ml-3 text-xs text-mma-blue-gray/60">
+              {digest.articles.length} sources
+            </span>
+          </div>
+        </div>
+        <span className="text-xs text-mma-blue-gray/50 hidden sm:block">
+          {open ? 'Collapse' : 'Expand'}
+        </span>
+      </button>
+
+      {/* Accordion body */}
+      {open && (
+        <div className="border-t border-[#001A41]/8 px-5 py-5">
+          {/* Body paragraphs */}
+          <div className="space-y-3 mb-6">
+            {digest.body.map((para, i) => (
+              <p key={i} className={`text-sm leading-relaxed ${
+                i === 0 ? 'text-[#001A41] font-medium' : 'text-[#3a4a5c]'
+              }`}>
+                {para}
+              </p>
+            ))}
+          </div>
+          {/* Source articles */}
+          <p className="text-[10px] font-bold uppercase tracking-widest text-mma-blue-gray mb-2">
+            Source Articles
+          </p>
+          <div className="space-y-1.5">
+            {sorted.map((art, i) => (
+              <a
+                key={i}
+                href={art.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-start justify-between gap-3 rounded-lg border border-[#001A41]/6 bg-[#001A41]/[0.02] px-4 py-3 hover:border-[#009DE0]/40 hover:bg-white transition-all"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[#001A41] group-hover:text-[#009DE0] transition-colors leading-snug">
+                    {art.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-mma-blue-gray">
+                    {art.outlet} · {formatDate(art.date)}
+                  </p>
+                </div>
+                <ExternalLink className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-mma-blue-gray/40 group-hover:text-[#009DE0] transition-colors" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
