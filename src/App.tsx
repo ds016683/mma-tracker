@@ -19,6 +19,7 @@ import { ProductionProgressView } from './components/production/ProductionProgre
 import { CallNotesView } from './components/call-notes/CallNotesView';
 import { ReportsAndReleaseNotesView } from './components/reports/ReportsAndReleaseNotesView';
 import { HorizonSignalView } from './components/horizon-signal/HorizonSignalView';
+import { ProductionRunSummariesView } from './components/starset/ProductionRunSummariesView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -83,6 +84,7 @@ function AppInner({
         {activeView === 'call-notes' && <CallNotesView />}
         {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
         {activeView === 'horizon-signal' && <HorizonSignalView />}
+        {activeView === 'production-run-summaries' && <ProductionRunSummariesView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
