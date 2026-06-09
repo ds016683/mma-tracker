@@ -3,7 +3,7 @@ import { Check, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import type { PRRow, Version, Carrier } from './ProductionRunData';
 import {
   CARRIER_SHORT, STATE_ORDER, STATE_NAMES,
-  getCellViewData, LABEL_FULL,
+  getCellViewData, LABEL_FULL, fmtPct, fmtDelta,
 } from './ProductionRunData';
 
 interface Props {
@@ -62,7 +62,13 @@ export function ProductionRunMSA({
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="w-full border-separate border-spacing-0 text-sm">
+          <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+            <colgroup>
+              <col style={{ width: '16rem' }} />
+              {visibleCarriers.map((c) => (
+                <col key={c} />
+              ))}
+            </colgroup>
             <thead className="bg-gray-50">
               <tr>
                 <th className="border-b border-gray-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
@@ -71,7 +77,7 @@ export function ProductionRunMSA({
                 {visibleCarriers.map((c) => (
                   <th
                     key={c}
-                    className="border-b border-gray-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+                    className="border-b border-gray-200 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500"
                   >
                     {CARRIER_SHORT[c]}
                   </th>
@@ -105,7 +111,11 @@ export function ProductionRunMSA({
                             {!row ? (
                               <span className="text-[11px] italic">No data</span>
                             ) : version === 'delta' ? (
-                              <DeltaBody dir={view.direction} />
+                              <DeltaBody
+                                dir={view.direction}
+                                gy={row.pct_greenyellow_new}
+                                dlt={row.delta_pct_greenyellow}
+                              />
                             ) : view.abbrevs.length === 0 ? (
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
                                 <Check className="h-3 w-3" /> Clean
@@ -138,10 +148,24 @@ export function ProductionRunMSA({
   );
 }
 
-function DeltaBody({ dir }: { dir: string }) {
-  if (dir === 'improved') return <span className="inline-flex items-center gap-1 text-[11px] font-semibold"><ArrowUp className="h-3 w-3" /> Improved</span>;
-  if (dir === 'regressed') return <span className="inline-flex items-center gap-1 text-[11px] font-semibold"><ArrowDown className="h-3 w-3" /> Regressed</span>;
-  if (dir === 'still_clean') return <span className="inline-flex items-center gap-1 text-[11px] font-semibold"><Minus className="h-3 w-3" /> Clean</span>;
-  return <span className="inline-flex items-center gap-1 text-[11px] font-semibold"><span className="font-mono">~</span> Stable</span>;
+function DeltaBody({ dir, gy, dlt }: { dir: string; gy: number | null; dlt: number | null }) {
+  let label = 'Stable';
+  let Icon: typeof ArrowUp = Minus;
+  let iconChar: string | null = null;
+  if (dir === 'improved') { label = 'Improved'; Icon = ArrowUp; }
+  else if (dir === 'regressed') { label = 'Regressed'; Icon = ArrowDown; }
+  else if (dir === 'still_clean') { label = 'Clean'; Icon = Minus; }
+  else { label = 'Stable'; iconChar = '~'; }
+  return (
+    <div className="flex w-full flex-col gap-0.5">
+      <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
+        {iconChar ? <span className="font-mono leading-none">{iconChar}</span> : <Icon className="h-3 w-3" />}
+        {label}
+      </span>
+      <span className="font-mono text-[10px] tabular-nums opacity-80">
+        G/Y {fmtPct(gy)} <span className="opacity-75">· {fmtDelta(dlt)}</span>
+      </span>
+    </div>
+  );
 }
 

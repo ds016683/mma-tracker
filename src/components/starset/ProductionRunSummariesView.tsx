@@ -8,6 +8,7 @@ import { ProductionRunNational } from './ProductionRunNational';
 import { ProductionRunMSA } from './ProductionRunMSA';
 import { ProductionRunPdfPanel } from './ProductionRunPdfPanel';
 import { ProductionRunHeatmap, type HeatmapMetric } from './ProductionRunHeatmap';
+import { ProductionRunLegend } from './ProductionRunLegend';
 
 const CSV_URL = '/mma-tracker/data/production-run-v9-comparison.csv';
 
@@ -242,27 +243,37 @@ export function ProductionRunSummariesView() {
             )}
 
             {(grain === 'state' || grain === 'national') && visibleCarriers.length > 0 && (
-              <ProductionRunMatrix
-                stateMatrix={indexed.stateMatrix}
-                visibleCarriers={visibleCarriers}
-                version={version}
-                onCellClick={handleCellClick}
-                scrollToState={scrollToState}
-                onScrollHandled={() => setScrollToState(null)}
-              />
+              <>
+                <div className="mb-3">
+                  <ProductionRunLegend version={version} />
+                </div>
+                <ProductionRunMatrix
+                  stateMatrix={indexed.stateMatrix}
+                  visibleCarriers={visibleCarriers}
+                  version={version}
+                  onCellClick={handleCellClick}
+                  scrollToState={scrollToState}
+                  onScrollHandled={() => setScrollToState(null)}
+                />
+              </>
             )}
 
             {grain === 'msa' && (
-              <ProductionRunMSA
-                msaMatrix={indexed.msaByState[msaState] ?? {}}
-                msaNames={indexed.msaNames}
-                statesWithMsa={statesWithMsa}
-                selectedState={msaState || statesWithMsa[0] || ''}
-                onStateChange={setMsaState}
-                visibleCarriers={visibleCarriers}
-                version={version}
-                onCellClick={handleCellClick}
-              />
+              <>
+                <div className="mb-3">
+                  <ProductionRunLegend version={version} />
+                </div>
+                <ProductionRunMSA
+                  msaMatrix={indexed.msaByState[msaState] ?? {}}
+                  msaNames={indexed.msaNames}
+                  statesWithMsa={statesWithMsa}
+                  selectedState={msaState || statesWithMsa[0] || ''}
+                  onStateChange={setMsaState}
+                  visibleCarriers={visibleCarriers}
+                  version={version}
+                  onCellClick={handleCellClick}
+                />
+              </>
             )}
 
             {visibleCarriers.length === 0 && (

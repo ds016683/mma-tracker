@@ -32,12 +32,12 @@ function MetricRow({ label, baseStr, newStr, deltaStr, deltaSign, betterWhenUp }
     deltaColor = good ? 'text-emerald-600' : 'text-red-600';
   }
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 border-b border-gray-100 py-2 text-sm last:border-0">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-mono text-gray-700 tabular-nums">{baseStr}</span>
-      <span className="font-mono text-gray-900 tabular-nums">{newStr}</span>
-      <span className={`font-mono text-xs tabular-nums ${deltaColor}`}>{deltaStr}</span>
-    </div>
+    <tr className="border-b border-gray-100 last:border-0">
+      <td className="py-2 pr-2 text-sm text-gray-600">{label}</td>
+      <td className="py-2 px-2 text-right font-mono text-sm text-gray-500 tabular-nums">{baseStr}</td>
+      <td className="py-2 px-2 text-right font-mono text-sm font-semibold text-gray-900 tabular-nums">{newStr}</td>
+      <td className={`py-2 pl-2 text-right font-mono text-xs tabular-nums ${deltaColor}`}>{deltaStr}</td>
+    </tr>
   );
 }
 
@@ -79,7 +79,7 @@ export function ProductionRunCellDetail({ open, state, carrier, totalRow, settin
         aria-hidden
       />
       <aside
-        className="fixed right-0 top-0 z-[1101] flex h-screen w-full max-w-[480px] flex-col bg-white shadow-2xl"
+        className="fixed right-0 top-0 z-[1101] flex h-screen w-full max-w-[540px] flex-col bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-label={`Quality detail for ${stateFull} ${carrier}`}
@@ -111,69 +111,81 @@ export function ProductionRunCellDetail({ open, state, carrier, totalRow, settin
               {/* Section 1: Quality Snapshot */}
               <section className="mb-6">
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Quality Snapshot</h3>
-                <div className="rounded-lg border border-gray-200 px-3 pb-2 pt-1">
-                  <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 border-b border-gray-200 pb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                    <span>Metric</span>
-                    <span className="text-right">v8.2</span>
-                    <span className="text-right">v9</span>
-                    <span className="text-right">Δ</span>
-                  </div>
-                  <MetricRow
-                    label="G/Y (MRF-Backed) %"
-                    baseStr={fmtPct(totalRow.pct_greenyellow_base)}
-                    newStr={fmtPct(totalRow.pct_greenyellow_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_greenyellow)}
-                    deltaSign={Math.sign(totalRow.delta_pct_greenyellow ?? 0)}
-                    betterWhenUp
-                  />
-                  <MetricRow
-                    label="Red %"
-                    baseStr={fmtPct(totalRow.pct_red_base)}
-                    newStr={fmtPct(totalRow.pct_red_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_red)}
-                    deltaSign={Math.sign(totalRow.delta_pct_red ?? 0)}
-                    betterWhenUp={false}
-                  />
-                  <MetricRow
-                    label="Missing %"
-                    baseStr={fmtPct(totalRow.pct_missing_base)}
-                    newStr={fmtPct(totalRow.pct_missing_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_missing)}
-                    deltaSign={Math.sign(totalRow.delta_pct_missing ?? 0)}
-                    betterWhenUp={false}
-                  />
-                  <MetricRow
-                    label="Carrier MRF %"
-                    baseStr={fmtPct(totalRow.pct_carrier_mrf_spend_base)}
-                    newStr={fmtPct(totalRow.pct_carrier_mrf_spend_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_carrier_mrf)}
-                    deltaSign={Math.sign(totalRow.delta_pct_carrier_mrf ?? 0)}
-                    betterWhenUp
-                  />
-                  <MetricRow
-                    label="Hospital MRF %"
-                    baseStr={fmtPct(totalRow.pct_hospital_mrf_spend_base)}
-                    newStr={fmtPct(totalRow.pct_hospital_mrf_spend_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_hospital_mrf)}
-                    deltaSign={Math.sign(totalRow.delta_pct_hospital_mrf ?? 0)}
-                    betterWhenUp
-                  />
-                  <MetricRow
-                    label="Imputed %"
-                    baseStr={fmtPct(totalRow.pct_imputed_spend_base)}
-                    newStr={fmtPct(totalRow.pct_imputed_spend_new)}
-                    deltaStr={fmtDelta(totalRow.delta_pct_imputed)}
-                    deltaSign={Math.sign(totalRow.delta_pct_imputed ?? 0)}
-                    betterWhenUp={false}
-                  />
-                  <MetricRow
-                    label="Spend per 1k"
-                    baseStr={fmtSpendPerK(totalRow.total_weighted_rate_base)}
-                    newStr={fmtSpendPerK(totalRow.total_weighted_rate_new)}
-                    deltaStr={fmtPct(totalRow.pct_change_total_weighted_rate)}
-                    deltaSign={0}
-                    betterWhenUp
-                  />
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <table className="w-full table-fixed">
+                    <colgroup>
+                      <col />
+                      <col style={{ width: '6.5rem' }} />
+                      <col style={{ width: '6.5rem' }} />
+                      <col style={{ width: '5rem' }} />
+                    </colgroup>
+                    <thead>
+                      <tr className="border-b border-gray-200 bg-gray-50">
+                        <th className="py-2 pl-3 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500">Metric</th>
+                        <th className="py-2 px-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-500">v8.2</th>
+                        <th className="py-2 px-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-500">v9</th>
+                        <th className="py-2 pl-2 pr-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-500">Δ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="[&_td:first-child]:pl-3 [&_td:last-child]:pr-3">
+                      <MetricRow
+                        label="G/Y (MRF-Backed) %"
+                        baseStr={fmtPct(totalRow.pct_greenyellow_base)}
+                        newStr={fmtPct(totalRow.pct_greenyellow_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_greenyellow)}
+                        deltaSign={Math.sign(totalRow.delta_pct_greenyellow ?? 0)}
+                        betterWhenUp
+                      />
+                      <MetricRow
+                        label="Red %"
+                        baseStr={fmtPct(totalRow.pct_red_base)}
+                        newStr={fmtPct(totalRow.pct_red_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_red)}
+                        deltaSign={Math.sign(totalRow.delta_pct_red ?? 0)}
+                        betterWhenUp={false}
+                      />
+                      <MetricRow
+                        label="Missing %"
+                        baseStr={fmtPct(totalRow.pct_missing_base)}
+                        newStr={fmtPct(totalRow.pct_missing_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_missing)}
+                        deltaSign={Math.sign(totalRow.delta_pct_missing ?? 0)}
+                        betterWhenUp={false}
+                      />
+                      <MetricRow
+                        label="Carrier MRF %"
+                        baseStr={fmtPct(totalRow.pct_carrier_mrf_spend_base)}
+                        newStr={fmtPct(totalRow.pct_carrier_mrf_spend_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_carrier_mrf)}
+                        deltaSign={Math.sign(totalRow.delta_pct_carrier_mrf ?? 0)}
+                        betterWhenUp
+                      />
+                      <MetricRow
+                        label="Hospital MRF %"
+                        baseStr={fmtPct(totalRow.pct_hospital_mrf_spend_base)}
+                        newStr={fmtPct(totalRow.pct_hospital_mrf_spend_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_hospital_mrf)}
+                        deltaSign={Math.sign(totalRow.delta_pct_hospital_mrf ?? 0)}
+                        betterWhenUp
+                      />
+                      <MetricRow
+                        label="Imputed %"
+                        baseStr={fmtPct(totalRow.pct_imputed_spend_base)}
+                        newStr={fmtPct(totalRow.pct_imputed_spend_new)}
+                        deltaStr={fmtDelta(totalRow.delta_pct_imputed)}
+                        deltaSign={Math.sign(totalRow.delta_pct_imputed ?? 0)}
+                        betterWhenUp={false}
+                      />
+                      <MetricRow
+                        label="Spend per 1k"
+                        baseStr={fmtSpendPerK(totalRow.total_weighted_rate_base)}
+                        newStr={fmtSpendPerK(totalRow.total_weighted_rate_new)}
+                        deltaStr={fmtPct(totalRow.pct_change_total_weighted_rate)}
+                        deltaSign={0}
+                        betterWhenUp
+                      />
+                    </tbody>
+                  </table>
                 </div>
               </section>
 

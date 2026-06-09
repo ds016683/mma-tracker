@@ -3,7 +3,7 @@ import { Check, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import type { PRRow, Version, Carrier } from './ProductionRunData';
 import {
   CARRIERS, CARRIER_SHORT, STATE_ORDER, STATE_NAMES,
-  getCellViewData, LABEL_FULL,
+  getCellViewData, LABEL_FULL, fmtPct, fmtDelta,
 } from './ProductionRunData';
 
 interface Props {
@@ -42,24 +42,27 @@ export function ProductionRunMatrix({
       ref={scrollRef}
       className="relative max-h-[70vh] overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm"
     >
-      <table className="w-full border-separate border-spacing-0 text-sm">
+      <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+        <colgroup>
+          <col style={{ width: '9rem' }} />
+          {visibleCarriers.map((c) => (
+            <col key={c} />
+          ))}
+        </colgroup>
         <thead className="sticky top-0 z-20 bg-white">
           <tr>
             <th
-              className="sticky left-0 z-30 w-32 border-b border-r border-gray-200 bg-white px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+              className="sticky left-0 z-30 border-b border-r border-gray-200 bg-white px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500"
             >
               State
             </th>
             {visibleCarriers.map((c) => (
               <th
                 key={c}
-                className="border-b border-gray-200 bg-white px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500"
+                className="border-b border-gray-200 bg-white px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500"
                 title={c}
               >
-                <div className="flex items-center gap-1">
-                  <span>{CARRIER_SHORT[c]}</span>
-                  <span className="text-[10px] font-normal normal-case text-gray-400">{c.replace(CARRIER_SHORT[c], '')}</span>
-                </div>
+                {CARRIER_SHORT[c]}
               </th>
             ))}
           </tr>
@@ -140,31 +143,27 @@ function VersionCellBody({ view }: { view: ReturnType<typeof getCellViewData> })
 function DeltaCellBody({ view }: { view: ReturnType<typeof getCellViewData> }) {
   if (!view.row) return <span className="text-[11px] italic">No data</span>;
   const dir = view.direction;
-  if (dir === 'improved') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
-        <ArrowUp className="h-3 w-3" /> Improved
-      </span>
-    );
-  }
-  if (dir === 'regressed') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
-        <ArrowDown className="h-3 w-3" /> Regressed
-      </span>
-    );
-  }
-  if (dir === 'still_clean') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
-        <Minus className="h-3 w-3" /> Clean
-      </span>
-    );
-  }
+  const gy = view.row.pct_greenyellow_new;
+  const dlt = view.row.delta_pct_greenyellow;
+
+  let label = 'Stable';
+  let Icon: typeof ArrowUp = Minus;
+  let iconChar: string | null = null;
+  if (dir === 'improved') { label = 'Improved'; Icon = ArrowUp; }
+  else if (dir === 'regressed') { label = 'Regressed'; Icon = ArrowDown; }
+  else if (dir === 'still_clean') { label = 'Clean'; Icon = Minus; }
+  else { label = 'Stable'; iconChar = '~'; }
+
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
-      <span className="font-mono">~</span> Stable
-    </span>
+    <div className="flex w-full flex-col gap-0.5">
+      <span className="inline-flex items-center gap-1 text-[11px] font-semibold">
+        {iconChar ? <span className="font-mono leading-none">{iconChar}</span> : <Icon className="h-3 w-3" />}
+        {label}
+      </span>
+      <span className="font-mono text-[10px] tabular-nums opacity-80">
+        G/Y {fmtPct(gy)} <span className="opacity-75">· {fmtDelta(dlt)}</span>
+      </span>
+    </div>
   );
 }
 
