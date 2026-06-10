@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FileText, Map as MapIcon } from 'lucide-react';
 import type { PRRow, Carrier, Version } from './ProductionRunData';
-import { CARRIERS, parseCSV, STATE_ORDER } from './ProductionRunData';
+import { CARRIERS, parseCSV } from './ProductionRunData';
 import { ProductionRunMatrix, CarrierToggles } from './ProductionRunMatrix';
 import { ProductionRunCellDetail } from './ProductionRunCellDetail';
 import { ProductionRunNational } from './ProductionRunNational';
@@ -109,8 +109,7 @@ export function ProductionRunSummariesView() {
   // Default MSA state when grain switches to MSA
   useEffect(() => {
     if (grain !== 'msa' || msaState || statesWithMsa.length === 0) return;
-    const first = STATE_ORDER.find((s) => statesWithMsa.includes(s)) ?? statesWithMsa[0];
-    setMsaState(first);
+    setMsaState('ALL');
   }, [grain, msaState, statesWithMsa]);
 
   const toggleCarrier = (c: Carrier) => {
@@ -265,10 +264,11 @@ export function ProductionRunSummariesView() {
                   <ProductionRunLegend version={version} />
                 </div>
                 <ProductionRunMSA
-                  msaMatrix={indexed.msaByState[msaState] ?? {}}
+                  msaMatrix={msaState === 'ALL' ? {} : (indexed.msaByState[msaState] ?? {})}
+                  msaByState={indexed.msaByState}
                   msaNames={indexed.msaNames}
                   statesWithMsa={statesWithMsa}
-                  selectedState={msaState || statesWithMsa[0] || ''}
+                  selectedState={msaState || 'ALL'}
                   onStateChange={setMsaState}
                   visibleCarriers={visibleCarriers}
                   version={version}

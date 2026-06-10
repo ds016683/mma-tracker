@@ -1,14 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Check, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import type { PRRow, Version, Carrier } from './ProductionRunData';
 import {
   CARRIER_SHORT, STATE_ORDER, STATE_NAMES,
-  getCellViewData, LABEL_FULL, fmtPct, fmtDelta,
+  getCellViewData, LABEL_FULL, fmtPct, fmtDelta, MSA_POPULATION,
 } from './ProductionRunData';
+
+type MsaOrder = 'alpha' | 'largest' | 'smallest';
 
 interface Props {
   // MSA rows (TOTAL/TOTAL only) for selected state, keyed by msa_id -> carrier -> row
   msaMatrix: Record<string, Record<string, PRRow>>;
+  // Full msaByState for "All MSAs" mode
+  msaByState: Record<string, Record<string, Record<string, PRRow>>>;
   // msa_id -> msa_cbsa_name
   msaNames: Record<string, string>;
   // All states with MSA data
@@ -21,44 +25,91 @@ interface Props {
 }
 
 export function ProductionRunMSA({
-  msaMatrix, msaNames, statesWithMsa, selectedState, onStateChange,
+  msaMatrix, msaByState, msaNames, statesWithMsa, selectedState, onStateChange,
   visibleCarriers, version, onCellClick,
 }: Props) {
+  const [order, setOrder] = useState<MsaOrder>('alpha');
+
   const orderedStates = useMemo(() => {
     const inOrder = STATE_ORDER.filter((s) => statesWithMsa.includes(s));
     const extras = statesWithMsa.filter((s) => !STATE_ORDER.includes(s));
     return [...inOrder, ...extras];
   }, [statesWithMsa]);
 
+  // Build effective matrix — single state or all states merged
+  const effectiveMatrix = useMemo(() => {
+    if (selectedState !== 'ALL') return msaMatrix;
+    const merged: Record<string, Record<string, PRRow>> = {};
+    for (const stMatrix of Object.values(msaByState)) {
+      for (const [msaId, carrierMap] of Object.entries(stMatrix)) {
+        if (!merged[msaId]) merged[msaId] = {};
+        for (const [carrier, row] of Object.entries(carrierMap)) {
+          // Prefer existing (first state encountered) — MSAs that span states use first
+          if (!merged[msaId][carrier]) merged[msaId][carrier] = row;
+        }
+      }
+    }
+    return merged;
+  }, [selectedState, msaMatrix, msaByState]);
+
   const orderedMsaIds = useMemo(() => {
-    return Object.keys(msaMatrix).sort((a, b) => {
-      const na = msaNames[a] ?? '';
-      const nb = msaNames[b] ?? '';
-      return na.localeCompare(nb);
+    const ids = Object.keys(effectiveMatrix);
+    if (order === 'alpha') {
+      return ids.sort((a, b) => (msaNames[a] ?? '').localeCompare(msaNames[b] ?? ''));
+    }
+    if (order === 'largest') {
+      return ids.sort((a, b) => {
+        const pa = MSA_POPULATION[a] ?? 0;
+        const pb = MSA_POPULATION[b] ?? 0;
+        if (pb !== pa) return pb - pa;
+        return (msaNames[a] ?? '').localeCompare(msaNames[b] ?? '');
+      });
+    }
+    // smallest
+    return ids.sort((a, b) => {
+      const pa = MSA_POPULATION[a] ?? 0;
+      const pb = MSA_POPULATION[b] ?? 0;
+      if (pa !== pb) return pa - pb;
+      return (msaNames[a] ?? '').localeCompare(msaNames[b] ?? '');
     });
-  }, [msaMatrix, msaNames]);
+  }, [effectiveMatrix, msaNames, order]);
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
+        {/* STATE dropdown */}
         <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">State</label>
         <select
           value={selectedState}
           onChange={(e) => onStateChange(e.target.value)}
           className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-[#001A41] focus:outline-none focus:ring-2 focus:ring-[#009DE0]"
         >
+          <option value="ALL">All MSAs</option>
           {orderedStates.map((s) => (
             <option key={s} value={s}>
               {s} — {STATE_NAMES[s] ?? s}
             </option>
           ))}
         </select>
+
+        {/* ORDER dropdown */}
+        <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Order</label>
+        <select
+          value={order}
+          onChange={(e) => setOrder(e.target.value as MsaOrder)}
+          className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-[#001A41] focus:outline-none focus:ring-2 focus:ring-[#009DE0]"
+        >
+          <option value="alpha">Alphabetical</option>
+          <option value="largest">Largest to Smallest</option>
+          <option value="smallest">Smallest to Largest</option>
+        </select>
+
         <span className="text-xs text-gray-400">{orderedMsaIds.length} MSAs</span>
       </div>
 
       {orderedMsaIds.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-8 text-center text-sm text-gray-500">
-          No MSA-level data for {STATE_NAMES[selectedState] ?? selectedState}.
+          No MSA-level data for {selectedState === 'ALL' ? 'any state' : (STATE_NAMES[selectedState] ?? selectedState)}.
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -87,7 +138,7 @@ export function ProductionRunMSA({
             <tbody>
               {orderedMsaIds.map((msaId) => {
                 const name = msaNames[msaId] ?? msaId;
-                const carrierRows = msaMatrix[msaId] ?? {};
+                const carrierRows = effectiveMatrix[msaId] ?? {};
                 return (
                   <tr key={msaId}>
                     <th
@@ -168,4 +219,3 @@ function DeltaBody({ dir, gy, dlt }: { dir: string; gy: number | null; dlt: numb
     </div>
   );
 }
-

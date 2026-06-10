@@ -279,3 +279,166 @@ export function fmtSpendPerK(v: number | null | undefined): string {
   if (v === null || v === undefined || Number.isNaN(v)) return '—';
   return '$' + Math.round(v).toLocaleString();
 }
+
+// MSA population lookup by CBSA code (2020 Census / ACS estimates).
+// Used for "Largest to Smallest" / "Smallest to Largest" sort on the MSA view.
+// CBSAs not listed default to 0 (sort to bottom of L→S, top of S→L).
+
+// MSA population lookup by CBSA code (2020 Census / ACS estimates).
+// Used for "Largest to Smallest" / "Smallest to Largest" sort on the MSA view.
+// CBSAs not listed default to 0 (sort to bottom of L→S, top of S→L).
+export const MSA_POPULATION: Record<string, number> = {
+  '35620': 19216182, // New York-Newark-Jersey City
+  '31080': 13214799, // Los Angeles-Long Beach-Anaheim
+  '16980': 9618502,  // Chicago-Naperville-Elgin
+  '19100': 7759615,  // Dallas-Fort Worth-Arlington
+  '26420': 7340216,  // Houston-The Woodlands-Sugar Land
+  '47900': 6385162,  // Washington-Arlington-Alexandria
+  '33100': 6166488,  // Miami-Fort Lauderdale-Pompano Beach
+  '37980': 6245051,  // Philadelphia-Camden-Wilmington
+  '12060': 6089815,  // Atlanta-Sandy Springs-Roswell
+  '14460': 4873019,  // Boston-Cambridge-Newton
+  '38060': 4946145,  // Phoenix-Mesa-Chandler
+  '40140': 3338330,  // Riverside-San Bernardino-Ontario
+  '41860': 4749008,  // San Francisco-Oakland-Berkeley
+  '42660': 4018762,  // Seattle-Tacoma-Bellevue
+  '19820': 4365205,  // Detroit-Warren-Dearborn
+  '33460': 3690261,  // Minneapolis-St. Paul-Bloomington
+  '41740': 3286069,  // San Diego-Chula Vista-Carlsbad
+  '45300': 3175275,  // Tampa-St. Petersburg-Clearwater
+  '41180': 2820253,  // St. Louis
+  '16740': 2652513,  // Charlotte-Concord-Gastonia
+  '36740': 2673376,  // Orlando-Kissimmee-Sanford
+  '19740': 2963821,  // Denver-Aurora-Lakewood
+  '32820': 2038578,  // Memphis
+  '29820': 2227053,  // Las Vegas-Henderson-Paradise
+  '18140': 2138926,  // Columbus, OH
+  '26900': 2056851,  // Indianapolis-Carmel-Anderson
+  '41940': 1990660,  // San Jose-Sunnyvale-Santa Clara
+  '34980': 1994983,  // Nashville-Davidson-Murfreesboro-Franklin
+  '12580': 2834316,  // Baltimore-Columbia-Towson
+  '28140': 2206235,  // Kansas City
+  '12420': 2283371,  // Austin-Round Rock-Georgetown
+  '38860': 1387340,  // Portland-Vancouver-Hillsboro
+  '35380': 1311049,  // New Orleans-Metairie
+  '27260': 1571801,  // Jacksonville
+  '33340': 1576236,  // Milwaukee-Waukesha
+  '30980': 1669071,  // Louisville/Jefferson County
+  '17140': 1303842,  // Cincinnati
+  '46140': 1386116,  // Virginia Beach-Norfolk-Newport News
+  '39580': 1362997,  // Raleigh-Cary
+  '13820': 1133706,  // Birmingham-Hoover
+  '41700': 1165109,  // San Antonio-New Braunfels
+  '17460': 1135547,  // Cleveland-Elyria
+  '25540': 1204877,  // Hartford-East Hartford-Middletown
+  '38300': 1103271,  // Pittsburgh
+  '22900': 1064877,  // Greenville-Anderson
+  '14260': 1110511,  // Baton Rouge
+  '49340': 1283517,  // Worcester
+  '47260': 1186006,  // Tucson
+  '24340': 1098248,  // Grand Rapids-Kentwood
+  '40380': 1117806,  // Rochester, NY
+  '22380': 1214379,  // Fresno
+  '26180': 1359678,  // Honolulu
+  '40060': 1233215,  // Richmond, VA
+  '16620': 1244347,  // Chattanooga
+  '41620': 1258150,  // Salt Lake City
+  '41500': 313060,   // San Jose (metro only)
+  '36420': 1425976,  // Oklahoma City
+  '13140': 1041618,  // Baton Rouge alt
+  '39300': 806896,   // Providence-Warwick
+  '35100': 276018,   // New Bern
+  '44060': 970849,   // Spokane-Spokane Valley
+  '19380': 1007261,  // Dayton-Kettering
+  '45820': 754131,   // Thousand Oaks
+  '15980': 770577,   // Cape Coral-Fort Myers
+  '16020': 444483,   // Canton-Massillon
+  '29460': 819941,   // Lakeland-Winter Haven
+  '32580': 805832,   // McAllen-Edinburg-Mission
+  '39740': 794055,   // Sarasota-Bradenton-Venice
+  '15260': 847006,   // Bridgeport-Stamford-Norwalk
+  '28940': 869927,   // Knoxville
+  '21340': 868549,   // El Paso
+  '10740': 916528,   // Albuquerque
+  '45060': 869545,   // Syracuse
+  '24660': 765756,   // Greensboro-High Point
+  '29180': 816581,   // Lafayette, LA
+  '39900': 766901,   // Scranton-Wilkes-Barre
+  '20500': 774619,   // Durham-Chapel Hill
+  '17820': 773551,   // Colorado Springs
+  '19700': 771830,   // Deltona-Daytona Beach-Ormond Beach
+  '38900': 765936,   // Portland-South Portland, ME
+  '20940': 664613,   // El Centro
+  '10420': 703505,   // Akron
+  '49660': 652517,   // Youngstown-Warren-Boardman
+  '11260': 398328,   // Anchorage
+  '24020': 395440,   // Gainesville, FL
+  '17300': 557424,   // Columbia, SC
+  '45780': 542063,   // Tallahassee
+  '27980': 539294,   // Killeen-Temple
+  '46060': 513387,   // Vallejo
+  '37340': 498634,   // Pensacola-Ferry Pass-Brent
+  '14500': 637682,   // Beaumont-Port Arthur
+  '49420': 354026,   // Winston-Salem
+  '30460': 348612,   // Lynchburg
+  '31420': 339009,   // Lincoln, NE
+  '13780': 336776,   // Binghamton
+  '39460': 334253,   // Reno-Sparks
+  '30700': 331500,   // Madison, WI
+  '13020': 330013,   // Bakersfield
+  '36500': 436564,   // Ogden-Clearfield
+  '32900': 435146,   // Modesto
+  '35300': 432157,   // New Haven-Milford
+  '40580': 445530,   // Rockford
+  '43620': 275402,   // Sioux Falls
+  '33780': 274813,   // Mobile
+  '47020': 316379,   // Trenton-Princeton
+  '11100': 309631,   // Amarillo
+  '44220': 328581,   // Springfield, OH
+  '40220': 326833,   // Roanoke
+  '18880': 322185,   // Crestview-Fort Walton Beach-Destin
+  '22420': 319294,   // Fort Collins
+  '49700': 455975,   // York-Hanover
+  '49180': 364079,   // Wilmington, NC
+  '44180': 357439,   // Springfield, MO
+  '21780': 354905,   // Eugene-Springfield
+  '28660': 413033,   // Kennewick-Richland
+  '42680': 406000,   // Santa Rosa-Petaluma
+  '33940': 399044,   // Myrtle Beach-Conway-North Myrtle Beach
+  '34940': 388025,   // Naples-Marco Island
+  '18580': 376601,   // Corpus Christi
+  '11700': 479609,   // Asheville
+  '29740': 541615,   // Lancaster, PA
+  '19780': 499560,   // Des Moines-West Des Moines
+  '21500': 476530,   // Erie
+  '27100': 472866,   // Huntsville, AL
+  '14980': 466789,   // Brownsville-Harlingen
+  '33140': 458839,   // Midland, TX
+  '36220': 454726,   // Odessa, TX
+  '42540': 278168,   // Santa Barbara-Santa Maria-Goleta
+  '31140': 823217,   // Lexington-Fayette
+  '17860': 310634,   // Columbus, GA-AL
+  '29100': 308158,   // Lafayette-West Lafayette, IN
+  '14010': 305489,   // Bloomington, IL
+  '21820': 304212,   // Evansville
+  '28020': 302294,   // Kalamazoo-Portage
+  '29420': 302196,   // Lake Charles
+  '40340': 295432,   // Rochester, MN
+  '37620': 291680,   // Peoria
+  '11580': 291034,   // Appleton
+  '43900': 288093,   // South Bend-Mishawaka
+  '34060': 286032,   // Macon-Bibb County
+  '29580': 280414,   // Lansing-East Lansing
+  '44100': 280122,   // Springfield, IL
+  '43100': 714088,   // Shreveport-Bossier City
+  '25860': 706326,   // Hickory-Lenoir-Morganton
+  '44700': 672492,   // Stockton
+  '37100': 659890,   // Palm Bay-Melbourne-Titusville
+  '48620': 654610,   // Waco
+  '48140': 609755,   // Visalia
+  '49020': 707571,   // Wichita
+  '46700': 311680,   // Utica-Rome
+  '38660': 311550,   // Port St. Lucie
+  '35840': 1061360,  // North Port-Sarasota-Bradenton
+  '24540': 507658,   // Greenville, NC
+};
