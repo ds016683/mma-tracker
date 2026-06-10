@@ -1,25 +1,39 @@
 import { useState } from 'react';
-import { X, Download, FileText, ExternalLink } from 'lucide-react';
+import { X, Download, FileText, FileSpreadsheet, ExternalLink } from 'lucide-react';
 
-interface PdfDoc {
+interface RefDoc {
   id: string;
   title: string;
   description: string;
   url: string;
+  kind: 'pdf' | 'csv';
+  filename: string;
 }
 
-const DOCS: PdfDoc[] = [
+const DOCS: RefDoc[] = [
   {
     id: 'quality-review',
     title: 'v9 Data Quality Review',
     description: 'Pre-production data quality dossier — issue catalog, thresholds, and review playbook.',
     url: '/mma-tracker/data/v9-data-quality-review.pdf',
+    kind: 'pdf',
+    filename: 'v9-data-quality-review.pdf',
   },
   {
     id: 'technical',
     title: 'Technical Reference / Data Dictionary',
     description: 'Column-level definitions, derived metrics, and pipeline notes for the comparison table.',
     url: '/mma-tracker/data/v9-technical-reference.pdf',
+    kind: 'pdf',
+    filename: 'v9-technical-reference.pdf',
+  },
+  {
+    id: 'comparison-csv',
+    title: 'v8.2 → v9 Comparison Source CSV',
+    description: 'Raw BigQuery export powering the matrix — National, State, and MSA rows for all carriers and settings.',
+    url: '/mma-tracker/data/production-run-v9-comparison.csv',
+    kind: 'csv',
+    filename: 'state_review_comparison_v8_2_vs_preprod_v9.csv',
   },
 ];
 
@@ -31,7 +45,7 @@ interface Props {
 export function ProductionRunPdfPanel({ open, onClose }: Props) {
   const [previewId, setPreviewId] = useState<string | null>(null);
   if (!open) return null;
-  const previewDoc = DOCS.find((d) => d.id === previewId) ?? null;
+  const previewDoc = DOCS.find((d) => d.id === previewId && d.kind === 'pdf') ?? null;
 
   return (
     <aside
@@ -57,27 +71,35 @@ export function ProductionRunPdfPanel({ open, onClose }: Props) {
         <div className="space-y-3">
           {DOCS.map((doc) => {
             const isPreview = previewId === doc.id;
+            const Icon = doc.kind === 'csv' ? FileSpreadsheet : FileText;
+            const previewable = doc.kind === 'pdf';
             return (
               <div
                 key={doc.id}
                 className={`rounded-lg border px-3 py-3 transition-colors ${
-                  isPreview ? 'border-[#009DE0] bg-[#009DE0]/5' : 'border-gray-200 bg-white'
+                  isPreview && previewable ? 'border-[#009DE0] bg-[#009DE0]/5' : 'border-gray-200 bg-white'
                 }`}
               >
                 <button
-                  onClick={() => setPreviewId(isPreview ? null : doc.id)}
+                  onClick={() => previewable && setPreviewId(isPreview ? null : doc.id)}
                   className="flex w-full items-start gap-2 text-left"
+                  disabled={!previewable}
                 >
-                  <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#001A41]" />
+                  <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#001A41]" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-[#001A41]">{doc.title}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-[#001A41]">{doc.title}</div>
+                      <span className="inline-flex h-4 items-center rounded bg-gray-100 px-1.5 font-mono text-[9px] font-bold uppercase text-gray-500">
+                        {doc.kind}
+                      </span>
+                    </div>
                     <div className="mt-0.5 text-xs text-gray-500">{doc.description}</div>
                   </div>
                 </button>
                 <div className="mt-2 flex items-center gap-2">
                   <a
                     href={doc.url}
-                    download
+                    download={doc.filename}
                     className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <Download className="h-3 w-3" />
@@ -92,12 +114,14 @@ export function ProductionRunPdfPanel({ open, onClose }: Props) {
                     <ExternalLink className="h-3 w-3" />
                     Open
                   </a>
-                  <button
-                    onClick={() => setPreviewId(isPreview ? null : doc.id)}
-                    className="ml-auto text-xs font-medium text-[#009DE0] hover:underline"
-                  >
-                    {isPreview ? 'Hide preview' : 'Preview'}
-                  </button>
+                  {previewable && (
+                    <button
+                      onClick={() => setPreviewId(isPreview ? null : doc.id)}
+                      className="ml-auto text-xs font-medium text-[#009DE0] hover:underline"
+                    >
+                      {isPreview ? 'Hide preview' : 'Preview'}
+                    </button>
+                  )}
                 </div>
               </div>
             );

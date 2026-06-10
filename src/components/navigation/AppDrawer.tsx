@@ -62,7 +62,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Network Navigator Deployment',
     defaultOpen: true,
     items: [
-      { id: 'reporting-queries',  label: 'Reporting Queries',  icon: BarChart2 },
+      { id: 'reporting-queries',        label: 'Reporting Queries',        icon: BarChart2 },
+      { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
     ],
   },
   {
@@ -93,8 +94,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Collateral',
     defaultOpen: true,
     items: [
-      { id: 'data-intelligence',         label: 'Data Intelligence',         icon: FlaskConical },
-      { id: 'production-run-summaries',  label: 'Production Run Summaries',  icon: TableProperties },
+      { id: 'data-intelligence', label: 'Data Intelligence', icon: FlaskConical },
     ],
   },
   {
