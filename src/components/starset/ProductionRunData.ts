@@ -25,9 +25,9 @@ export const CARRIER_SHORT: Record<Carrier, string> = {
 
 // Population-ranked state order from brief
 export const STATE_ORDER: string[] = [
-  'CA','TX','FL','NY','PA','IL','OH','GA','NC','MI','NJ','VA','WA','AZ','MA','TN','IN','MD','MO','WI',
-  'CO','MN','SC','AL','LA','KY','OR','OK','CT','UT','IA','NV','AR','MS','KS','NM','NE','ID','WV','HI',
-  'NH','ME','RI','MT','DE','SD','ND','AK','DC','VT','WY',
+  'AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA',
+  'MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI',
+  'SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY',
 ];
 
 export const STATE_NAMES: Record<string, string> = {
