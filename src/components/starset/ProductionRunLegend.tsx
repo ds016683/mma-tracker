@@ -64,7 +64,7 @@ export function ProductionRunLegend({ version }: Props) {
               <Check className="h-3 w-3" /> Clean
             </span>
           }
-          text="no review flags"
+          text="passes all 4 thresholds (no flags tripped)"
         />
         <LegendItem
           badge={<AbbrevTag>LC</AbbrevTag>}

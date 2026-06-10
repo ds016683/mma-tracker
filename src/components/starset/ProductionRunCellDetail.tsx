@@ -244,7 +244,7 @@ export function ProductionRunCellDetail({ open, state, carrier, totalRow, settin
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">v9 Review Flags</h3>
                 {newFlags.length === 0 ? (
                   <div className={`inline-flex rounded-md border px-3 py-1.5 text-sm font-medium ${newFlagsClass}`}>
-                    Clean — no issues flagged
+                    Clean — passes all 4 thresholds (no flags tripped)
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">

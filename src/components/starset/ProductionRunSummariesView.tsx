@@ -225,6 +225,7 @@ export function ProductionRunSummariesView() {
                   nationalTotals={indexed.nationalTotals}
                   nationalBySetting={indexed.nationalBySetting}
                   version={version}
+                  visibleCarriers={visibleCarriers}
                 />
               </div>
             )}
