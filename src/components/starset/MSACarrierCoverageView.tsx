@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowUp, ArrowDown, Minus, X, Info } from 'lucide-react';
 import {
   parseCSV, BUCKET_LABELS, BUCKET_ORDER,
-  NATIONAL_CARRIERS, gyColorClasses, deltaColor, fmtPct, fmtDelta,
+  NATIONAL_CARRIERS, deltaColorClasses, deltaColor, fmtPct, fmtDelta,
   type CCRow, type BucketKey,
 } from './MSACarrierCoverageData';
 
 const CSV_URL = '/mma-tracker/data/carrier-coverage-comparison.csv';
+
+// Carriers selected by default (those present in the chosen state)
+const DEFAULT_CARRIERS = ['Aetna Choice POS', 'BCBS PPO', 'Cigna OAP', 'UHC Choice POS Plus'];
 
 // ─── State / MSA helpers ────────────────────────────────────────────────────
 
@@ -49,12 +52,29 @@ function OOABadge() {
   );
 }
 
+// ─── Metric selection ────────────────────────────────────────────────────────
+
+type Metric = 'gy' | 'cb';
+
+const METRIC_LABELS: Record<Metric, string> = {
+  gy: 'Percent Green/Yellow (GY)',
+  cb: 'Code Basket (CB)',
+};
+
+// Pull the v8.2 / v9 / delta values for the active metric out of a row.
+function metricVals(r: CCRow, metric: Metric): { v8: number | null; v9: number | null; d: number | null } {
+  return metric === 'gy'
+    ? { v8: r.gy8, v9: r.gy9, d: r.gyd }
+    : { v8: r.cb8, v9: r.cb9, d: r.cbd };
+}
+
 interface CellProps {
   rows: CCRow[]; // all 4 bucket rows for this msa × carrier
+  metric: Metric;
   onClick: () => void;
 }
 
-function CoverageCell({ rows, onClick }: CellProps) {
+function CoverageCell({ rows, metric, onClick }: CellProps) {
   if (rows.length === 0) {
     return (
       <td className="border-b border-gray-100 p-1 align-top">
@@ -65,38 +85,42 @@ function CoverageCell({ rows, onClick }: CellProps) {
     );
   }
 
+  const totalRow = rows.find(r => r.bucket === 'TOTAL');
+
   return (
     <td className="border-b border-gray-100 p-1 align-top">
       <button
         onClick={onClick}
         className="w-full rounded-md border border-gray-200 bg-white text-left transition-shadow hover:shadow-md focus:outline-none"
       >
+        {totalRow?.ooa && (
+          <div className="px-2 pt-1.5">
+            <OOABadge />
+          </div>
+        )}
         {BUCKET_ORDER.map(bk => {
           const r = rows.find(x => x.bucket === bk);
           if (!r) return (
             <div key={bk} className="flex items-center gap-1 border-b border-gray-100 px-2 py-1.5 last:border-0">
-              <span className="w-14 shrink-0 text-[10px] font-medium text-gray-400">{BUCKET_LABELS[bk]}</span>
+              <span className="w-[4.5rem] shrink-0 text-[10px] font-medium text-gray-400">{BUCKET_LABELS[bk]}</span>
               <span className="text-[10px] italic text-gray-300">—</span>
             </div>
           );
-          const cc = gyColorClasses(r.gy9, r.ooa);
+          const { v8, v9, d } = metricVals(r, metric);
+          const cc = deltaColorClasses(d, r.ooa);
           return (
-            <div key={bk} className={`flex items-start gap-1.5 border-b border-gray-100 px-2 py-1.5 last:border-0 rounded-sm ${cc}`}>
-              <span className="w-14 shrink-0 text-[10px] font-semibold opacity-70">{BUCKET_LABELS[bk]}</span>
-              <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-                {/* G/Y row */}
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[10px] font-medium opacity-60">G/Y</span>
-                  <span className="font-mono text-[11px] font-bold tabular-nums">{fmtPct(r.gy9)}</span>
-                  <DeltaBadge d={r.gyd} />
-                </div>
-                {/* Codebasket row */}
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[10px] font-medium opacity-60">CB</span>
-                  <span className="font-mono text-[11px] tabular-nums">{fmtPct(r.cb9)}</span>
-                  <DeltaBadge d={r.cbd} />
-                </div>
-                {r.ooa && <OOABadge />}
+            <div key={bk} className={`flex items-center gap-1 border-b border-gray-100 px-2 py-1.5 last:border-0 rounded-sm ${cc}`}>
+              <span className="w-[4.5rem] shrink-0 text-[10px] font-semibold opacity-70">{BUCKET_LABELS[bk]}</span>
+              <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+                <span className="flex items-baseline gap-0.5">
+                  <span className="text-[8px] font-medium uppercase tracking-wide opacity-40">v8.2</span>
+                  <span className="font-mono text-[11px] tabular-nums opacity-60">{fmtPct(v8)}</span>
+                </span>
+                <span className="flex items-baseline gap-0.5">
+                  <span className="text-[8px] font-medium uppercase tracking-wide opacity-40">v9</span>
+                  <span className="font-mono text-[11px] font-bold tabular-nums">{fmtPct(v9)}</span>
+                </span>
+                <span className="w-12 text-right"><DeltaBadge d={d} /></span>
               </div>
             </div>
           );
@@ -226,27 +250,17 @@ interface CarrierTogglesProps {
   allCarriers: string[];
   visible: string[];
   onToggle: (c: string) => void;
-  search: string;
-  onSearch: (s: string) => void;
 }
 
-function CarrierToggles({ allCarriers, visible, onToggle, search, onSearch }: CarrierTogglesProps) {
-  const filtered = allCarriers.filter(c => c.toLowerCase().includes(search.toLowerCase()));
+function CarrierToggles({ allCarriers, visible, onToggle }: CarrierTogglesProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Carriers</span>
-        <input
-          type="text"
-          value={search}
-          onChange={e => onSearch(e.target.value)}
-          placeholder="Search…"
-          className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs focus:outline-none focus:border-gray-400 w-40"
-        />
         <span className="text-[11px] text-gray-400">{visible.length} selected</span>
       </div>
       <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-        {filtered.map(c => {
+        {allCarriers.map(c => {
           const on = visible.includes(c);
           const isNational = NATIONAL_CARRIERS.includes(c);
           return (
@@ -272,25 +286,27 @@ function CarrierToggles({ allCarriers, visible, onToggle, search, onSearch }: Ca
 
 // ─── Legend ──────────────────────────────────────────────────────────────────
 
-function Legend() {
+function Legend({ metric }: { metric: Metric }) {
   const tiers = [
-    { cls: 'bg-emerald-50 border-emerald-200', label: '≥75%' },
-    { cls: 'bg-green-50 border-green-200',     label: '60–74%' },
-    { cls: 'bg-yellow-50 border-yellow-300',   label: '45–59%' },
-    { cls: 'bg-orange-50 border-orange-300',   label: '30–44%' },
-    { cls: 'bg-red-50 border-red-300',         label: '<30%' },
-    { cls: 'bg-gray-50 border-gray-300',       label: 'OOA' },
+    { cls: 'bg-emerald-100 border-emerald-300', label: '≥ +10' },
+    { cls: 'bg-emerald-50 border-emerald-200',  label: '+3 to +10' },
+    { cls: 'bg-green-50 border-green-200',      label: '+0.5 to +3' },
+    { cls: 'bg-white border-gray-300',          label: '≈ 0' },
+    { cls: 'bg-orange-50 border-orange-300',    label: '−0.5 to −3' },
+    { cls: 'bg-red-50 border-red-300',          label: '−3 to −10' },
+    { cls: 'bg-red-100 border-red-400',         label: '≤ −10' },
+    { cls: 'bg-gray-100 border-gray-300',       label: 'OOA' },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-xs text-gray-600 shadow-sm">
-      <span className="font-semibold uppercase tracking-wider text-gray-400 text-[10px]">G/Y Color</span>
+      <span className="font-semibold uppercase tracking-wider text-gray-400 text-[10px]">Δ Color (pp)</span>
       {tiers.map(t => (
         <span key={t.label} className="inline-flex items-center gap-1.5">
           <span className={`inline-block h-3 w-3 rounded-sm border ${t.cls}`} />
           {t.label}
         </span>
       ))}
-      <span className="ml-auto text-[11px] text-gray-400">G/Y = % Green/Yellow · CB = % Codebasket · Δ = v9 − v8.2</span>
+      <span className="ml-auto text-[11px] text-gray-400">Showing {METRIC_LABELS[metric]} · color = v9 − v8.2 change</span>
     </div>
   );
 }
@@ -303,10 +319,9 @@ export function MSACarrierCoverageView() {
   const [rows, setRows] = useState<CCRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string>('');
-  const [visibleCarriers, setVisibleCarriers] = useState<string[]>([...NATIONAL_CARRIERS]);
-  const [carrierSearch, setCarrierSearch] = useState('');
+  const [visibleCarriers, setVisibleCarriers] = useState<string[]>([]);
   const [openCell, setOpenCell] = useState<OpenCell | null>(null);
-  const [showOOA, setShowOOA] = useState(true);
+  const [metric, setMetric] = useState<Metric>('gy');
 
   useEffect(() => {
     fetch(CSV_URL)
@@ -353,6 +368,25 @@ export function MSACarrierCoverageView() {
     if (!indexed || !selectedState) return {};
     return indexed.byState[selectedState] ?? {};
   }, [indexed, selectedState]);
+
+  // Carriers that actually have data in the selected state
+  const stateCarriers = useMemo(() => {
+    const present = new Set<string>();
+    for (const msaId in stateMsaMap) {
+      for (const carrier in stateMsaMap[msaId]) present.add(carrier);
+    }
+    return [...present].sort();
+  }, [stateMsaMap]);
+
+  // When the state changes, default the visible columns to DEFAULT_CARRIERS present
+  // in that state; fall back to national carriers, then to all carriers with data.
+  useEffect(() => {
+    if (stateCarriers.length === 0) return;
+    const defaultsPresent = DEFAULT_CARRIERS.filter(c => stateCarriers.includes(c));
+    if (defaultsPresent.length > 0) { setVisibleCarriers(defaultsPresent); return; }
+    const nationalsPresent = NATIONAL_CARRIERS.filter(c => stateCarriers.includes(c));
+    setVisibleCarriers(nationalsPresent.length > 0 ? nationalsPresent : stateCarriers);
+  }, [stateCarriers]);
 
   const orderedMsaIds = useMemo(() => {
     return Object.entries(stateMsaMap)
@@ -408,26 +442,26 @@ export function MSACarrierCoverageView() {
             )}
           </div>
 
-          {/* OOA toggle */}
-          <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
-            <input
-              type="checkbox"
-              checked={showOOA}
-              onChange={e => setShowOOA(e.target.checked)}
-              className="rounded"
-            />
-            Show out-of-area carriers
-          </label>
+          {/* Metric selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Metric</span>
+            <select
+              value={metric}
+              onChange={e => setMetric(e.target.value as Metric)}
+              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-[#001A41] focus:outline-none focus:ring-2 focus:ring-[#009DE0]"
+            >
+              <option value="gy">{METRIC_LABELS.gy}</option>
+              <option value="cb">{METRIC_LABELS.cb}</option>
+            </select>
+          </div>
         </div>
 
-        {/* Carrier toggles */}
-        {indexed && (
+        {/* Carrier toggles — only carriers with data in the selected state */}
+        {indexed && stateCarriers.length > 0 && (
           <CarrierToggles
-            allCarriers={indexed.allCarriers}
+            allCarriers={stateCarriers}
             visible={visibleCarriers}
             onToggle={toggleCarrier}
-            search={carrierSearch}
-            onSearch={setCarrierSearch}
           />
         )}
       </div>
@@ -459,7 +493,7 @@ export function MSACarrierCoverageView() {
 
         {rows && indexed && orderedMsaIds.length > 0 && visibleCarriers.length > 0 && (
           <>
-            <Legend />
+            <Legend metric={metric} />
 
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="overflow-x-auto">
@@ -506,20 +540,11 @@ export function MSACarrierCoverageView() {
                               );
                             }
                             const bucketRows = Object.values(bucketMap) as CCRow[];
-                            const totalRow = bucketRows.find(r => r.bucket === 'TOTAL');
-                            if (!showOOA && totalRow?.ooa) {
-                              return (
-                                <td key={carrier} className="border-b border-gray-100 p-1 align-top">
-                                  <div className="flex h-full min-h-[80px] items-center justify-center rounded-md border border-dashed border-gray-200 text-[11px] italic text-gray-300">
-                                    OOA hidden
-                                  </div>
-                                </td>
-                              );
-                            }
                             return (
                               <CoverageCell
                                 key={carrier}
                                 rows={bucketRows}
+                                metric={metric}
                                 onClick={() => setOpenCell({ msaId, carrier })}
                               />
                             );

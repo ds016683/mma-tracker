@@ -98,6 +98,20 @@ export function gyColorClasses(gy: number | null, ooa: boolean): string {
   return 'bg-red-50 border-red-300 text-red-900';
 }
 
+// Diverging cell tint based on the v8.2 → v9 delta (percentage points):
+// greens = improvement, white ≈ no change, reds = regression.
+export function deltaColorClasses(d: number | null, ooa: boolean): string {
+  if (ooa)        return 'bg-gray-100 border-gray-300 text-gray-400';
+  if (d === null) return 'bg-white border-gray-200 text-gray-400';
+  if (d >= 10)    return 'bg-emerald-100 border-emerald-300 text-emerald-900';
+  if (d >= 3)     return 'bg-emerald-50 border-emerald-200 text-emerald-900';
+  if (d > 0.5)    return 'bg-green-50 border-green-200 text-green-900';
+  if (d >= -0.5)  return 'bg-white border-gray-200 text-gray-600';
+  if (d > -3)     return 'bg-orange-50 border-orange-300 text-orange-900';
+  if (d > -10)    return 'bg-red-50 border-red-300 text-red-900';
+  return 'bg-red-100 border-red-400 text-red-900';
+}
+
 export function deltaColor(d: number | null): string {
   if (d === null) return 'text-gray-400';
   if (d > 0.5)   return 'text-emerald-600';
