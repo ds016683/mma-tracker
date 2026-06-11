@@ -19,6 +19,7 @@ import { ProductionProgressView } from './components/production/ProductionProgre
 import { CallNotesView } from './components/call-notes/CallNotesView';
 import { ReportsAndReleaseNotesView } from './components/reports/ReportsAndReleaseNotesView';
 import { HorizonSignalView } from './components/horizon-signal/HorizonSignalView';
+import { MSACarrierCoverageView } from './components/starset/MSACarrierCoverageView';
 import { ProductionRunSummariesView } from './components/starset/ProductionRunSummariesView';
 
 function AppContent() {
@@ -85,6 +86,7 @@ function AppInner({
         {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
         {activeView === 'horizon-signal' && <HorizonSignalView />}
         {activeView === 'production-run-summaries' && <ProductionRunSummariesView />}
+        {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
@@ -98,4 +100,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-
