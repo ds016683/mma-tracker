@@ -21,6 +21,7 @@ import { ReportsAndReleaseNotesView } from './components/reports/ReportsAndRelea
 import { HorizonSignalView } from './components/horizon-signal/HorizonSignalView';
 import { ProductionRunSummariesView } from './components/starset/ProductionRunSummariesView';
 import { MSACarrierCoverageView } from './components/starset/MSACarrierCoverageView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -85,8 +86,8 @@ function AppInner({
         {activeView === 'call-notes' && <CallNotesView />}
         {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
         {activeView === 'horizon-signal' && <HorizonSignalView />}
-        {activeView === 'production-run-summaries' && <ProductionRunSummariesView />}
-        {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
+        {activeView === 'production-run-summaries' && <ErrorBoundary name="Production Run Summaries"><ProductionRunSummariesView /></ErrorBoundary>}
+        {activeView === 'msa-carrier-coverage' && <ErrorBoundary name="MSA Carrier Coverage"><MSACarrierCoverageView /></ErrorBoundary>}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
