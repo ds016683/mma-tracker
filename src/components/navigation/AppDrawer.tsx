@@ -3,7 +3,7 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties
+  TableProperties, Grid3x3
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -25,7 +25,8 @@ export type AppView =
   | 'call-notes'
   | 'reports-release-notes'
   | 'production-run-summaries'
-  | 'tier-shift-summary';
+  | 'tier-shift-summary'
+  | 'msa-carrier-coverage';
 
 interface NavItem {
   id: AppView;
@@ -66,6 +67,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'reporting-queries',        label: 'Reporting Queries',        icon: BarChart2 },
       { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
       { id: 'tier-shift-summary', label: 'Tier Shift Summary', icon: Activity },
+      { id: 'msa-carrier-coverage', label: 'MSA Carrier Coverage', icon: Grid3x3 },
     ],
   },
   {
