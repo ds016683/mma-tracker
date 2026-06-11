@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tier Shift Summary — V8 to V9</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f8f7f4;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: #1a1a1a;
+    color: #f8f7f4;
+    padding: 20px 28px 16px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  header p { font-size: 12px; color: #aaa; margin-top: 3px; }
+
+  .controls {
+    background: #fff;
+    border-bottom: 1px solid #e5e3de;
+    padding: 12px 28px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .controls label { font-size: 12px; color: #666; }
+  .controls select, .controls input[type=text] {
+    font-size: 13px;
+    padding: 5px 10px;
+    border: 1px solid #d5d3ce;
+    border-radius: 5px;
+    background: #faf9f7;
+    color: #1a1a1a;
+    cursor: pointer;
+  }
+  .controls select:focus, .controls input:focus { outline: none; border-color: #888; }
+  .search-wrap { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .search-wrap input { width: 220px; }
+  .count-badge {
+    font-size: 11px; color: #888; background: #efefed;
+    padding: 3px 8px; border-radius: 10px;
+  }
+
+  .plan-list { padding: 16px 28px 32px; display: flex; flex-direction: column; gap: 14px; }
+
+  .plan-card {
+    background: #fff;
+    border: 1px solid #e5e3de;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+  }
+  .plan-header:hover { background: #faf9f7; }
+  .plan-name { font-size: 14px; font-weight: 600; color: #1a1a1a; flex: 1; }
+  .plan-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+  }
+  .pill-scope { background: #eef2ff; color: #3b4fa8; }
+  .pill-combos { background: #f0fdf0; color: #2d6a2d; }
+  .chevron { font-size: 16px; color: #aaa; transition: transform 0.2s; flex-shrink: 0; }
+  .plan-card.open .chevron { transform: rotate(180deg); }
+
+  .plan-body { display: none; border-top: 1px solid #eee; }
+  .plan-card.open .plan-body { display: block; }
+
+  /* combo grid */
+  .combo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1px;
+    background: #eee;
+  }
+  .combo-cell {
+    background: #fff;
+    padding: 12px 16px;
+  }
+  .combo-cell:hover { background: #fdfcfa; }
+  .combo-labels {
+    display: flex; gap: 5px; margin-bottom: 10px; align-items: center;
+  }
+  .tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 4px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .tag-i { background: #e8f4ff; color: #1a5fa8; }
+  .tag-p { background: #f0ebff; color: #5a2fa8; }
+  .tag-cpt { background: #e8ffe8; color: #1a7a1a; }
+  .tag-hcpcs { background: #fff7e0; color: #8a5a00; }
+  .tag-msdrg { background: #ffe8e8; color: #a01a1a; }
+
+  .combo-cell svg { overflow: visible; }
+
+  .no-results { text-align: center; color: #aaa; padding: 48px; font-size: 14px; }
+
+  .legend {
+    display: flex; gap: 16px; padding: 8px 28px; background: #f0eeea;
+    border-bottom: 1px solid #e5e3de; font-size: 11px; color: #666; flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tier Shift Summary by MSA — V8 to V9</h1>
+  <p>Change in green + yellow share (pp) across up to 977 MSAs, by carrier plan name, billing class, and billing code type</p>
+</header>
+
+<div style="background:#fff;border-bottom:1px solid #e5e3de;padding:16px 28px;display:flex;flex-direction:column;gap:10px;">
+  <div style="font-size:13px;color:#1a1a1a;line-height:1.6;max-width:900px;">
+    <strong>What this shows.</strong> This dashboard compares reimbursement rate confidence tier distributions between dataset versions V8 and V9, across up to 977 Metropolitan Statistical Areas (MSAs). Each billing code in the dataset is classified into one of three confidence tiers — <span style="color:#3B6D11;font-weight:500;">green</span> (highest confidence), <span style="color:#854F0B;font-weight:500;">yellow</span> (moderate), or <span style="color:#A32D2D;font-weight:500;">red</span> (lowest confidence) — based on the adequacy of the underlying rate data. The metric shown is the change in the combined green + yellow share (Δ G+Y) in percentage points: a positive value means more codes moved into green or yellow in V9 relative to V8; a negative value means codes shifted toward red. Because green + yellow + red must sum to 100%, Δ G+Y and Δ red are always equal and opposite.
+  </div>
+  <div style="font-size:13px;color:#1a1a1a;line-height:1.6;max-width:900px;">
+    <strong>How to read the cards.</strong> Results are organized by carrier plan, then broken out by billing class (Institutional / Professional) and billing code type (CPT, HCPCS, MS-DRG). Each combination shows the average Δ G+Y across MSAs, a box plot of the distribution (median, interquartile range, and whiskers to min/max), and a count bar showing how many MSAs improved versus worsened. Use the filters at the top to narrow by billing class, code type, or overall trend direction, and search by plan name to jump to a specific carrier.
+  </div>
+  <div style="font-size:12px;color:#888;line-height:1.5;max-width:900px;">
+    <strong>Notes.</strong> MSA counts per combo vary by carrier — national plans cover up to 977 MSAs; regional plans cover only the markets where they operate. MSAs where both V8 and V9 had no codes in a given combination are excluded. The 48 non-standard codes (99001–99048) represent custom non-MSA regional groupings in the source data.
+  </div>
+</div>
+
+<div class="legend">
+  <span style="font-weight:600; color:#444;">Δ G+Y per combo:</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#639922"></span>Box = IQR (P25–P75)</span>
+  <span class="legend-item"><span style="display:inline-block;width:3px;height:12px;background:#639922;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>Median (solid)</span>
+  <span class="legend-item"><span style="display:inline-block;width:2px;height:12px;background:#444;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>Avg (dashed)</span>
+  <span class="legend-item"><span style="display:inline-block;width:14px;height:7px;background:#639922;opacity:0.8;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>Count bar: green = improved, red = worsened</span>
+  <span>Scale: −80 pp to +80 pp. Unit: MSA (up to 977 per combo).</span>
+</div>
+
+<div class="controls">
+  <label>Class:</label>
+  <select id="filterClass">
+    <option value="">All</option>
+    <option value="institutional">Institutional</option>
+    <option value="professional">Professional</option>
+  </select>
+  <label>Code type:</label>
+  <select id="filterCode">
+    <option value="">All</option>
+    <option value="CPT">CPT</option>
+    <option value="HCPCS">HCPCS</option>
+    <option value="MS-DRG">MS-DRG</option>
+  </select>
+  <label>Trend:</label>
+  <select id="filterTrend">
+    <option value="">All</option>
+    <option value="improved">Improved (red fell)</option>
+    <option value="worsened">Worsened (red rose)</option>
+    <option value="mixed">Mixed results</option>
+  </select>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search plan name…">
+    <span class="count-badge" id="countBadge">— plans</span>
+  </div>
+</div>
+
+<div class="plan-list" id="planList"></div>
+
+<script>
+const DATA = [
+  {plan:"Aetna Choice POS",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 949, "avgGY": 0.1167, "avgRed": -0.1167, "minRed": -0.7267, "maxRed": 1.0, "p25": -0.2888, "p75": 0.0334, "nWorse": 259, "nBetter": 629, "worstMSA": "Connersville, IN", "bestMSA": "Muscatine, IA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 912, "avgGY": 0.0108, "avgRed": -0.0108, "minRed": -1.0, "maxRed": 1.0, "p25": -0.1575, "p75": 0.1256, "nWorse": 368, "nBetter": 455, "worstMSA": "Morgan City, LA", "bestMSA": "Borger, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 364, "avgGY": 0.158, "avgRed": -0.158, "minRed": -0.9286, "maxRed": 0.6274, "p25": -0.3129, "p75": -0.0073, "nWorse": 67, "nBetter": 263, "worstMSA": "Meridian, MS", "bestMSA": "Montgomery, AL"},
+    {"cls": "professional", "code": "CPT", "n": 973, "avgGY": 0.0837, "avgRed": -0.0837, "minRed": -0.5733, "maxRed": 0.5771, "p25": -0.1156, "p75": -0.0605, "nWorse": 44, "nBetter": 888, "worstMSA": "Minneapolis-St. Paul-Bloomington, MN-WI", "bestMSA": "Barre, VT"},
+    {"cls": "professional", "code": "HCPCS", "n": 972, "avgGY": 0.2497, "avgRed": -0.2497, "minRed": -0.7614, "maxRed": 0.1892, "p25": -0.3103, "p75": -0.1949, "nWorse": 10, "nBetter": 956, "worstMSA": "Manchester-Nashua, NH", "bestMSA": "Barre, VT"},
+  ]},
+  {plan:"Aetna Open Choice PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 949, "avgGY": 0.17, "avgRed": -0.17, "minRed": -0.7912, "maxRed": 1.0, "p25": -0.3439, "p75": -0.0171, "nWorse": 190, "nBetter": 706, "worstMSA": "Connersville, IN", "bestMSA": "Muscatine, IA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 911, "avgGY": 0.0497, "avgRed": -0.0497, "minRed": -1.0, "maxRed": 1.0, "p25": -0.2, "p75": 0.0929, "nWorse": 313, "nBetter": 518, "worstMSA": "Morgan City, LA", "bestMSA": "Borger, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 357, "avgGY": 0.2728, "avgRed": -0.2728, "minRed": -1.0, "maxRed": 0.4261, "p25": -0.4314, "p75": -0.1401, "nWorse": 46, "nBetter": 292, "worstMSA": "Canton, IL", "bestMSA": "Anniston-Oxford, AL"},
+    {"cls": "professional", "code": "CPT", "n": 973, "avgGY": 0.1375, "avgRed": -0.1375, "minRed": -0.7749, "maxRed": 0.5713, "p25": -0.183, "p75": -0.0963, "nWorse": 27, "nBetter": 922, "worstMSA": "Minneapolis-St. Paul-Bloomington, MN-WI", "bestMSA": "Barre, VT"},
+    {"cls": "professional", "code": "HCPCS", "n": 972, "avgGY": 0.3327, "avgRed": -0.3327, "minRed": -0.8094, "maxRed": 0.1663, "p25": -0.3926, "p75": -0.2688, "nWorse": 7, "nBetter": 962, "worstMSA": "Hutchinson, MN", "bestMSA": "Barre, VT"},
+  ]},
+  {plan:"Anthem BCBS CT Century Preferred",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": -0.4591, "avgRed": 0.4591, "minRed": 0.4591, "maxRed": 0.4591, "p25": 0.4591, "p75": 0.4591, "nWorse": 1, "nBetter": 0, "worstMSA": "Worcester, MA-CT", "bestMSA": "Worcester, MA-CT"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.0044, "avgRed": -0.0044, "minRed": -0.0044, "maxRed": -0.0044, "p25": -0.0044, "p75": -0.0044, "nWorse": 0, "nBetter": 0, "worstMSA": "Worcester, MA-CT", "bestMSA": "Worcester, MA-CT"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.5036, "avgRed": -0.5036, "minRed": -0.5036, "maxRed": -0.5036, "p25": -0.5036, "p75": -0.5036, "nWorse": 0, "nBetter": 1, "worstMSA": "Worcester, MA-CT", "bestMSA": "Worcester, MA-CT"},
+  ]},
+  {plan:"Anthem BCBS Central Blue Access",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 14, "avgGY": 0.1088, "avgRed": -0.1088, "minRed": -0.5757, "maxRed": 0.1289, "p25": -0.2031, "p75": 0.0586, "nWorse": 5, "nBetter": 8, "worstMSA": "Clarksville, TN-KY", "bestMSA": "Joplin, MO-KS"},
+    {"cls": "institutional", "code": "HCPCS", "n": 13, "avgGY": -0.1068, "avgRed": 0.1068, "minRed": -0.2678, "maxRed": 0.5434, "p25": -0.1051, "p75": 0.2728, "nWorse": 8, "nBetter": 5, "worstMSA": "Clarksville, TN-KY", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 7, "avgGY": 0.3287, "avgRed": -0.3287, "minRed": -0.511, "maxRed": -0.1841, "p25": -0.3968, "p75": -0.2517, "nWorse": 0, "nBetter": 7, "worstMSA": "Wheeling, WV-OH", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "professional", "code": "CPT", "n": 13, "avgGY": 0.093, "avgRed": -0.093, "minRed": -0.2233, "maxRed": 0.0744, "p25": -0.167, "p75": -0.014, "nWorse": 2, "nBetter": 9, "worstMSA": "Minneapolis-St. Paul-Bloomington, MN-WI", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "professional", "code": "HCPCS", "n": 10, "avgGY": 0.2532, "avgRed": -0.2532, "minRed": -0.3864, "maxRed": -0.0815, "p25": -0.3173, "p75": -0.2013, "nWorse": 0, "nBetter": 10, "worstMSA": "Wheeling, WV-OH", "bestMSA": "Marinette, WI-MI"},
+  ]},
+  {plan:"Anthem BCBS GA Blue High Performance",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 40, "avgGY": 0.061, "avgRed": -0.061, "minRed": -1.0, "maxRed": 0.6948, "p25": -0.2514, "p75": 0.0753, "nWorse": 11, "nBetter": 16, "worstMSA": "Vidalia, GA", "bestMSA": "Greenville-Anderson-Greer, SC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 17, "avgGY": -0.0869, "avgRed": 0.0869, "minRed": -0.2083, "maxRed": 0.6667, "p25": -0.1015, "p75": 0.23, "nWorse": 7, "nBetter": 7, "worstMSA": "Vidalia, GA", "bestMSA": "Warner Robins, GA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 2, "avgGY": 0.5038, "avgRed": -0.5038, "minRed": -0.591, "maxRed": -0.4167, "p25": -0.5474, "p75": -0.4602, "nWorse": 0, "nBetter": 2, "worstMSA": "Rome, GA", "bestMSA": "Statesboro, GA"},
+    {"cls": "professional", "code": "CPT", "n": 113, "avgGY": 0.1331, "avgRed": -0.1331, "minRed": -0.7247, "maxRed": 0.5368, "p25": -0.2062, "p75": -0.0769, "nWorse": 12, "nBetter": 99, "worstMSA": "Palatka, FL", "bestMSA": "Kill Devil Hills, NC"},
+    {"cls": "professional", "code": "HCPCS", "n": 72, "avgGY": 0.3305, "avgRed": -0.3305, "minRed": -0.8125, "maxRed": 0.545, "p25": -0.4825, "p75": -0.3179, "nWorse": 9, "nBetter": 63, "worstMSA": "NC NONMETROPOLITAN AREA", "bestMSA": "Boone, NC"},
+  ]},
+  {plan:"Anthem BCBS GA Blue Open Access POS",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 39, "avgGY": 0.0105, "avgRed": -0.0105, "minRed": -0.7544, "maxRed": 0.875, "p25": -0.3564, "p75": 0.3432, "nWorse": 18, "nBetter": 21, "worstMSA": "Cornelia, GA", "bestMSA": "Thomaston, GA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 29, "avgGY": -0.072, "avgRed": 0.072, "minRed": -0.3525, "maxRed": 0.6394, "p25": -0.0833, "p75": 0.2381, "nWorse": 16, "nBetter": 11, "worstMSA": "Hinesville, GA", "bestMSA": "Atlanta-Sandy Springs-Roswell, GA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 22, "avgGY": 0.2312, "avgRed": -0.2312, "minRed": -0.5917, "maxRed": 0.4615, "p25": -0.4251, "p75": -0.1085, "nWorse": 3, "nBetter": 17, "worstMSA": "Hinesville, GA", "bestMSA": "Gainesville, GA"},
+    {"cls": "professional", "code": "CPT", "n": 40, "avgGY": 0.1053, "avgRed": -0.1053, "minRed": -0.2296, "maxRed": 0.6903, "p25": -0.1586, "p75": -0.1057, "nWorse": 1, "nBetter": 36, "worstMSA": "Eufaula, AL-GA", "bestMSA": "Atlanta-Sandy Springs-Roswell, GA"},
+    {"cls": "professional", "code": "HCPCS", "n": 39, "avgGY": 0.3252, "avgRed": -0.3252, "minRed": -0.5052, "maxRed": -0.0369, "p25": -0.3847, "p75": -0.2744, "nWorse": 0, "nBetter": 39, "worstMSA": "Americus, GA", "bestMSA": "Atlanta-Sandy Springs-Roswell, GA"},
+  ]},
+  {plan:"Anthem BCBS GA BlueChoice PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 5, "avgGY": 0.2, "avgRed": -0.2, "minRed": -1.0, "maxRed": 0.0, "p25": 0.0, "p75": 0.0, "nWorse": 0, "nBetter": 1, "worstMSA": "Hilton Head Island-Bluffton-Port Royal, SC", "bestMSA": "SC NONMETROPOLITAN AREA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.3965, "avgRed": -0.3965, "minRed": -0.3965, "maxRed": -0.3965, "p25": -0.3965, "p75": -0.3965, "nWorse": 0, "nBetter": 1, "worstMSA": "Chattanooga, TN-GA", "bestMSA": "Chattanooga, TN-GA"},
+    {"cls": "professional", "code": "CPT", "n": 81, "avgGY": 0.0687, "avgRed": -0.0687, "minRed": -0.2878, "maxRed": 0.776, "p25": -0.1706, "p75": -0.0207, "nWorse": 11, "nBetter": 61, "worstMSA": "Okeechobee, FL", "bestMSA": "Kinston, NC"},
+    {"cls": "professional", "code": "HCPCS", "n": 37, "avgGY": 0.2051, "avgRed": -0.2051, "minRed": -0.4431, "maxRed": 0.729, "p25": -0.3688, "p75": -0.2917, "nWorse": 6, "nBetter": 31, "worstMSA": "Burlington, NC", "bestMSA": "Asheville, NC"},
+  ]},
+  {plan:"Anthem BCBS NH Preferred Blue",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.4756, "avgRed": -0.4756, "minRed": -0.4756, "maxRed": -0.4756, "p25": -0.4756, "p75": -0.4756, "nWorse": 0, "nBetter": 1, "worstMSA": "Boston-Cambridge-Newton, MA-NH", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.2399, "avgRed": -0.2399, "minRed": -0.2399, "maxRed": -0.2399, "p25": -0.2399, "p75": -0.2399, "nWorse": 0, "nBetter": 1, "worstMSA": "Boston-Cambridge-Newton, MA-NH", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 1, "avgGY": 0.4865, "avgRed": -0.4865, "minRed": -0.4865, "maxRed": -0.4865, "p25": -0.4865, "p75": -0.4865, "nWorse": 0, "nBetter": 1, "worstMSA": "Boston-Cambridge-Newton, MA-NH", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.031, "avgRed": -0.031, "minRed": -0.031, "maxRed": -0.031, "p25": -0.031, "p75": -0.031, "nWorse": 0, "nBetter": 1, "worstMSA": "Boston-Cambridge-Newton, MA-NH", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": -0.292, "avgRed": 0.292, "minRed": 0.292, "maxRed": 0.292, "p25": 0.292, "p75": 0.292, "nWorse": 1, "nBetter": 0, "worstMSA": "Boston-Cambridge-Newton, MA-NH", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+  ]},
+  {plan:"Anthem BCBS NY Empire PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 7, "avgGY": 0.0567, "avgRed": -0.0567, "minRed": -0.4223, "maxRed": 0.8205, "p25": -0.3761, "p75": 0.15, "nWorse": 2, "nBetter": 4, "worstMSA": "Massena-Ogdensburg, NY", "bestMSA": "NY NONMETROPOLITAN AREA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 3, "avgGY": 0.2928, "avgRed": -0.2928, "minRed": -0.4405, "maxRed": -0.1474, "p25": -0.3655, "p75": -0.2189, "nWorse": 0, "nBetter": 3, "worstMSA": "Albany-Schenectady-Troy, NY", "bestMSA": "NY NONMETROPOLITAN AREA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 4, "avgGY": 0.2058, "avgRed": -0.2058, "minRed": -0.4205, "maxRed": 0.1383, "p25": -0.4155, "p75": -0.0609, "nWorse": 1, "nBetter": 3, "worstMSA": "Glens Falls, NY", "bestMSA": "NY NONMETROPOLITAN AREA"},
+    {"cls": "professional", "code": "CPT", "n": 20, "avgGY": 0.1948, "avgRed": -0.1948, "minRed": -0.4061, "maxRed": -0.0848, "p25": -0.2133, "p75": -0.153, "nWorse": 0, "nBetter": 20, "worstMSA": "Glens Falls, NY", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 19, "avgGY": 0.0335, "avgRed": -0.0335, "minRed": -0.3996, "maxRed": 0.6705, "p25": -0.3423, "p75": 0.3412, "nWorse": 6, "nBetter": 13, "worstMSA": "Ithaca, NY", "bestMSA": "NY NONMETROPOLITAN AREA"},
+  ]},
+  {plan:"Anthem BCBS VA KeyCare PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.0968, "avgRed": -0.0968, "minRed": -0.0968, "maxRed": -0.0968, "p25": -0.0968, "p75": -0.0968, "nWorse": 0, "nBetter": 1, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.3018, "avgRed": 0.3018, "minRed": 0.3018, "maxRed": 0.3018, "p25": 0.3018, "p75": 0.3018, "nWorse": 1, "nBetter": 0, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": -0.0438, "avgRed": 0.0438, "minRed": 0.0438, "maxRed": 0.0438, "p25": 0.0438, "p75": 0.0438, "nWorse": 1, "nBetter": 0, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.4287, "avgRed": -0.4287, "minRed": -0.4287, "maxRed": -0.4287, "p25": -0.4287, "p75": -0.4287, "nWorse": 0, "nBetter": 1, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+  ]},
+  {plan:"BC ID Preferred Blue Standard",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.04, "avgRed": -0.04, "minRed": -0.04, "maxRed": -0.04, "p25": -0.04, "p75": -0.04, "nWorse": 0, "nBetter": 1, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Lewiston, ID-WA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.0929, "avgRed": 0.0929, "minRed": 0.0929, "maxRed": 0.0929, "p25": 0.0929, "p75": 0.0929, "nWorse": 1, "nBetter": 0, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Lewiston, ID-WA"},
+    {"cls": "professional", "code": "CPT", "n": 4, "avgGY": 0.0697, "avgRed": -0.0697, "minRed": -0.1654, "maxRed": 0.1223, "p25": -0.1465, "p75": -0.0411, "nWorse": 1, "nBetter": 3, "worstMSA": "Jackson, WY-ID", "bestMSA": "Brigham City, UT-ID"},
+    {"cls": "professional", "code": "HCPCS", "n": 3, "avgGY": 0.4381, "avgRed": -0.4381, "minRed": -0.5687, "maxRed": -0.2478, "p25": -0.5333, "p75": -0.3728, "nWorse": 0, "nBetter": 3, "worstMSA": "Jackson, WY-ID", "bestMSA": "Brigham City, UT-ID"},
+  ]},
+  {plan:"BCBS AR True Blue PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 2, "avgGY": -0.1852, "avgRed": 0.1852, "minRed": 0.0651, "maxRed": 0.3053, "p25": 0.1251, "p75": 0.2452, "nWorse": 2, "nBetter": 0, "worstMSA": "Fort Smith, AR-OK", "bestMSA": "Texarkana, TX-AR"},
+    {"cls": "institutional", "code": "HCPCS", "n": 2, "avgGY": -0.3963, "avgRed": 0.3963, "minRed": 0.2829, "maxRed": 0.5097, "p25": 0.3396, "p75": 0.453, "nWorse": 2, "nBetter": 0, "worstMSA": "Texarkana, TX-AR", "bestMSA": "Fort Smith, AR-OK"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": -0.0175, "avgRed": 0.0175, "minRed": 0.0175, "maxRed": 0.0175, "p25": 0.0175, "p75": 0.0175, "nWorse": 0, "nBetter": 0, "worstMSA": "Texarkana, TX-AR", "bestMSA": "Texarkana, TX-AR"},
+  ]},
+  {plan:"BCBS FL NetworkBlue",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 24, "avgGY": 0.1815, "avgRed": -0.1815, "minRed": -0.4631, "maxRed": 1.0, "p25": -0.3922, "p75": -0.1555, "nWorse": 3, "nBetter": 21, "worstMSA": "Arcadia, FL", "bestMSA": "North Port-Bradenton-Sarasota, FL"},
+    {"cls": "institutional", "code": "HCPCS", "n": 23, "avgGY": -0.0227, "avgRed": 0.0227, "minRed": -0.5, "maxRed": 0.259, "p25": -0.1062, "p75": 0.183, "nWorse": 14, "nBetter": 7, "worstMSA": "Palm Bay-Melbourne-Titusville, FL", "bestMSA": "Okeechobee, FL"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 23, "avgGY": 0.2371, "avgRed": -0.2371, "minRed": -0.5369, "maxRed": 0.1743, "p25": -0.3843, "p75": -0.1357, "nWorse": 2, "nBetter": 20, "worstMSA": "Clewiston, FL", "bestMSA": "Lakeland-Winter Haven, FL"},
+    {"cls": "professional", "code": "CPT", "n": 41, "avgGY": 0.1833, "avgRed": -0.1833, "minRed": -0.5833, "maxRed": 0.9545, "p25": -0.3082, "p75": -0.0467, "nWorse": 4, "nBetter": 33, "worstMSA": "Tifton, GA", "bestMSA": "Macon-Bibb County, GA"},
+    {"cls": "professional", "code": "HCPCS", "n": 21, "avgGY": 0.1627, "avgRed": -0.1627, "minRed": -0.6737, "maxRed": 0.5263, "p25": -0.5186, "p75": 0.3345, "nWorse": 8, "nBetter": 13, "worstMSA": "Palatka, FL", "bestMSA": "Port St. Lucie, FL"},
+  ]},
+  {plan:"BCBS FL Traditional",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 29, "avgGY": 0.2559, "avgRed": -0.2559, "minRed": -0.46, "maxRed": 0.4411, "p25": -0.4, "p75": -0.1836, "nWorse": 3, "nBetter": 25, "worstMSA": "Clewiston, FL", "bestMSA": "Jacksonville, FL"},
+    {"cls": "institutional", "code": "HCPCS", "n": 28, "avgGY": -0.0154, "avgRed": 0.0154, "minRed": -0.7778, "maxRed": 1.0, "p25": -0.1315, "p75": 0.1886, "nWorse": 17, "nBetter": 10, "worstMSA": "Clewiston, FL", "bestMSA": "Key West-Key Largo, FL"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 28, "avgGY": 0.3451, "avgRed": -0.3451, "minRed": -0.6609, "maxRed": 0.1683, "p25": -0.465, "p75": -0.2176, "nWorse": 2, "nBetter": 26, "worstMSA": "Clewiston, FL", "bestMSA": "Deltona-Daytona Beach-Ormond Beach, FL"},
+    {"cls": "professional", "code": "CPT", "n": 33, "avgGY": 0.2798, "avgRed": -0.2798, "minRed": -0.5354, "maxRed": 0.0962, "p25": -0.3436, "p75": -0.2019, "nWorse": 1, "nBetter": 31, "worstMSA": "Key West-Key Largo, FL", "bestMSA": "GA NONMETROPOLITAN AREA"},
+    {"cls": "professional", "code": "HCPCS", "n": 25, "avgGY": 0.0476, "avgRed": -0.0476, "minRed": -0.6866, "maxRed": 0.6422, "p25": -0.515, "p75": 0.4323, "nWorse": 11, "nBetter": 13, "worstMSA": "Lake City, FL", "bestMSA": "Homosassa Springs, FL"},
+  ]},
+  {plan:"BCBS IL Blue Advantage HMO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 11, "avgGY": 0.1647, "avgRed": -0.1647, "minRed": -0.3221, "maxRed": 0.0, "p25": -0.2376, "p75": -0.0971, "nWorse": 0, "nBetter": 10, "worstMSA": "Pontiac, IL", "bestMSA": "St. Louis, MO-IL"},
+    {"cls": "institutional", "code": "HCPCS", "n": 10, "avgGY": -0.0421, "avgRed": 0.0421, "minRed": -0.2922, "maxRed": 0.2667, "p25": -0.063, "p75": 0.1497, "nWorse": 6, "nBetter": 3, "worstMSA": "Paducah, KY-IL", "bestMSA": "Bloomington, IL"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 10, "avgGY": 0.3834, "avgRed": -0.3834, "minRed": -0.5968, "maxRed": 0.2494, "p25": -0.518, "p75": -0.3511, "nWorse": 1, "nBetter": 9, "worstMSA": "Effingham, IL", "bestMSA": "Rockford, IL"},
+    {"cls": "professional", "code": "CPT", "n": 30, "avgGY": 0.0202, "avgRed": -0.0202, "minRed": -0.4517, "maxRed": 0.8361, "p25": -0.2176, "p75": 0.0496, "nWorse": 8, "nBetter": 21, "worstMSA": "Effingham, IL", "bestMSA": "Lincoln, IL"},
+    {"cls": "professional", "code": "HCPCS", "n": 28, "avgGY": 0.197, "avgRed": -0.197, "minRed": -0.6364, "maxRed": 0.2115, "p25": -0.2457, "p75": -0.1615, "nWorse": 1, "nBetter": 27, "worstMSA": "Freeport, IL", "bestMSA": "Jacksonville, IL"},
+  ]},
+  {plan:"BCBS IL Blue Choice Preferred PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 140, "avgGY": -0.2745, "avgRed": 0.2745, "minRed": -0.5, "maxRed": 1.0, "p25": 0.0, "p75": 0.5046, "nWorse": 87, "nBetter": 24, "worstMSA": "Alma, MI", "bestMSA": "Celina, OH"},
+    {"cls": "institutional", "code": "HCPCS", "n": 19, "avgGY": -0.1059, "avgRed": 0.1059, "minRed": -0.229, "maxRed": 1.0, "p25": -0.1311, "p75": 0.1433, "nWorse": 9, "nBetter": 9, "worstMSA": "Detroit-Warren-Dearborn, MI", "bestMSA": "Sterling, IL"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 15, "avgGY": 0.3778, "avgRed": -0.3778, "minRed": -0.6197, "maxRed": 0.2657, "p25": -0.4806, "p75": -0.3404, "nWorse": 1, "nBetter": 14, "worstMSA": "Effingham, IL", "bestMSA": "Ottawa, IL"},
+    {"cls": "professional", "code": "CPT", "n": 174, "avgGY": 0.1282, "avgRed": -0.1282, "minRed": -0.3967, "maxRed": 0.3923, "p25": -0.2099, "p75": -0.0734, "nWorse": 18, "nBetter": 147, "worstMSA": "Minneapolis-St. Paul-Bloomington, MN-WI", "bestMSA": "Van Wert, OH"},
+    {"cls": "professional", "code": "HCPCS", "n": 174, "avgGY": 0.0282, "avgRed": -0.0282, "minRed": -0.5, "maxRed": 0.4562, "p25": -0.1424, "p75": 0.0628, "nWorse": 54, "nBetter": 96, "worstMSA": "Mount Pleasant, MI", "bestMSA": "Sault Ste. Marie, MI"},
+  ]},
+  {plan:"BCBS IL Blue High Performance",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": -0.019, "avgRed": 0.019, "minRed": 0.019, "maxRed": 0.019, "p25": 0.019, "p75": 0.019, "nWorse": 0, "nBetter": 0, "worstMSA": "Chicago-Naperville-Elgin, IL-IN-WI", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.1323, "avgRed": -0.1323, "minRed": -0.1323, "maxRed": -0.1323, "p25": -0.1323, "p75": -0.1323, "nWorse": 0, "nBetter": 1, "worstMSA": "Chicago-Naperville-Elgin, IL-IN-WI", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "professional", "code": "CPT", "n": 112, "avgGY": -0.0041, "avgRed": 0.0041, "minRed": -0.4482, "maxRed": 0.8438, "p25": -0.1598, "p75": 0.101, "nWorse": 39, "nBetter": 66, "worstMSA": "Burlington, IA-IL", "bestMSA": "Saginaw, MI"},
+    {"cls": "professional", "code": "HCPCS", "n": 50, "avgGY": 0.0669, "avgRed": -0.0669, "minRed": -0.372, "maxRed": 0.8201, "p25": -0.242, "p75": -0.0135, "nWorse": 8, "nBetter": 35, "worstMSA": "Columbus, OH", "bestMSA": "Macomb, IL"},
+  ]},
+  {plan:"BCBS IL Participating Provider Option",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.5423, "avgRed": -0.5423, "minRed": -0.5423, "maxRed": -0.5423, "p25": -0.5423, "p75": -0.5423, "nWorse": 0, "nBetter": 1, "worstMSA": "Chicago-Naperville-Elgin, IL-IN-WI", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.1993, "avgRed": -0.1993, "minRed": -0.1993, "maxRed": -0.1993, "p25": -0.1993, "p75": -0.1993, "nWorse": 0, "nBetter": 1, "worstMSA": "Chicago-Naperville-Elgin, IL-IN-WI", "bestMSA": "Chicago-Naperville-Elgin, IL-IN-WI"},
+  ]},
+  {plan:"BCBS KC Preferred Care",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.7481, "avgRed": -0.7481, "minRed": -0.7481, "maxRed": -0.7481, "p25": -0.7481, "p75": -0.7481, "nWorse": 0, "nBetter": 1, "worstMSA": "Kansas City, MO-KS", "bestMSA": "Kansas City, MO-KS"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.3893, "avgRed": -0.3893, "minRed": -0.4258, "maxRed": -0.3528, "p25": -0.4076, "p75": -0.3711, "nWorse": 0, "nBetter": 2, "worstMSA": "St. Joseph, MO-KS", "bestMSA": "Kansas City, MO-KS"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.7026, "avgRed": -0.7026, "minRed": -0.7026, "maxRed": -0.7026, "p25": -0.7026, "p75": -0.7026, "nWorse": 0, "nBetter": 1, "worstMSA": "Kansas City, MO-KS", "bestMSA": "Kansas City, MO-KS"},
+  ]},
+  {plan:"BCBS KS Blue Choice",combos:[
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.0456, "avgRed": -0.0456, "minRed": -0.1221, "maxRed": 0.0249, "p25": -0.0809, "p75": -0.0074, "nWorse": 1, "nBetter": 2, "worstMSA": "Joplin, MO-KS", "bestMSA": "Kansas City, MO-KS"},
+    {"cls": "professional", "code": "HCPCS", "n": 3, "avgGY": 0.3357, "avgRed": -0.3357, "minRed": -0.3488, "maxRed": -0.322, "p25": -0.3426, "p75": -0.3292, "nWorse": 0, "nBetter": 3, "worstMSA": "Kansas City, MO-KS", "bestMSA": "Joplin, MO-KS"},
+  ]},
+  {plan:"BCBS MA Blue Care Elect",combos:[
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.2397, "avgRed": -0.2397, "minRed": -0.3257, "maxRed": -0.1537, "p25": -0.2827, "p75": -0.1967, "nWorse": 0, "nBetter": 2, "worstMSA": "Providence-Warwick, RI-MA", "bestMSA": "Boston-Cambridge-Newton, MA-NH"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.4705, "avgRed": -0.4705, "minRed": -0.4705, "maxRed": -0.4705, "p25": -0.4705, "p75": -0.4705, "nWorse": 0, "nBetter": 1, "worstMSA": "Providence-Warwick, RI-MA", "bestMSA": "Providence-Warwick, RI-MA"},
+  ]},
+  {plan:"BCBS MI Blue Preferred Plan",combos:[
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": -0.0425, "avgRed": 0.0425, "minRed": -0.008, "maxRed": 0.0931, "p25": 0.0173, "p75": 0.0678, "nWorse": 1, "nBetter": 0, "worstMSA": "Marinette, WI-MI", "bestMSA": "South Bend-Mishawaka, IN-MI"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.2748, "avgRed": -0.2748, "minRed": -0.2748, "maxRed": -0.2748, "p25": -0.2748, "p75": -0.2748, "nWorse": 0, "nBetter": 1, "worstMSA": "South Bend-Mishawaka, IN-MI", "bestMSA": "South Bend-Mishawaka, IN-MI"},
+  ]},
+  {plan:"BCBS MN Aware",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 2, "avgGY": -0.2024, "avgRed": 0.2024, "minRed": 0.1911, "maxRed": 0.2137, "p25": 0.1968, "p75": 0.2081, "nWorse": 2, "nBetter": 0, "worstMSA": "Grand Forks, ND-MN", "bestMSA": "Sioux Falls, SD-MN"},
+    {"cls": "institutional", "code": "HCPCS", "n": 2, "avgGY": -0.5001, "avgRed": 0.5001, "minRed": 0.4001, "maxRed": 0.6, "p25": 0.4501, "p75": 0.55, "nWorse": 2, "nBetter": 0, "worstMSA": "Grand Forks, ND-MN", "bestMSA": "Sioux Falls, SD-MN"},
+    {"cls": "professional", "code": "CPT", "n": 4, "avgGY": 0.1701, "avgRed": -0.1701, "minRed": -0.2462, "maxRed": -0.1105, "p25": -0.2057, "p75": -0.1264, "nWorse": 0, "nBetter": 4, "worstMSA": "Wahpeton, ND-MN", "bestMSA": "Grand Forks, ND-MN"},
+    {"cls": "professional", "code": "HCPCS", "n": 4, "avgGY": 0.0955, "avgRed": -0.0955, "minRed": -0.3755, "maxRed": 0.1643, "p25": -0.2352, "p75": 0.0542, "nWorse": 1, "nBetter": 2, "worstMSA": "Fargo, ND-MN", "bestMSA": "Sioux Falls, SD-MN"},
+  ]},
+  {plan:"BCBS MS Network Blue",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": -0.053, "avgRed": 0.053, "minRed": 0.053, "maxRed": 0.053, "p25": 0.053, "p75": 0.053, "nWorse": 1, "nBetter": 0, "worstMSA": "Memphis, TN-MS-AR", "bestMSA": "Memphis, TN-MS-AR"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.0883, "avgRed": -0.0883, "minRed": -0.0883, "maxRed": -0.0883, "p25": -0.0883, "p75": -0.0883, "nWorse": 0, "nBetter": 1, "worstMSA": "Memphis, TN-MS-AR", "bestMSA": "Memphis, TN-MS-AR"},
+  ]},
+  {plan:"BCBS NC Blue Advantage Options",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.3362, "avgRed": -0.3362, "minRed": -0.3362, "maxRed": -0.3362, "p25": -0.3362, "p75": -0.3362, "nWorse": 0, "nBetter": 1, "worstMSA": "Charlotte-Concord-Gastonia, NC-SC", "bestMSA": "Charlotte-Concord-Gastonia, NC-SC"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.2477, "avgRed": -0.2477, "minRed": -0.3339, "maxRed": -0.1615, "p25": -0.2908, "p75": -0.2046, "nWorse": 0, "nBetter": 2, "worstMSA": "Myrtle Beach-Conway-North Myrtle Beach, SC-NC", "bestMSA": "Charlotte-Concord-Gastonia, NC-SC"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.4556, "avgRed": -0.4556, "minRed": -0.5365, "maxRed": -0.3746, "p25": -0.496, "p75": -0.4151, "nWorse": 0, "nBetter": 2, "worstMSA": "Myrtle Beach-Conway-North Myrtle Beach, SC-NC", "bestMSA": "Charlotte-Concord-Gastonia, NC-SC"},
+  ]},
+  {plan:"BCBS NC Blue High Performance",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 5, "avgGY": 0.1061, "avgRed": -0.1061, "minRed": -0.4799, "maxRed": 0.2368, "p25": -0.192, "p75": 0.0746, "nWorse": 2, "nBetter": 3, "worstMSA": "Asheville, NC", "bestMSA": "Charlotte-Concord-Gastonia, NC-SC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 8, "avgGY": -0.1647, "avgRed": 0.1647, "minRed": -0.0973, "maxRed": 0.5, "p25": 0.0145, "p75": 0.285, "nWorse": 6, "nBetter": 2, "worstMSA": "Asheville, NC", "bestMSA": "Shelby-Kings Mountain, NC"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 9, "avgGY": 0.3105, "avgRed": -0.3105, "minRed": -0.6297, "maxRed": -0.0745, "p25": -0.3478, "p75": -0.2541, "nWorse": 0, "nBetter": 9, "worstMSA": "Laurinburg, NC", "bestMSA": "Rocky Mount, NC"},
+    {"cls": "professional", "code": "CPT", "n": 112, "avgGY": 0.0926, "avgRed": -0.0926, "minRed": -0.3702, "maxRed": 0.3975, "p25": -0.1585, "p75": -0.0568, "nWorse": 13, "nBetter": 94, "worstMSA": "Statesboro, GA", "bestMSA": "Palatka, FL"},
+    {"cls": "professional", "code": "HCPCS", "n": 92, "avgGY": 0.2094, "avgRed": -0.2094, "minRed": -0.3914, "maxRed": 0.5091, "p25": -0.2893, "p75": -0.211, "nWorse": 6, "nBetter": 83, "worstMSA": "Atlanta-Sandy Springs-Roswell, GA", "bestMSA": "Gaffney, SC"},
+  ]},
+  {plan:"BCBS NC Blue Value Network",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 23, "avgGY": -0.1269, "avgRed": 0.1269, "minRed": -0.3289, "maxRed": 1.0, "p25": -0.0437, "p75": 0.1263, "nWorse": 11, "nBetter": 8, "worstMSA": "Waynesville, NC", "bestMSA": "Mount Airy, NC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 28, "avgGY": -0.0766, "avgRed": 0.0766, "minRed": -0.089, "maxRed": 0.6667, "p25": 0.0304, "p75": 0.0892, "nWorse": 22, "nBetter": 4, "worstMSA": "Greenville, NC", "bestMSA": "Greensboro-High Point, NC"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 27, "avgGY": 0.1741, "avgRed": -0.1741, "minRed": -0.4618, "maxRed": 0.4331, "p25": -0.3793, "p75": -0.1208, "nWorse": 5, "nBetter": 21, "worstMSA": "Sanford, NC", "bestMSA": "Asheville, NC"},
+    {"cls": "professional", "code": "CPT", "n": 114, "avgGY": 0.1066, "avgRed": -0.1066, "minRed": -0.3786, "maxRed": 0.8301, "p25": -0.1855, "p75": -0.0914, "nWorse": 13, "nBetter": 100, "worstMSA": "Americus, GA", "bestMSA": "Palatka, FL"},
+    {"cls": "professional", "code": "HCPCS", "n": 82, "avgGY": 0.2197, "avgRed": -0.2197, "minRed": -0.515, "maxRed": 0.8221, "p25": -0.3429, "p75": -0.2535, "nWorse": 8, "nBetter": 72, "worstMSA": "Moultrie, GA", "bestMSA": "Durham-Chapel Hill, NC"},
+  ]},
+  {plan:"BCBS NC Classic Blue",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 17, "avgGY": -0.0159, "avgRed": 0.0159, "minRed": -0.2487, "maxRed": 0.2786, "p25": -0.0636, "p75": 0.0975, "nWorse": 8, "nBetter": 7, "worstMSA": "Fayetteville, NC", "bestMSA": "Charlotte-Concord-Gastonia, NC-SC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 17, "avgGY": -0.2305, "avgRed": 0.2305, "minRed": -0.2417, "maxRed": 0.8333, "p25": -0.0234, "p75": 0.4, "nWorse": 11, "nBetter": 5, "worstMSA": "NC NONMETROPOLITAN AREA", "bestMSA": "Winston-Salem, NC"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 4, "avgGY": 0.6711, "avgRed": -0.6711, "minRed": -0.9483, "maxRed": -0.4195, "p25": -0.7602, "p75": -0.5691, "nWorse": 0, "nBetter": 4, "worstMSA": "Charlotte-Concord-Gastonia, NC-SC", "bestMSA": "Durham-Chapel Hill, NC"},
+    {"cls": "professional", "code": "CPT", "n": 115, "avgGY": 0.1833, "avgRed": -0.1833, "minRed": -0.4412, "maxRed": 0.6052, "p25": -0.258, "p75": -0.1685, "nWorse": 8, "nBetter": 105, "worstMSA": "Americus, GA", "bestMSA": "Palatka, FL"},
+    {"cls": "professional", "code": "HCPCS", "n": 84, "avgGY": 0.2469, "avgRed": -0.2469, "minRed": -0.5182, "maxRed": 0.8077, "p25": -0.3716, "p75": -0.2813, "nWorse": 9, "nBetter": 74, "worstMSA": "Moultrie, GA", "bestMSA": "Raleigh-Cary, NC"},
+  ]},
+  {plan:"BCBS NC Preferred Provider Network",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 23, "avgGY": -0.1297, "avgRed": 0.1297, "minRed": -0.3289, "maxRed": 1.0, "p25": -0.0613, "p75": 0.144, "nWorse": 11, "nBetter": 9, "worstMSA": "Waynesville, NC", "bestMSA": "Mount Airy, NC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 28, "avgGY": -0.0736, "avgRed": 0.0736, "minRed": -0.0979, "maxRed": 0.6667, "p25": 0.0069, "p75": 0.093, "nWorse": 20, "nBetter": 4, "worstMSA": "Greenville, NC", "bestMSA": "Greensboro-High Point, NC"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 29, "avgGY": 0.1784, "avgRed": -0.1784, "minRed": -0.4632, "maxRed": 0.4345, "p25": -0.3509, "p75": -0.1555, "nWorse": 5, "nBetter": 23, "worstMSA": "Sanford, NC", "bestMSA": "Asheville, NC"},
+    {"cls": "professional", "code": "CPT", "n": 115, "avgGY": 0.1138, "avgRed": -0.1138, "minRed": -0.3776, "maxRed": 0.829, "p25": -0.2024, "p75": -0.0914, "nWorse": 11, "nBetter": 102, "worstMSA": "Americus, GA", "bestMSA": "Palatka, FL"},
+    {"cls": "professional", "code": "HCPCS", "n": 82, "avgGY": 0.2277, "avgRed": -0.2277, "minRed": -0.5295, "maxRed": 0.8221, "p25": -0.3544, "p75": -0.2651, "nWorse": 8, "nBetter": 72, "worstMSA": "Moultrie, GA", "bestMSA": "Raleigh-Cary, NC"},
+  ]},
+  {plan:"BCBS ND Preferred Blue PPO",combos:[
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.205, "avgRed": -0.205, "minRed": -0.3498, "maxRed": -0.0074, "p25": -0.3038, "p75": -0.1326, "nWorse": 0, "nBetter": 2, "worstMSA": "Wahpeton, ND-MN", "bestMSA": "Fargo, ND-MN"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.2882, "avgRed": -0.2882, "minRed": -0.432, "maxRed": -0.1445, "p25": -0.3601, "p75": -0.2164, "nWorse": 0, "nBetter": 2, "worstMSA": "Grand Forks, ND-MN", "bestMSA": "Wahpeton, ND-MN"},
+  ]},
+  {plan:"BCBS NE Network Blue",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 2, "avgGY": 0.1006, "avgRed": -0.1006, "minRed": -0.4089, "maxRed": 0.2077, "p25": -0.2547, "p75": 0.0535, "nWorse": 1, "nBetter": 1, "worstMSA": "Sioux City, IA-NE-SD", "bestMSA": "Omaha, NE-IA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 2, "avgGY": -0.4056, "avgRed": 0.4056, "minRed": 0.2112, "maxRed": 0.6, "p25": 0.3084, "p75": 0.5028, "nWorse": 2, "nBetter": 0, "worstMSA": "Sioux City, IA-NE-SD", "bestMSA": "Omaha, NE-IA"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.1274, "avgRed": -0.1274, "minRed": -0.1637, "maxRed": -0.0911, "p25": -0.1456, "p75": -0.1093, "nWorse": 0, "nBetter": 2, "worstMSA": "Sioux City, IA-NE-SD", "bestMSA": "Omaha, NE-IA"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.3162, "avgRed": -0.3162, "minRed": -0.3162, "maxRed": -0.3162, "p25": -0.3162, "p75": -0.3162, "nWorse": 0, "nBetter": 1, "worstMSA": "Sioux City, IA-NE-SD", "bestMSA": "Sioux City, IA-NE-SD"},
+  ]},
+  {plan:"BCBS OK Blue Choice PPO",combos:[
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.2996, "avgRed": -0.2996, "minRed": -0.2996, "maxRed": -0.2996, "p25": -0.2996, "p75": -0.2996, "nWorse": 0, "nBetter": 1, "worstMSA": "Fort Smith, AR-OK", "bestMSA": "Fort Smith, AR-OK"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.2963, "avgRed": -0.2963, "minRed": -0.2963, "maxRed": -0.2963, "p25": -0.2963, "p75": -0.2963, "nWorse": 0, "nBetter": 1, "worstMSA": "Fort Smith, AR-OK", "bestMSA": "Fort Smith, AR-OK"},
+  ]},
+  {plan:"BCBS RI Healthmate Coast to Coast",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.2459, "avgRed": -0.2459, "minRed": -0.2459, "maxRed": -0.2459, "p25": -0.2459, "p75": -0.2459, "nWorse": 0, "nBetter": 1, "worstMSA": "Providence-Warwick, RI-MA", "bestMSA": "Providence-Warwick, RI-MA"},
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.1425, "avgRed": -0.1425, "minRed": -0.1425, "maxRed": -0.1425, "p25": -0.1425, "p75": -0.1425, "nWorse": 0, "nBetter": 1, "worstMSA": "Providence-Warwick, RI-MA", "bestMSA": "Providence-Warwick, RI-MA"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.3235, "avgRed": -0.3235, "minRed": -0.3235, "maxRed": -0.3235, "p25": -0.3235, "p75": -0.3235, "nWorse": 0, "nBetter": 1, "worstMSA": "Providence-Warwick, RI-MA", "bestMSA": "Providence-Warwick, RI-MA"},
+  ]},
+  {plan:"BCBS SC Preferred Blue",combos:[
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.2857, "avgRed": -0.2857, "minRed": -0.2857, "maxRed": -0.2857, "p25": -0.2857, "p75": -0.2857, "nWorse": 0, "nBetter": 1, "worstMSA": "Augusta-Richmond County, GA-SC", "bestMSA": "Augusta-Richmond County, GA-SC"},
+  ]},
+  {plan:"BCBS TN Blue Network P",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.0086, "avgRed": -0.0086, "minRed": -0.0086, "maxRed": -0.0086, "p25": -0.0086, "p75": -0.0086, "nWorse": 0, "nBetter": 0, "worstMSA": "Memphis, TN-MS-AR", "bestMSA": "Memphis, TN-MS-AR"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.0964, "avgRed": -0.0964, "minRed": -0.1459, "maxRed": -0.0469, "p25": -0.1212, "p75": -0.0717, "nWorse": 0, "nBetter": 2, "worstMSA": "Clarksville, TN-KY", "bestMSA": "Memphis, TN-MS-AR"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.3553, "avgRed": -0.3553, "minRed": -0.3553, "maxRed": -0.3553, "p25": -0.3553, "p75": -0.3553, "nWorse": 0, "nBetter": 1, "worstMSA": "Memphis, TN-MS-AR", "bestMSA": "Memphis, TN-MS-AR"},
+  ]},
+  {plan:"BCBS TX Blue Advantage HMO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 78, "avgGY": 0.1069, "avgRed": -0.1069, "minRed": -0.4123, "maxRed": 0.6667, "p25": -0.3064, "p75": 0.0196, "nWorse": 20, "nBetter": 55, "worstMSA": "Muskogee, OK", "bestMSA": "Dallas-Fort Worth-Arlington, TX"},
+    {"cls": "institutional", "code": "HCPCS", "n": 67, "avgGY": 0.0051, "avgRed": -0.0051, "minRed": -0.5, "maxRed": 0.5, "p25": -0.1932, "p75": 0.1158, "nWorse": 30, "nBetter": 31, "worstMSA": "Snyder, TX", "bestMSA": "Uvalde, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 60, "avgGY": 0.1399, "avgRed": -0.1399, "minRed": -0.7769, "maxRed": 0.4364, "p25": -0.488, "p75": 0.1485, "nWorse": 25, "nBetter": 34, "worstMSA": "Eagle Pass, TX", "bestMSA": "Odessa, TX"},
+    {"cls": "professional", "code": "CPT", "n": 87, "avgGY": 0.3093, "avgRed": -0.3093, "minRed": -0.5461, "maxRed": 0.5513, "p25": -0.4114, "p75": -0.2964, "nWorse": 6, "nBetter": 81, "worstMSA": "Mountain Home, AR", "bestMSA": "New Orleans-Metairie, LA"},
+    {"cls": "professional", "code": "HCPCS", "n": 72, "avgGY": 0.4388, "avgRed": -0.4388, "minRed": -0.7024, "maxRed": 0.4467, "p25": -0.5421, "p75": -0.3962, "nWorse": 1, "nBetter": 69, "worstMSA": "Paragould, AR", "bestMSA": "Zapata, TX"},
+  ]},
+  {plan:"BCBS TX Blue Choice PPO",combos:[
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.3478, "avgRed": -0.3478, "minRed": -0.3478, "maxRed": -0.3478, "p25": -0.3478, "p75": -0.3478, "nWorse": 0, "nBetter": 1, "worstMSA": "Texarkana, TX-AR", "bestMSA": "Texarkana, TX-AR"},
+  ]},
+  {plan:"BCBS TX Blue Essentials",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 118, "avgGY": 0.0115, "avgRed": -0.0115, "minRed": -0.5506, "maxRed": 1.0, "p25": -0.2802, "p75": 0.259, "nWorse": 49, "nBetter": 61, "worstMSA": "El Dorado, AR", "bestMSA": "Dallas-Fort Worth-Arlington, TX"},
+    {"cls": "institutional", "code": "HCPCS", "n": 126, "avgGY": 0.0612, "avgRed": -0.0612, "minRed": -0.8958, "maxRed": 0.5392, "p25": -0.0948, "p75": 0.0, "nWorse": 23, "nBetter": 38, "worstMSA": "Port Lavaca, TX", "bestMSA": "Corsicana, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 61, "avgGY": 0.1668, "avgRed": -0.1668, "minRed": -0.8303, "maxRed": 0.4289, "p25": -0.4873, "p75": 0.1458, "nWorse": 24, "nBetter": 35, "worstMSA": "Eagle Pass, TX", "bestMSA": "El Campo, TX"},
+    {"cls": "professional", "code": "CPT", "n": 130, "avgGY": 0.2767, "avgRed": -0.2767, "minRed": -0.4626, "maxRed": 0.3589, "p25": -0.3263, "p75": -0.2592, "nWorse": 2, "nBetter": 126, "worstMSA": "Malvern, AR", "bestMSA": "Forrest City, AR"},
+    {"cls": "professional", "code": "HCPCS", "n": 120, "avgGY": 0.2847, "avgRed": -0.2847, "minRed": -0.6442, "maxRed": 0.52, "p25": -0.5386, "p75": -0.1824, "nWorse": 25, "nBetter": 93, "worstMSA": "Paragould, AR", "bestMSA": "Woodward, OK"},
+  ]},
+  {plan:"BCBS TX Blue High Performance",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 58, "avgGY": -0.13, "avgRed": 0.13, "minRed": -0.5, "maxRed": 0.55, "p25": -0.1525, "p75": 0.4946, "nWorse": 30, "nBetter": 21, "worstMSA": "Corsicana, TX", "bestMSA": "Sweetwater, TX"},
+    {"cls": "institutional", "code": "HCPCS", "n": 23, "avgGY": -0.0754, "avgRed": 0.0754, "minRed": -0.5556, "maxRed": 0.8333, "p25": -0.2778, "p75": 0.3357, "nWorse": 14, "nBetter": 8, "worstMSA": "Amarillo, TX", "bestMSA": "Sherman-Denison, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 12, "avgGY": 0.4057, "avgRed": -0.4057, "minRed": -0.7982, "maxRed": 0.0977, "p25": -0.5327, "p75": -0.2792, "nWorse": 1, "nBetter": 11, "worstMSA": "College Station-Bryan, TX", "bestMSA": "Longview, TX"},
+    {"cls": "professional", "code": "CPT", "n": 123, "avgGY": 0.3039, "avgRed": -0.3039, "minRed": -0.757, "maxRed": 0.6592, "p25": -0.3888, "p75": -0.2574, "nWorse": 6, "nBetter": 116, "worstMSA": "Mountain Home, AR", "bestMSA": "Arkadelphia, AR"},
+    {"cls": "professional", "code": "HCPCS", "n": 93, "avgGY": 0.3534, "avgRed": -0.3534, "minRed": -0.8723, "maxRed": 0.6, "p25": -0.5998, "p75": -0.2681, "nWorse": 15, "nBetter": 76, "worstMSA": "Natchitoches, LA", "bestMSA": "McAlester, OK"},
+  ]},
+  {plan:"BCBS TX MyBlue Health HMO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 94, "avgGY": -0.0469, "avgRed": 0.0469, "minRed": -1.0, "maxRed": 0.55, "p25": -0.1561, "p75": 0.3588, "nWorse": 44, "nBetter": 28, "worstMSA": "Hereford, TX", "bestMSA": "Ardmore, OK"},
+    {"cls": "institutional", "code": "HCPCS", "n": 25, "avgGY": -0.1086, "avgRed": 0.1086, "minRed": -0.3714, "maxRed": 1.0, "p25": -0.1396, "p75": 0.2286, "nWorse": 11, "nBetter": 11, "worstMSA": "Midland, TX", "bestMSA": "Kerrville, TX"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 17, "avgGY": 0.4247, "avgRed": -0.4247, "minRed": -0.7651, "maxRed": 0.4653, "p25": -0.6097, "p75": -0.332, "nWorse": 1, "nBetter": 16, "worstMSA": "Killeen-Temple, TX", "bestMSA": "Longview, TX"},
+    {"cls": "professional", "code": "CPT", "n": 125, "avgGY": 0.3597, "avgRed": -0.3597, "minRed": -0.6362, "maxRed": 0.4371, "p25": -0.4667, "p75": -0.3379, "nWorse": 8, "nBetter": 116, "worstMSA": "Stillwater, OK", "bestMSA": "Forrest City, AR"},
+    {"cls": "professional", "code": "HCPCS", "n": 98, "avgGY": 0.3638, "avgRed": -0.3638, "minRed": -0.7051, "maxRed": 0.5025, "p25": -0.593, "p75": -0.2923, "nWorse": 14, "nBetter": 82, "worstMSA": "Hammond, LA", "bestMSA": "Zapata, TX"},
+  ]},
+  {plan:"BCBS WY Select",combos:[
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.1288, "avgRed": -0.1288, "minRed": -0.1288, "maxRed": -0.1288, "p25": -0.1288, "p75": -0.1288, "nWorse": 0, "nBetter": 1, "worstMSA": "Evanston, WY-UT", "bestMSA": "Evanston, WY-UT"},
+  ]},
+  {plan:"BS CA Blue Shield Preferred Network",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 31, "avgGY": 0.1731, "avgRed": -0.1731, "minRed": -0.4465, "maxRed": 0.3844, "p25": -0.3262, "p75": -0.0572, "nWorse": 4, "nBetter": 25, "worstMSA": "Sonora, CA", "bestMSA": "Redding, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 32, "avgGY": -0.1073, "avgRed": 0.1073, "minRed": -0.2773, "maxRed": 0.5833, "p25": -0.0023, "p75": 0.2527, "nWorse": 21, "nBetter": 7, "worstMSA": "Red Bluff, CA", "bestMSA": "Truckee-Grass Valley, CA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 18, "avgGY": 0.3706, "avgRed": -0.3706, "minRed": -0.6942, "maxRed": -0.0499, "p25": -0.5325, "p75": -0.2237, "nWorse": 0, "nBetter": 18, "worstMSA": "San Jose-Sunnyvale-Santa Clara, CA", "bestMSA": "Yuba City, CA"},
+    {"cls": "professional", "code": "CPT", "n": 36, "avgGY": 0.2504, "avgRed": -0.2504, "minRed": -0.4715, "maxRed": -0.0852, "p25": -0.3075, "p75": -0.1893, "nWorse": 0, "nBetter": 36, "worstMSA": "Gardnerville Ranchos, NV-CA", "bestMSA": "Santa Cruz-Watsonville, CA"},
+    {"cls": "professional", "code": "HCPCS", "n": 35, "avgGY": 0.4307, "avgRed": -0.4307, "minRed": -0.6948, "maxRed": -0.0668, "p25": -0.4832, "p75": -0.3737, "nWorse": 0, "nBetter": 35, "worstMSA": "Fresno, CA", "bestMSA": "Sacramento-Roseville-Folsom, CA"},
+  ]},
+  {plan:"Capital BC PA PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 6, "avgGY": 0.2441, "avgRed": -0.2441, "minRed": -0.519, "maxRed": 0.1792, "p25": -0.3417, "p75": -0.244, "nWorse": 1, "nBetter": 5, "worstMSA": "Gettysburg, PA", "bestMSA": "Reading, PA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 5, "avgGY": 0.2132, "avgRed": -0.2132, "minRed": -0.3278, "maxRed": -0.0997, "p25": -0.2775, "p75": -0.1095, "nWorse": 0, "nBetter": 5, "worstMSA": "Lebanon, PA", "bestMSA": "York-Hanover, PA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 7, "avgGY": 0.3131, "avgRed": -0.3131, "minRed": -0.4219, "maxRed": 0.0377, "p25": -0.401, "p75": -0.3155, "nWorse": 1, "nBetter": 6, "worstMSA": "Gettysburg, PA", "bestMSA": "Harrisburg-Carlisle, PA"},
+    {"cls": "professional", "code": "CPT", "n": 13, "avgGY": 0.1173, "avgRed": -0.1173, "minRed": -0.2587, "maxRed": 0.0562, "p25": -0.1702, "p75": -0.0461, "nWorse": 1, "nBetter": 11, "worstMSA": "Somerset, PA", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 12, "avgGY": 0.3399, "avgRed": -0.3399, "minRed": -0.5327, "maxRed": -0.1683, "p25": -0.3843, "p75": -0.3039, "nWorse": 0, "nBetter": 12, "worstMSA": "Gettysburg, PA", "bestMSA": "Allentown-Bethlehem-Easton, PA-NJ"},
+  ]},
+  {plan:"Capital BC PA Traditional",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 12, "avgGY": 0.2491, "avgRed": -0.2491, "minRed": -0.5402, "maxRed": -0.0625, "p25": -0.3363, "p75": -0.1362, "nWorse": 0, "nBetter": 12, "worstMSA": "Pottsville, PA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "institutional", "code": "HCPCS", "n": 12, "avgGY": 0.0753, "avgRed": -0.0753, "minRed": -0.2779, "maxRed": 0.2476, "p25": -0.1913, "p75": 0.0276, "nWorse": 3, "nBetter": 8, "worstMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD", "bestMSA": "Harrisburg-Carlisle, PA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 16, "avgGY": 0.3592, "avgRed": -0.3592, "minRed": -0.4825, "maxRed": -0.2293, "p25": -0.4134, "p75": -0.3116, "nWorse": 0, "nBetter": 16, "worstMSA": "Bloomsburg-Berwick, PA", "bestMSA": "East Stroudsburg, PA"},
+    {"cls": "professional", "code": "CPT", "n": 41, "avgGY": 0.1215, "avgRed": -0.1215, "minRed": -0.394, "maxRed": 0.0526, "p25": -0.1556, "p75": -0.0638, "nWorse": 1, "nBetter": 38, "worstMSA": "Bradford, PA", "bestMSA": "Plattsburgh, NY"},
+    {"cls": "professional", "code": "HCPCS", "n": 37, "avgGY": 0.3444, "avgRed": -0.3444, "minRed": -0.567, "maxRed": 0.322, "p25": -0.4085, "p75": -0.3289, "nWorse": 1, "nBetter": 36, "worstMSA": "Erie, PA", "bestMSA": "Allentown-Bethlehem-Easton, PA-NJ"},
+  ]},
+  {plan:"CareFirst BCBS BlueChoice Alternate Network",combos:[
+    {"cls": "professional", "code": "CPT", "n": 11, "avgGY": 0.2195, "avgRed": -0.2195, "minRed": -0.3007, "maxRed": 0.0018, "p25": -0.2655, "p75": -0.2084, "nWorse": 0, "nBetter": 10, "worstMSA": "MD NONMETROPOLITAN AREA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "professional", "code": "HCPCS", "n": 11, "avgGY": 0.4233, "avgRed": -0.4233, "minRed": -0.6615, "maxRed": -0.1624, "p25": -0.5457, "p75": -0.3072, "nWorse": 0, "nBetter": 11, "worstMSA": "Baltimore-Columbia-Towson, MD", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+  ]},
+  {plan:"CareFirst BCBS Select Preferred Provider",combos:[
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.2532, "avgRed": -0.2532, "minRed": -0.2699, "maxRed": -0.2365, "p25": -0.2616, "p75": -0.2449, "nWorse": 0, "nBetter": 2, "worstMSA": "Richmond, VA", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.2557, "avgRed": -0.2557, "minRed": -0.3458, "maxRed": -0.1655, "p25": -0.3008, "p75": -0.2106, "nWorse": 0, "nBetter": 2, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Richmond, VA"},
+  ]},
+  {plan:"Cigna HealthPartners",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 35, "avgGY": 0.1488, "avgRed": -0.1488, "minRed": -0.7297, "maxRed": 0.1587, "p25": -0.242, "p75": 0.0, "nWorse": 5, "nBetter": 22, "worstMSA": "Duluth, MN-WI", "bestMSA": "Brainerd, MN"},
+    {"cls": "institutional", "code": "HCPCS", "n": 23, "avgGY": -0.2177, "avgRed": 0.2177, "minRed": 0.0, "maxRed": 0.6013, "p25": 0.1027, "p75": 0.2665, "nWorse": 19, "nBetter": 0, "worstMSA": "Madison, WI", "bestMSA": "Rochester, MN"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 16, "avgGY": 0.334, "avgRed": -0.334, "minRed": -0.6393, "maxRed": -0.0203, "p25": -0.4274, "p75": -0.2766, "nWorse": 0, "nBetter": 16, "worstMSA": "Platteville, WI", "bestMSA": "Fargo, ND-MN"},
+    {"cls": "professional", "code": "CPT", "n": 63, "avgGY": 0.0353, "avgRed": -0.0353, "minRed": -0.5023, "maxRed": 0.7184, "p25": -0.1745, "p75": 0.1085, "nWorse": 23, "nBetter": 37, "worstMSA": "Hutchinson, MN", "bestMSA": "Iron Mountain, MI-WI"},
+    {"cls": "professional", "code": "HCPCS", "n": 57, "avgGY": 0.2613, "avgRed": -0.2613, "minRed": -0.6174, "maxRed": 0.8646, "p25": -0.4609, "p75": -0.2816, "nWorse": 9, "nBetter": 48, "worstMSA": "Dickinson, ND", "bestMSA": "Marinette, WI-MI"},
+  ]},
+  {plan:"Cigna LocalPlus",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 849, "avgGY": 0.0065, "avgRed": -0.0065, "minRed": -1.0, "maxRed": 1.0, "p25": -0.1915, "p75": 0.1608, "nWorse": 343, "nBetter": 419, "worstMSA": "Auburn, IN", "bestMSA": "Alamosa, CO"},
+    {"cls": "institutional", "code": "HCPCS", "n": 684, "avgGY": -0.185, "avgRed": 0.185, "minRed": -1.0, "maxRed": 1.0, "p25": 0.0355, "p75": 0.3196, "nWorse": 524, "nBetter": 113, "worstMSA": "Lake of the Woods, VA", "bestMSA": "Jackson, MI"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 441, "avgGY": 0.2376, "avgRed": -0.2376, "minRed": -0.9627, "maxRed": 0.7651, "p25": -0.407, "p75": -0.1147, "nWorse": 72, "nBetter": 358, "worstMSA": "Cleveland, TN", "bestMSA": "New Philadelphia-Dover, OH"},
+    {"cls": "professional", "code": "CPT", "n": 970, "avgGY": 0.1627, "avgRed": -0.1627, "minRed": -0.6088, "maxRed": 0.2427, "p25": -0.2125, "p75": -0.1134, "nWorse": 31, "nBetter": 926, "worstMSA": "Hutchinson, MN", "bestMSA": "Zapata, TX"},
+    {"cls": "professional", "code": "HCPCS", "n": 967, "avgGY": 0.3059, "avgRed": -0.3059, "minRed": -0.7575, "maxRed": 0.8646, "p25": -0.4061, "p75": -0.2354, "nWorse": 36, "nBetter": 921, "worstMSA": "Dickinson, ND", "bestMSA": "Olean, NY"},
+  ]},
+  {plan:"Cigna OAP",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 848, "avgGY": -0.0355, "avgRed": 0.0355, "minRed": -1.0, "maxRed": 1.0, "p25": -0.1554, "p75": 0.2007, "nWorse": 382, "nBetter": 374, "worstMSA": "Auburn, IN", "bestMSA": "Alamosa, CO"},
+    {"cls": "institutional", "code": "HCPCS", "n": 689, "avgGY": -0.2315, "avgRed": 0.2315, "minRed": -1.0, "maxRed": 1.0, "p25": 0.0953, "p75": 0.3675, "nWorse": 563, "nBetter": 78, "worstMSA": "Hillsdale, MI", "bestMSA": "Jackson, MI"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 457, "avgGY": 0.1473, "avgRed": -0.1473, "minRed": -0.9627, "maxRed": 0.9921, "p25": -0.3128, "p75": -0.007, "nWorse": 95, "nBetter": 335, "worstMSA": "McComb, MS", "bestMSA": "New Philadelphia-Dover, OH"},
+    {"cls": "professional", "code": "CPT", "n": 970, "avgGY": 0.1171, "avgRed": -0.1171, "minRed": -0.4126, "maxRed": 0.7335, "p25": -0.1652, "p75": -0.0774, "nWorse": 51, "nBetter": 870, "worstMSA": "Hutchinson, MN", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 952, "avgGY": 0.2169, "avgRed": -0.2169, "minRed": -0.7274, "maxRed": 0.8646, "p25": -0.3328, "p75": -0.1474, "nWorse": 75, "nBetter": 848, "worstMSA": "Dickinson, ND", "bestMSA": "Corning, NY"},
+  ]},
+  {plan:"Cigna PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 847, "avgGY": 0.0015, "avgRed": -0.0015, "minRed": -1.0, "maxRed": 1.0, "p25": -0.195, "p75": 0.1714, "nWorse": 350, "nBetter": 415, "worstMSA": "Auburn, IN", "bestMSA": "Alamosa, CO"},
+    {"cls": "institutional", "code": "HCPCS", "n": 681, "avgGY": -0.1626, "avgRed": 0.1626, "minRed": -1.0, "maxRed": 1.0, "p25": 0.0053, "p75": 0.3102, "nWorse": 506, "nBetter": 134, "worstMSA": "Lake of the Woods, VA", "bestMSA": "Amsterdam, NY"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 444, "avgGY": 0.2462, "avgRed": -0.2462, "minRed": -0.9627, "maxRed": 0.752, "p25": -0.416, "p75": -0.1181, "nWorse": 71, "nBetter": 361, "worstMSA": "Sterling, CO", "bestMSA": "New Philadelphia-Dover, OH"},
+    {"cls": "professional", "code": "CPT", "n": 970, "avgGY": 0.1603, "avgRed": -0.1603, "minRed": -0.6051, "maxRed": 0.7184, "p25": -0.2161, "p75": -0.1079, "nWorse": 35, "nBetter": 914, "worstMSA": "Hutchinson, MN", "bestMSA": "Zapata, TX"},
+    {"cls": "professional", "code": "HCPCS", "n": 952, "avgGY": 0.3011, "avgRed": -0.3011, "minRed": -0.7556, "maxRed": 0.8646, "p25": -0.4135, "p75": -0.2347, "nWorse": 55, "nBetter": 887, "worstMSA": "Dickinson, ND", "bestMSA": "Corning, NY"},
+  ]},
+  {plan:"Cigna Priority Health",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 29, "avgGY": -0.0152, "avgRed": 0.0152, "minRed": -0.485, "maxRed": 0.8333, "p25": -0.125, "p75": 0.101, "nWorse": 8, "nBetter": 10, "worstMSA": "Bay City, MI", "bestMSA": "Monroe, MI"},
+    {"cls": "institutional", "code": "HCPCS", "n": 2, "avgGY": -0.0357, "avgRed": 0.0357, "minRed": -0.5, "maxRed": 0.5714, "p25": -0.2321, "p75": 0.3036, "nWorse": 1, "nBetter": 1, "worstMSA": "MI NONMETROPOLITAN AREA", "bestMSA": "Jackson, MI"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 5, "avgGY": 0.3952, "avgRed": -0.3952, "minRed": -0.6603, "maxRed": -0.1745, "p25": -0.5, "p75": -0.2327, "nWorse": 0, "nBetter": 5, "worstMSA": "Saginaw, MI", "bestMSA": "Ann Arbor, MI"},
+    {"cls": "professional", "code": "CPT", "n": 36, "avgGY": -0.0034, "avgRed": 0.0034, "minRed": -0.5982, "maxRed": 0.3594, "p25": -0.0791, "p75": 0.0953, "nWorse": 16, "nBetter": 17, "worstMSA": "Owosso, MI", "bestMSA": "Marinette, WI-MI"},
+    {"cls": "professional", "code": "HCPCS", "n": 30, "avgGY": 0.3276, "avgRed": -0.3276, "minRed": -0.6597, "maxRed": 0.5199, "p25": -0.4764, "p75": -0.366, "nWorse": 4, "nBetter": 26, "worstMSA": "Detroit-Warren-Dearborn, MI", "bestMSA": "Big Rapids, MI"},
+  ]},
+  {plan:"Highmark BCBS DE Blue Choice",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 2, "avgGY": -0.3064, "avgRed": 0.3064, "minRed": 0.0457, "maxRed": 0.5671, "p25": 0.1761, "p75": 0.4367, "nWorse": 2, "nBetter": 0, "worstMSA": "Salisbury, MD-DE", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": -0.2601, "avgRed": 0.2601, "minRed": -0.1986, "maxRed": 0.7188, "p25": 0.0307, "p75": 0.4894, "nWorse": 1, "nBetter": 1, "worstMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD", "bestMSA": "Salisbury, MD-DE"},
+  ]},
+  {plan:"Highmark BCBS WV Super Blue Plus",combos:[
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.0755, "avgRed": -0.0755, "minRed": -0.0755, "maxRed": -0.0755, "p25": -0.0755, "p75": -0.0755, "nWorse": 0, "nBetter": 1, "worstMSA": "Huntington-Ashland, WV-KY-OH", "bestMSA": "Huntington-Ashland, WV-KY-OH"},
+  ]},
+  {plan:"Highmark BCBS of Western NY PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.2837, "avgRed": -0.2837, "minRed": -0.2837, "maxRed": -0.2837, "p25": -0.2837, "p75": -0.2837, "nWorse": 0, "nBetter": 1, "worstMSA": "Rochester, NY", "bestMSA": "Rochester, NY"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.0849, "avgRed": -0.0849, "minRed": -0.0849, "maxRed": -0.0849, "p25": -0.0849, "p75": -0.0849, "nWorse": 0, "nBetter": 1, "worstMSA": "Rochester, NY", "bestMSA": "Rochester, NY"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": -0.0096, "avgRed": 0.0096, "minRed": 0.0, "maxRed": 0.0192, "p25": 0.0048, "p75": 0.0144, "nWorse": 0, "nBetter": 0, "worstMSA": "Rochester, NY", "bestMSA": "Ithaca, NY"},
+    {"cls": "professional", "code": "HCPCS", "n": 1, "avgGY": 0.0673, "avgRed": -0.0673, "minRed": -0.0673, "maxRed": -0.0673, "p25": -0.0673, "p75": -0.0673, "nWorse": 0, "nBetter": 1, "worstMSA": "Rochester, NY", "bestMSA": "Rochester, NY"},
+  ]},
+  {plan:"Highmark BS PA Statewide PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 10, "avgGY": 0.0611, "avgRed": -0.0611, "minRed": -0.4961, "maxRed": 0.6828, "p25": -0.1423, "p75": 0.0418, "nWorse": 3, "nBetter": 6, "worstMSA": "Selinsgrove, PA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "institutional", "code": "HCPCS", "n": 8, "avgGY": 0.0164, "avgRed": -0.0164, "minRed": -0.3303, "maxRed": 0.2105, "p25": -0.0569, "p75": 0.0674, "nWorse": 3, "nBetter": 4, "worstMSA": "Chambersburg, PA", "bestMSA": "East Stroudsburg, PA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 8, "avgGY": 0.2883, "avgRed": -0.2883, "minRed": -0.4626, "maxRed": -0.1368, "p25": -0.3532, "p75": -0.2157, "nWorse": 0, "nBetter": 8, "worstMSA": "Chambersburg, PA", "bestMSA": "Bloomsburg-Berwick, PA"},
+    {"cls": "professional", "code": "CPT", "n": 11, "avgGY": -0.003, "avgRed": 0.003, "minRed": -0.3498, "maxRed": 0.3966, "p25": -0.0475, "p75": 0.0721, "nWorse": 5, "nBetter": 5, "worstMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 7, "avgGY": 0.0085, "avgRed": -0.0085, "minRed": -0.375, "maxRed": 0.5833, "p25": -0.1676, "p75": 0.0722, "nWorse": 2, "nBetter": 5, "worstMSA": "Chambersburg, PA", "bestMSA": "Selinsgrove, PA"},
+  ]},
+  {plan:"Highmark BS of Northeastern NY PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 5, "avgGY": -0.0639, "avgRed": 0.0639, "minRed": -0.3176, "maxRed": 0.2307, "p25": 0.0871, "p75": 0.2274, "nWorse": 4, "nBetter": 1, "worstMSA": "Kingston, NY", "bestMSA": "Hudson, NY"},
+    {"cls": "institutional", "code": "HCPCS", "n": 4, "avgGY": -0.4077, "avgRed": 0.4077, "minRed": 0.2143, "maxRed": 0.6667, "p25": 0.2411, "p75": 0.5417, "nWorse": 4, "nBetter": 0, "worstMSA": "Hudson, NY", "bestMSA": "Plattsburgh, NY"},
+    {"cls": "professional", "code": "CPT", "n": 6, "avgGY": 0.0577, "avgRed": -0.0577, "minRed": -0.1329, "maxRed": 0.0446, "p25": -0.0968, "p75": -0.0385, "nWorse": 1, "nBetter": 5, "worstMSA": "Kingston, NY", "bestMSA": "Gloversville, NY"},
+    {"cls": "professional", "code": "HCPCS", "n": 5, "avgGY": 0.3325, "avgRed": -0.3325, "minRed": -1.0, "maxRed": 0.0, "p25": -0.3, "p75": -0.0769, "nWorse": 0, "nBetter": 4, "worstMSA": "Kingston, NY", "bestMSA": "Gloversville, NY"},
+  ]},
+  {plan:"Horizon BCBS NJ Direct Access",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": 0.2053, "avgRed": -0.2053, "minRed": -0.488, "maxRed": 0.3136, "p25": -0.4647, "p75": -0.0639, "nWorse": 1, "nBetter": 2, "worstMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA", "bestMSA": "Allentown-Bethlehem-Easton, PA-NJ"},
+    {"cls": "institutional", "code": "HCPCS", "n": 3, "avgGY": 0.1614, "avgRed": -0.1614, "minRed": -0.4076, "maxRed": 0.1196, "p25": -0.3019, "p75": -0.0383, "nWorse": 1, "nBetter": 2, "worstMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 2, "avgGY": 0.4235, "avgRed": -0.4235, "minRed": -0.4932, "maxRed": -0.3538, "p25": -0.4584, "p75": -0.3886, "nWorse": 0, "nBetter": 2, "worstMSA": "Allentown-Bethlehem-Easton, PA-NJ", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.2415, "avgRed": -0.2415, "minRed": -0.3451, "maxRed": -0.1375, "p25": -0.2935, "p75": -0.1897, "nWorse": 0, "nBetter": 3, "worstMSA": "Allentown-Bethlehem-Easton, PA-NJ", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 3, "avgGY": 0.4353, "avgRed": -0.4353, "minRed": -0.4871, "maxRed": -0.3551, "p25": -0.4754, "p75": -0.4095, "nWorse": 0, "nBetter": 3, "worstMSA": "Allentown-Bethlehem-Easton, PA-NJ", "bestMSA": "New York-Northern New Jersey-Long Island, NY-NJ-PA"},
+  ]},
+  {plan:"Independence BC PA Personal Choice",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 5, "avgGY": 0.2198, "avgRed": -0.2198, "minRed": -0.5173, "maxRed": 0.1923, "p25": -0.5075, "p75": -0.0684, "nWorse": 1, "nBetter": 4, "worstMSA": "York-Hanover, PA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "institutional", "code": "HCPCS", "n": 3, "avgGY": 0.054, "avgRed": -0.054, "minRed": -0.3675, "maxRed": 0.2304, "p25": -0.1961, "p75": 0.1028, "nWorse": 1, "nBetter": 2, "worstMSA": "Lancaster, PA", "bestMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD"},
+    {"cls": "professional", "code": "CPT", "n": 12, "avgGY": -0.2597, "avgRed": 0.2597, "minRed": -0.1204, "maxRed": 1.0, "p25": -0.09, "p75": 0.7345, "nWorse": 6, "nBetter": 6, "worstMSA": "Altoona, PA", "bestMSA": "Reading, PA"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": -0.6598, "avgRed": 0.6598, "minRed": 0.5118, "maxRed": 0.8077, "p25": 0.5858, "p75": 0.7337, "nWorse": 2, "nBetter": 0, "worstMSA": "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD", "bestMSA": "Allentown-Bethlehem-Easton, PA-NJ"},
+  ]},
+  {plan:"Kaiser Permanente KFHP CO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.266, "avgRed": -0.266, "minRed": -0.266, "maxRed": -0.266, "p25": -0.266, "p75": -0.266, "nWorse": 0, "nBetter": 1, "worstMSA": "Denver-Aurora-Centennial, CO", "bestMSA": "Denver-Aurora-Centennial, CO"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.4424, "avgRed": -0.4424, "minRed": -0.4424, "maxRed": -0.4424, "p25": -0.4424, "p75": -0.4424, "nWorse": 0, "nBetter": 1, "worstMSA": "Denver-Aurora-Centennial, CO", "bestMSA": "Denver-Aurora-Centennial, CO"},
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.0, "avgRed": 0.0, "minRed": 0.0, "maxRed": 0.0, "p25": 0.0, "p75": 0.0, "nWorse": 0, "nBetter": 0, "worstMSA": "Denver-Aurora-Centennial, CO", "bestMSA": "Denver-Aurora-Centennial, CO"},
+  ]},
+  {plan:"Kaiser Permanente KFHP NCA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": 0.1096, "avgRed": -0.1096, "minRed": -0.712, "maxRed": 0.3833, "p25": -0.356, "p75": 0.1917, "nWorse": 1, "nBetter": 1, "worstMSA": "CA NONMETROPOLITAN AREA", "bestMSA": "San Jose-Sunnyvale-Santa Clara, CA"},
+  ]},
+  {plan:"Kaiser Permanente KFHP SCA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": 0.3189, "avgRed": -0.3189, "minRed": -0.6955, "maxRed": 0.1053, "p25": -0.5311, "p75": -0.1306, "nWorse": 1, "nBetter": 2, "worstMSA": "Oxnard-Thousand Oaks-Ventura, CA", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.31, "avgRed": 0.31, "minRed": 0.31, "maxRed": 0.31, "p25": 0.31, "p75": 0.31, "nWorse": 1, "nBetter": 0, "worstMSA": "Oxnard-Thousand Oaks-Ventura, CA", "bestMSA": "Oxnard-Thousand Oaks-Ventura, CA"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-1 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.2963, "avgRed": 0.2963, "minRed": -0.5, "maxRed": 0.8054, "p25": 0.1451, "p75": 0.4735, "nWorse": 62, "nBetter": 7, "worstMSA": "Red Bluff, CA", "bestMSA": "Bishop, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.2109, "avgRed": 0.2109, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3482, "nWorse": 44, "nBetter": 13, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 78, "avgGY": 0.2929, "avgRed": -0.2929, "minRed": -0.7158, "maxRed": 0.0752, "p25": -0.37, "p75": -0.2131, "nWorse": 1, "nBetter": 77, "worstMSA": "Klamath Falls, OR", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.3223, "avgRed": -0.3223, "minRed": -0.5953, "maxRed": 0.8333, "p25": -0.4721, "p75": -0.3106, "nWorse": 3, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-2 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.2435, "avgRed": 0.2435, "minRed": -0.5, "maxRed": 0.8054, "p25": 0.0922, "p75": 0.4177, "nWorse": 57, "nBetter": 12, "worstMSA": "Red Bluff, CA", "bestMSA": "Chico, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.1921, "avgRed": 0.1921, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3392, "nWorse": 43, "nBetter": 14, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 79, "avgGY": 0.2598, "avgRed": -0.2598, "minRed": -0.7158, "maxRed": 0.75, "p25": -0.3496, "p75": -0.1981, "nWorse": 3, "nBetter": 75, "worstMSA": "Santa Rosa-Petaluma, CA", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.314, "avgRed": -0.314, "minRed": -0.5948, "maxRed": 1.0, "p25": -0.4264, "p75": -0.2916, "nWorse": 2, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-3 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.2431, "avgRed": 0.2431, "minRed": -0.5, "maxRed": 0.8041, "p25": 0.0922, "p75": 0.4177, "nWorse": 57, "nBetter": 12, "worstMSA": "Red Bluff, CA", "bestMSA": "Chico, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.1921, "avgRed": 0.1921, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3392, "nWorse": 43, "nBetter": 14, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 79, "avgGY": 0.2598, "avgRed": -0.2598, "minRed": -0.7158, "maxRed": 0.75, "p25": -0.3496, "p75": -0.1981, "nWorse": 3, "nBetter": 75, "worstMSA": "Santa Rosa-Petaluma, CA", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.314, "avgRed": -0.314, "minRed": -0.5948, "maxRed": 1.0, "p25": -0.4264, "p75": -0.2916, "nWorse": 2, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-4 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.2437, "avgRed": 0.2437, "minRed": -0.5, "maxRed": 0.8054, "p25": 0.0922, "p75": 0.4177, "nWorse": 57, "nBetter": 12, "worstMSA": "Red Bluff, CA", "bestMSA": "Chico, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.192, "avgRed": 0.192, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3392, "nWorse": 43, "nBetter": 14, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 79, "avgGY": 0.26, "avgRed": -0.26, "minRed": -0.7158, "maxRed": 0.75, "p25": -0.3496, "p75": -0.1991, "nWorse": 3, "nBetter": 75, "worstMSA": "Santa Rosa-Petaluma, CA", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.314, "avgRed": -0.314, "minRed": -0.5948, "maxRed": 1.0, "p25": -0.4264, "p75": -0.2916, "nWorse": 2, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-5 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.2432, "avgRed": 0.2432, "minRed": -0.5, "maxRed": 0.8054, "p25": 0.0922, "p75": 0.4177, "nWorse": 57, "nBetter": 12, "worstMSA": "Red Bluff, CA", "bestMSA": "Chico, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.1921, "avgRed": 0.1921, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3392, "nWorse": 43, "nBetter": 14, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 79, "avgGY": 0.2598, "avgRed": -0.2598, "minRed": -0.7158, "maxRed": 0.75, "p25": -0.3496, "p75": -0.1981, "nWorse": 3, "nBetter": 75, "worstMSA": "Santa Rosa-Petaluma, CA", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.314, "avgRed": -0.314, "minRed": -0.5948, "maxRed": 1.0, "p25": -0.4264, "p75": -0.2916, "nWorse": 2, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KFHP-6 WA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 71, "avgGY": -0.244, "avgRed": 0.244, "minRed": -0.5, "maxRed": 0.8054, "p25": 0.0922, "p75": 0.4177, "nWorse": 57, "nBetter": 12, "worstMSA": "Red Bluff, CA", "bestMSA": "Chico, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 62, "avgGY": -0.1924, "avgRed": 0.1924, "minRed": -0.375, "maxRed": 1.0, "p25": 0.0, "p75": 0.3459, "nWorse": 43, "nBetter": 14, "worstMSA": "Hermiston-Pendleton, OR", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "professional", "code": "CPT", "n": 79, "avgGY": 0.26, "avgRed": -0.26, "minRed": -0.7158, "maxRed": 0.75, "p25": -0.3496, "p75": -0.1991, "nWorse": 3, "nBetter": 75, "worstMSA": "Santa Rosa-Petaluma, CA", "bestMSA": "Coos Bay-North Bend, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 41, "avgGY": 0.314, "avgRed": -0.314, "minRed": -0.5948, "maxRed": 1.0, "p25": -0.4264, "p75": -0.2916, "nWorse": 2, "nBetter": 38, "worstMSA": "Bishop, CA", "bestMSA": "Eugene-Springfield, OR"},
+  ]},
+  {plan:"Kaiser Permanente KPIC HI",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": -0.098, "avgRed": 0.098, "minRed": -0.456, "maxRed": 0.75, "p25": -0.228, "p75": 0.375, "nWorse": 1, "nBetter": 1, "worstMSA": "Anchorage, AK", "bestMSA": "Urban Honolulu, HI"},
+  ]},
+  {plan:"Kaiser Permanente KPIC NCA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": 0.1097, "avgRed": -0.1097, "minRed": -0.7123, "maxRed": 0.3833, "p25": -0.3561, "p75": 0.1917, "nWorse": 1, "nBetter": 1, "worstMSA": "CA NONMETROPOLITAN AREA", "bestMSA": "San Jose-Sunnyvale-Santa Clara, CA"},
+  ]},
+  {plan:"Kaiser Permanente KPIC SCA",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": 0.3189, "avgRed": -0.3189, "minRed": -0.6955, "maxRed": 0.1054, "p25": -0.5311, "p75": -0.1306, "nWorse": 1, "nBetter": 2, "worstMSA": "Oxnard-Thousand Oaks-Ventura, CA", "bestMSA": "Riverside-San Bernardino-Ontario, CA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.31, "avgRed": 0.31, "minRed": 0.31, "maxRed": 0.31, "p25": 0.31, "p75": 0.31, "nWorse": 1, "nBetter": 0, "worstMSA": "Oxnard-Thousand Oaks-Ventura, CA", "bestMSA": "Oxnard-Thousand Oaks-Ventura, CA"},
+  ]},
+  {plan:"Kaiser Permanente NEW-01 MAS",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 2, "avgGY": 0.549, "avgRed": -0.549, "minRed": -0.8571, "maxRed": -0.2408, "p25": -0.7031, "p75": -0.3949, "nWorse": 0, "nBetter": 2, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Virginia Beach-Chesapeake-Norfolk, VA-NC"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.3333, "avgRed": 0.3333, "minRed": 0.3333, "maxRed": 0.3333, "p25": 0.3333, "p75": 0.3333, "nWorse": 1, "nBetter": 0, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+  ]},
+  {plan:"Kaiser Permanente NEW-04 MAS",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.2628, "avgRed": -0.2628, "minRed": -0.2628, "maxRed": -0.2628, "p25": -0.2628, "p75": -0.2628, "nWorse": 0, "nBetter": 1, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": -0.3317, "avgRed": 0.3317, "minRed": 0.3317, "maxRed": 0.3317, "p25": 0.3317, "p75": 0.3317, "nWorse": 1, "nBetter": 0, "worstMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV", "bestMSA": "Washington-Arlington-Alexandria, DC-VA-MD-WV"},
+  ]},
+  {plan:"Premera BC Heritage",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 3, "avgGY": -0.1316, "avgRed": 0.1316, "minRed": -0.02, "maxRed": 0.2579, "p25": 0.0685, "p75": 0.2074, "nWorse": 2, "nBetter": 0, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 3, "avgGY": -0.0886, "avgRed": 0.0886, "minRed": -0.2069, "maxRed": 0.5378, "p25": -0.1361, "p75": 0.2363, "nWorse": 1, "nBetter": 2, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 2, "avgGY": 0.3101, "avgRed": -0.3101, "minRed": -0.3556, "maxRed": -0.2645, "p25": -0.3328, "p75": -0.2873, "nWorse": 0, "nBetter": 2, "worstMSA": "Longview-Kelso, WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.2326, "avgRed": -0.2326, "minRed": -0.3519, "maxRed": -0.1237, "p25": -0.287, "p75": -0.1729, "nWorse": 0, "nBetter": 3, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "professional", "code": "HCPCS", "n": 3, "avgGY": 0.1377, "avgRed": -0.1377, "minRed": -0.5371, "maxRed": 0.4632, "p25": -0.4382, "p75": 0.062, "nWorse": 1, "nBetter": 2, "worstMSA": "Lewiston, ID-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+  ]},
+  {plan:"Regence BCBS OR Preferred Provider Plan",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 1, "avgGY": 0.3334, "avgRed": -0.3334, "minRed": -0.3334, "maxRed": -0.3334, "p25": -0.3334, "p75": -0.3334, "nWorse": 0, "nBetter": 1, "worstMSA": "Portland-Vancouver-Hillsboro, OR-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 1, "avgGY": 0.1391, "avgRed": -0.1391, "minRed": -0.1391, "maxRed": -0.1391, "p25": -0.1391, "p75": -0.1391, "nWorse": 0, "nBetter": 1, "worstMSA": "Portland-Vancouver-Hillsboro, OR-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 1, "avgGY": 0.3966, "avgRed": -0.3966, "minRed": -0.3966, "maxRed": -0.3966, "p25": -0.3966, "p75": -0.3966, "nWorse": 0, "nBetter": 1, "worstMSA": "Portland-Vancouver-Hillsboro, OR-WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.2436, "avgRed": -0.2436, "minRed": -0.2442, "maxRed": -0.243, "p25": -0.2439, "p75": -0.2433, "nWorse": 0, "nBetter": 2, "worstMSA": "Longview-Kelso, WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.4161, "avgRed": -0.4161, "minRed": -0.5911, "maxRed": -0.241, "p25": -0.5036, "p75": -0.3285, "nWorse": 0, "nBetter": 2, "worstMSA": "Longview-Kelso, WA", "bestMSA": "Portland-Vancouver-Hillsboro, OR-WA"},
+  ]},
+  {plan:"Regence BCBS UT ValueCare",combos:[
+    {"cls": "professional", "code": "CPT", "n": 3, "avgGY": 0.0066, "avgRed": -0.0066, "minRed": -0.1348, "maxRed": 0.1676, "p25": -0.0937, "p75": 0.0576, "nWorse": 1, "nBetter": 2, "worstMSA": "Evanston, WY-UT", "bestMSA": "Logan, UT-ID"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.2442, "avgRed": -0.2442, "minRed": -0.3479, "maxRed": -0.1406, "p25": -0.2961, "p75": -0.1924, "nWorse": 0, "nBetter": 2, "worstMSA": "Evanston, WY-UT", "bestMSA": "Brigham City, UT-ID"},
+  ]},
+  {plan:"Regence BS ID PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 17, "avgGY": 0.0601, "avgRed": -0.0601, "minRed": -0.4492, "maxRed": 0.4022, "p25": -0.1749, "p75": 0.0837, "nWorse": 6, "nBetter": 9, "worstMSA": "Brigham City, UT-ID", "bestMSA": "Twin Falls, ID"},
+    {"cls": "institutional", "code": "HCPCS", "n": 16, "avgGY": -0.0412, "avgRed": 0.0412, "minRed": -0.1986, "maxRed": 0.2719, "p25": -0.0571, "p75": 0.1805, "nWorse": 8, "nBetter": 6, "worstMSA": "Brigham City, UT-ID", "bestMSA": "Ontario, OR-ID"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 13, "avgGY": 0.1047, "avgRed": -0.1047, "minRed": -0.4662, "maxRed": 0.2331, "p25": -0.35, "p75": 0.1406, "nWorse": 5, "nBetter": 7, "worstMSA": "Rexburg, ID", "bestMSA": "ID NONMETROPOLITAN AREA"},
+    {"cls": "professional", "code": "CPT", "n": 17, "avgGY": 0.0428, "avgRed": -0.0428, "minRed": -0.0857, "maxRed": 0.0624, "p25": -0.0579, "p75": -0.0388, "nWorse": 1, "nBetter": 15, "worstMSA": "Jackson, WY-ID", "bestMSA": "Brigham City, UT-ID"},
+    {"cls": "professional", "code": "HCPCS", "n": 16, "avgGY": 0.2737, "avgRed": -0.2737, "minRed": -0.3352, "maxRed": -0.1968, "p25": -0.3011, "p75": -0.26, "nWorse": 0, "nBetter": 16, "worstMSA": "Coeur d'Alene, ID", "bestMSA": "Mountain Home, ID"},
+  ]},
+  {plan:"Regence BS Preferred Plan",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 11, "avgGY": 0.2947, "avgRed": -0.2947, "minRed": -0.507, "maxRed": -0.04, "p25": -0.3989, "p75": -0.2226, "nWorse": 0, "nBetter": 11, "worstMSA": "Aberdeen, WA", "bestMSA": "Yakima, WA"},
+    {"cls": "institutional", "code": "HCPCS", "n": 13, "avgGY": -0.2178, "avgRed": 0.2178, "minRed": -0.1474, "maxRed": 0.6667, "p25": 0.0059, "p75": 0.4936, "nWorse": 8, "nBetter": 2, "worstMSA": "Port Townsend, WA", "bestMSA": "Seattle-Tacoma-Bellevue, WA"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 8, "avgGY": 0.2257, "avgRed": -0.2257, "minRed": -0.4767, "maxRed": 0.0297, "p25": -0.3001, "p75": -0.1499, "nWorse": 1, "nBetter": 7, "worstMSA": "Centralia, WA", "bestMSA": "Seattle-Tacoma-Bellevue, WA"},
+    {"cls": "professional", "code": "CPT", "n": 28, "avgGY": 0.0963, "avgRed": -0.0963, "minRed": -0.2666, "maxRed": 0.6566, "p25": -0.1711, "p75": -0.0832, "nWorse": 2, "nBetter": 26, "worstMSA": "Othello, WA", "bestMSA": "Walla Walla, WA"},
+    {"cls": "professional", "code": "HCPCS", "n": 21, "avgGY": 0.332, "avgRed": -0.332, "minRed": -0.4706, "maxRed": -0.2247, "p25": -0.3633, "p75": -0.2888, "nWorse": 0, "nBetter": 21, "worstMSA": "Port Angeles, WA", "bestMSA": "Seattle-Tacoma-Bellevue, WA"},
+  ]},
+  {plan:"UHC Choice POS Plus",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 716, "avgGY": 0.0964, "avgRed": -0.0964, "minRed": -1.0, "maxRed": 0.7625, "p25": -0.3112, "p75": 0.0751, "nWorse": 223, "nBetter": 461, "worstMSA": "Mount Sterling, KY", "bestMSA": "Franklin, KY"},
+    {"cls": "institutional", "code": "HCPCS", "n": 691, "avgGY": -0.0085, "avgRed": 0.0085, "minRed": -0.7273, "maxRed": 1.0, "p25": -0.2373, "p75": 0.2489, "nWorse": 315, "nBetter": 343, "worstMSA": "Fallon, NV", "bestMSA": "Emporia, KS"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 635, "avgGY": 0.1485, "avgRed": -0.1485, "minRed": -1.0, "maxRed": 0.6797, "p25": -0.325, "p75": 0.0, "nWorse": 145, "nBetter": 449, "worstMSA": "Sparta, WI", "bestMSA": "Laurel, MS"},
+    {"cls": "professional", "code": "CPT", "n": 971, "avgGY": 0.1829, "avgRed": -0.1829, "minRed": -0.5642, "maxRed": 0.2272, "p25": -0.2349, "p75": -0.1346, "nWorse": 15, "nBetter": 936, "worstMSA": "Seneca Falls, NY", "bestMSA": "Anchorage, AK"},
+    {"cls": "professional", "code": "HCPCS", "n": 970, "avgGY": 0.2863, "avgRed": -0.2863, "minRed": -0.7008, "maxRed": 0.4042, "p25": -0.3498, "p75": -0.2191, "nWorse": 11, "nBetter": 953, "worstMSA": "MA NONMETROPOLITAN AREA", "bestMSA": "Manitowoc, WI"},
+  ]},
+  {plan:"UHC POS",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 713, "avgGY": 0.1187, "avgRed": -0.1187, "minRed": -1.0, "maxRed": 0.7625, "p25": -0.3242, "p75": 0.0507, "nWorse": 203, "nBetter": 481, "worstMSA": "Mount Sterling, KY", "bestMSA": "Franklin, KY"},
+    {"cls": "institutional", "code": "HCPCS", "n": 688, "avgGY": 0.0313, "avgRed": -0.0313, "minRed": -0.7273, "maxRed": 0.8333, "p25": -0.2651, "p75": 0.1921, "nWorse": 286, "nBetter": 369, "worstMSA": "Centralia, IL", "bestMSA": "Emporia, KS"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 632, "avgGY": 0.2132, "avgRed": -0.2132, "minRed": -1.0, "maxRed": 0.6114, "p25": -0.4033, "p75": -0.0433, "nWorse": 121, "nBetter": 482, "worstMSA": "Cornelia, GA", "bestMSA": "Laurel, MS"},
+    {"cls": "professional", "code": "CPT", "n": 971, "avgGY": 0.2317, "avgRed": -0.2317, "minRed": -0.592, "maxRed": 0.2255, "p25": -0.2919, "p75": -0.1733, "nWorse": 8, "nBetter": 953, "worstMSA": "Seneca Falls, NY", "bestMSA": "Medford, OR"},
+    {"cls": "professional", "code": "HCPCS", "n": 970, "avgGY": 0.337, "avgRed": -0.337, "minRed": -0.7655, "maxRed": 0.3552, "p25": -0.3968, "p75": -0.2766, "nWorse": 10, "nBetter": 958, "worstMSA": "Grand Rapids-Wyoming-Kentwood, MI", "bestMSA": "Minneapolis-St. Paul-Bloomington, MN-WI"},
+  ]},
+  {plan:"UHC PPO",combos:[
+    {"cls": "institutional", "code": "CPT", "n": 714, "avgGY": 0.1197, "avgRed": -0.1197, "minRed": -1.0, "maxRed": 0.7625, "p25": -0.3293, "p75": 0.052, "nWorse": 205, "nBetter": 481, "worstMSA": "Mount Sterling, KY", "bestMSA": "Franklin, KY"},
+    {"cls": "institutional", "code": "HCPCS", "n": 689, "avgGY": 0.0371, "avgRed": -0.0371, "minRed": -0.7273, "maxRed": 0.8333, "p25": -0.2857, "p75": 0.2121, "nWorse": 281, "nBetter": 372, "worstMSA": "Centralia, IL", "bestMSA": "Emporia, KS"},
+    {"cls": "institutional", "code": "MS-DRG", "n": 627, "avgGY": 0.2172, "avgRed": -0.2172, "minRed": -1.0, "maxRed": 0.6114, "p25": -0.4075, "p75": -0.0413, "nWorse": 118, "nBetter": 481, "worstMSA": "Cornelia, GA", "bestMSA": "Laurel, MS"},
+    {"cls": "professional", "code": "CPT", "n": 971, "avgGY": 0.2323, "avgRed": -0.2323, "minRed": -0.5964, "maxRed": 0.2273, "p25": -0.291, "p75": -0.1709, "nWorse": 7, "nBetter": 955, "worstMSA": "Seneca Falls, NY", "bestMSA": "Anchorage, AK"},
+    {"cls": "professional", "code": "HCPCS", "n": 970, "avgGY": 0.3348, "avgRed": -0.3348, "minRed": -0.7721, "maxRed": 0.3399, "p25": -0.3952, "p75": -0.2761, "nWorse": 11, "nBetter": 955, "worstMSA": "Buffalo-Cheektowaga, NY", "bestMSA": "Minneapolis-St. Paul-Bloomington, MN-WI"},
+  ]},
+  {plan:"Wellmark BCBS IA Alliance Select",combos:[
+    {"cls": "professional", "code": "CPT", "n": 2, "avgGY": 0.0869, "avgRed": -0.0869, "minRed": -0.1268, "maxRed": -0.047, "p25": -0.1068, "p75": -0.0669, "nWorse": 0, "nBetter": 2, "worstMSA": "Omaha, NE-IA", "bestMSA": "Sioux City, IA-NE-SD"},
+    {"cls": "professional", "code": "HCPCS", "n": 2, "avgGY": 0.3313, "avgRed": -0.3313, "minRed": -0.3385, "maxRed": -0.3241, "p25": -0.3349, "p75": -0.3277, "nWorse": 0, "nBetter": 2, "worstMSA": "Omaha, NE-IA", "bestMSA": "Sioux City, IA-NE-SD"},
+  ]},
+  {plan:"Wellmark BCBS SD Blue Select",combos:[
+    {"cls": "professional", "code": "CPT", "n": 1, "avgGY": 0.2374, "avgRed": -0.2374, "minRed": -0.2374, "maxRed": -0.2374, "p25": -0.2374, "p75": -0.2374, "nWorse": 0, "nBetter": 1, "worstMSA": "Sioux City, IA-NE-SD", "bestMSA": "Sioux City, IA-NE-SD"},
+  ]},
+];
+
+
+function pct(v) { return (v >= 0 ? '+' : '') + (v*100).toFixed(1) + ' pp'; }
+function absPct(v) { return (v*100).toFixed(1) + ' pp'; }
+
+function trend(c) {
+  if (c.avgRed > 0.02) return 'worsened';
+  if (c.avgRed < -0.02 && c.nWorse === 0) return 'improved';
+  if (c.nWorse > 0 && c.nBetter > 0) return 'mixed';
+  if (c.avgRed < -0.02) return 'improved';
+  return 'neutral';
+}
+
+function planTrend(combos) {
+  const trends = combos.map(trend);
+  if (trends.every(t => t === 'improved' || t === 'neutral')) return 'improved';
+  if (trends.some(t => t === 'worsened') && trends.some(t => t === 'improved')) return 'mixed';
+  if (trends.every(t => t === 'worsened')) return 'worsened';
+  return 'mixed';
+}
+
+// Option D: box plot (IQR + median + avg + whiskers) + split-count bar
+// Scale: −80 pp to +80 pp. Unit: MSA (up to 977 per combo). SVG width 280, pad 8 each side.
+const D_SVG_W = 280, D_PAD_L = 8, D_PAD_R = 8;
+const D_TRACK_W = D_SVG_W - D_PAD_L - D_PAD_R;
+const D_MIN = -0.80, D_MAX = 0.80, D_SPAN = D_MAX - D_MIN;
+
+function dX(v) {
+  return D_PAD_L + Math.max(0, Math.min(1, (v - D_MIN) / D_SPAN)) * D_TRACK_W;
+}
+
+const D_TICKS = [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6];
+
+function svgEl(tag, attrs) {
+  const parts = [`<${tag}`];
+  for (const [k, v] of Object.entries(attrs)) parts.push(` ${k}="${v}"`);
+  parts.push('/>');
+  return parts.join('');
+}
+function svgTxt(x, y, content, size, fill, anchor, weight) {
+  return `<text x="${x}" y="${y}" font-size="${size||9}" fill="${fill||'#888'}" text-anchor="${anchor||'middle'}" font-weight="${weight||'normal'}">${content}</text>`;
+}
+
+function renderRange(loGY, hiGY, avgGY, p25GY, p75GY, nWorse, nBetter, n) {
+  const medGY = (p25GY + p75GY) / 2;
+
+  const boxX  = dX(p25GY);
+  const boxW  = Math.max(dX(p75GY) - dX(p25GY), 1);
+  const medX  = dX(medGY);
+  const avgX  = dX(avgGY);
+  const minX  = dX(loGY);
+  const maxX  = dX(hiGY);
+  const zeroX = dX(0);
+
+  // IQR box colour: all-positive green, all-negative red, crosses zero amber
+  const boxFill   = p25GY >= 0 ? '#3B6D11' : p75GY <= 0 ? '#A32D2D' : '#854F0B';
+  const boxStroke = p25GY >= 0 ? '#639922' : p75GY <= 0 ? '#E24B4A' : '#EF9F27';
+
+  // Layout
+  const TY = 12;                    // tick labels
+  const BY = 18, BH = 10;          // box plot track
+  const MID = BY + BH / 2;
+  const CY = 32, CH = 7;           // split count bar
+  const LY = 50;                    // bottom value labels
+  const SVG_H = 56;
+
+  let s = `<svg width="100%" viewBox="0 0 ${D_SVG_W} ${SVG_H}" style="display:block;overflow:visible;" aria-hidden="true">`;
+
+  // Track background
+  s += svgEl('rect', {x:D_PAD_L, y:BY, width:D_TRACK_W, height:BH, fill:'#f0eeeb', rx:2});
+
+  // Grid lines + tick labels
+  for (const t of D_TICKS) {
+    const tx = dX(t);
+    const isZ = t === 0;
+    s += svgEl('line', {x1:tx, x2:tx, y1:BY, y2:BY+BH,
+      stroke: isZ ? '#bbb' : '#e0ded8', 'stroke-width': isZ ? 1.5 : 0.75});
+    const lbl = t === 0 ? '0' : (t > 0 ? '+' : '') + Math.round(t * 100);
+    s += svgTxt(tx, TY, lbl, 8, isZ ? '#999' : '#ccc', 'middle');
+  }
+
+  // Whiskers
+  s += svgEl('line', {x1:minX, x2:boxX,      y1:MID, y2:MID, stroke:'#aaa', 'stroke-width':1.5});
+  s += svgEl('line', {x1:boxX+boxW, x2:maxX, y1:MID, y2:MID, stroke:'#aaa', 'stroke-width':1.5});
+  s += svgEl('line', {x1:minX, x2:minX, y1:BY+2, y2:BY+BH-2, stroke:'#aaa', 'stroke-width':1.5});
+  s += svgEl('line', {x1:maxX, x2:maxX, y1:BY+2, y2:BY+BH-2, stroke:'#aaa', 'stroke-width':1.5});
+
+  // IQR box
+  s += svgEl('rect', {x:boxX, y:BY, width:boxW, height:BH, fill:boxFill, opacity:0.18, rx:2});
+  s += svgEl('rect', {x:boxX, y:BY, width:boxW, height:BH, fill:'none', stroke:boxStroke, 'stroke-width':1.2, rx:2});
+
+  // Median line
+  s += svgEl('line', {x1:medX, x2:medX, y1:BY-3, y2:BY+BH+3, stroke:boxStroke, 'stroke-width':2.5});
+
+  // Avg dashed marker
+  s += svgEl('line', {x1:avgX, x2:avgX, y1:BY-3, y2:BY+BH+3, stroke:'#444', 'stroke-width':1.5, 'stroke-dasharray':'2.5,2'});
+
+  // Split count bar
+  const negBarW = (nWorse  / n) * D_TRACK_W;
+  const posBarW = (nBetter / n) * D_TRACK_W;
+  const neuBarW = D_TRACK_W - negBarW - posBarW;
+
+  if (negBarW > 0)
+    s += svgEl('rect', {x:D_PAD_L,                        y:CY, width:negBarW, height:CH, fill:'#E24B4A', opacity:0.8, rx:0});
+  if (neuBarW > 0.5)
+    s += svgEl('rect', {x:D_PAD_L+negBarW,                y:CY, width:neuBarW, height:CH, fill:'#ccc',    opacity:0.5, rx:0});
+  if (posBarW > 0)
+    s += svgEl('rect', {x:D_PAD_L+negBarW+neuBarW,        y:CY, width:posBarW, height:CH, fill:'#639922', opacity:0.8, rx:0});
+
+  // Divider line at neg/pos boundary
+  s += svgEl('line', {x1:D_PAD_L+negBarW, x2:D_PAD_L+negBarW, y1:CY, y2:CY+CH, stroke:'#fff', 'stroke-width':1.2});
+
+  // Count labels inside bars
+  if (nWorse > 0)
+    s += svgTxt(D_PAD_L + negBarW/2,              CY+CH-1.5, nWorse,  8, '#fff', 'middle', 'bold');
+  if (nBetter > 0)
+    s += svgTxt(D_PAD_L + negBarW+neuBarW+posBarW/2, CY+CH-1.5, nBetter, 8, '#fff', 'middle', 'bold');
+
+  // Bottom labels
+  const minColor = loGY >= 0 ? '#3B6D11' : '#A32D2D';
+  const maxColor = hiGY >= 0 ? '#3B6D11' : '#A32D2D';
+  s += svgTxt(minX, LY,   pct(loGY), 8, minColor, 'middle');
+  s += svgTxt(avgX, LY,   'avg',     7.5, '#aaa', 'middle');
+  s += svgTxt(maxX, LY,   pct(hiGY), 8, maxColor, 'middle');
+  s += svgTxt(medX, LY-9, 'med',     7,  boxStroke, 'middle');
+
+  s += '</svg>';
+  return s;
+}
+
+function comboHtml(c) {
+  const gyColor = c.avgGY >= 0 ? '#3a7a10' : '#c03030';
+  const nLabel  = c.n === 1 ? `1 MSA (${c.worstMSA})` : `${c.n} MSAs`;
+
+  // Flip Δ red → Δ G+Y
+  const loGY  = -c.maxRed;
+  const hiGY  = -c.minRed;
+  const p25GY = -c.p75;
+  const p75GY = -c.p25;
+
+  const chart = c.n === 1
+    ? `<div style="font-size:10px;color:var(--color-text-secondary);">single MSA (${c.worstMSA})</div>`
+    : renderRange(loGY, hiGY, c.avgGY, p25GY, p75GY, c.nWorse, c.nBetter, c.n);
+
+  return `
+    <div class="combo-cell">
+      <div class="combo-labels">
+        <span class="tag ${c.cls==='institutional'?'tag-i':'tag-p'}">${c.cls==='institutional'?'Inst':'Prof'}</span>
+        <span class="tag ${c.code==='CPT'?'tag-cpt':c.code==='HCPCS'?'tag-hcpcs':'tag-msdrg'}">${c.code}</span>
+        <span style="font-size:10px;color:#aaa;margin-left:2px;">${nLabel}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--color-text-secondary);">Avg \u0394 G+Y</span>
+        <span style="font-size:18px;font-weight:500;color:${gyColor};line-height:1;">${pct(c.avgGY)}</span>
+      </div>
+      ${chart}
+    </div>`;
+}
+
+function getScope(combos) {
+  const states = new Set();
+  combos.forEach(c => { if (c.n >= 5) states.add(c.n); });
+  const maxN = Math.max(...combos.map(c=>c.n));
+  if (maxN >= 900) return 'national';
+  if (maxN >= 5) return `${maxN}-state`;
+  return '1-MSA';
+}
+
+function render() {
+  const cls = document.getElementById('filterClass').value;
+  const code = document.getElementById('filterCode').value;
+  const trendF = document.getElementById('filterTrend').value;
+  const search = document.getElementById('searchInput').value.toLowerCase();
+
+  let plans = DATA;
+  if (search) plans = plans.filter(p => p.plan.toLowerCase().includes(search));
+
+  let html = '';
+  let count = 0;
+
+  plans.forEach(p => {
+    let combos = p.combos;
+    if (cls) combos = combos.filter(c => c.cls === cls);
+    if (code) combos = combos.filter(c => c.code === code);
+    if (trendF) combos = combos.filter(c => trend(c) === trendF);
+    if (combos.length === 0) return;
+
+    const pt = planTrend(combos);
+    const maxN = Math.max(...combos.map(c=>c.n));
+    let scopeLabel = maxN >= 44 ? '75-MSA' : maxN >= 5 ? `${maxN}-state` : '1-MSA';
+
+    let trendPill = '';
+    if (pt === 'improved') trendPill = '<span style="font-size:11px;background:#f0fff0;color:#2a7a2a;padding:2px 8px;border-radius:10px;font-weight:600;">↓ improved</span>';
+    else if (pt === 'worsened') trendPill = '<span style="font-size:11px;background:#fff0f0;color:#c03030;padding:2px 8px;border-radius:10px;font-weight:600;">↑ worsened</span>';
+    else trendPill = '<span style="font-size:11px;background:#fff8e8;color:#8a5a00;padding:2px 8px;border-radius:10px;font-weight:600;">↕ mixed</span>';
+
+    count++;
+    html += `
+      <div class="plan-card" id="card-${count}">
+        <div class="plan-header" onclick="toggle(${count})">
+          <span class="plan-name">${p.plan}</span>
+          <div class="plan-meta">
+            ${trendPill}
+            <span class="pill pill-scope">${scopeLabel}</span>
+            <span class="pill pill-combos">${combos.length} combo${combos.length>1?'s':''}</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="plan-body">
+          <div class="combo-grid">
+            ${combos.map(comboHtml).join('')}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  if (!html) html = '<p class="no-results">No plans match the current filters.</p>';
+  document.getElementById('planList').innerHTML = html;
+  document.getElementById('countBadge').textContent = `${count} plan${count !== 1 ? 's' : ''}`;
+}
+
+function toggle(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('open');
+}
+
+document.getElementById('filterClass').addEventListener('change', render);
+document.getElementById('filterCode').addEventListener('change', render);
+document.getElementById('filterTrend').addEventListener('change', render);
+document.getElementById('searchInput').addEventListener('input', render);
+
+render();
+</script>
+</body>
+</html>

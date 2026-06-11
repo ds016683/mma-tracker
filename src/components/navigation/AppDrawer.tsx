@@ -24,7 +24,8 @@ export type AppView =
   | 'promise-health-plan'
   | 'call-notes'
   | 'reports-release-notes'
-  | 'production-run-summaries';
+  | 'production-run-summaries'
+  | 'tier-shift-summary';
 
 interface NavItem {
   id: AppView;
@@ -64,6 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'reporting-queries',        label: 'Reporting Queries',        icon: BarChart2 },
       { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
+      { id: 'tier-shift-summary', label: 'Tier Shift Summary', icon: TrendingUp },
     ],
   },
   {
