@@ -17,6 +17,8 @@ type Grain = 'national' | 'state' | 'msa';
 interface OpenCell {
   state: string;
   carrier: Carrier;
+  msaId?: string;
+  msaName?: string;
 }
 
 export function ProductionRunSummariesView() {
@@ -67,6 +69,8 @@ export function ProductionRunSummariesView() {
     const nationalBySetting: Record<string, PRRow[]> = {};
     // MSA/TOTAL/TOTAL by state: state -> msa_id -> carrier -> row
     const msaByState: Record<string, Record<string, Record<string, PRRow>>> = {};
+    // MSA setting rows: state -> msa_id -> carrier -> rows[]
+    const msaSettings: Record<string, Record<string, Record<string, PRRow[]>>> = {};
     // msa_id -> name
     const msaNames: Record<string, string> = {};
 
@@ -93,12 +97,14 @@ export function ProductionRunSummariesView() {
         if (!st || !id) continue;
         if (isTotal) {
           ((msaByState[st] ||= {})[id] ||= {})[c] = r;
+        } else {
+          (((msaSettings[st] ||= {})[id] ||= {})[c] ||= []).push(r);
         }
         if (r.msa_cbsa_name && !msaNames[id]) msaNames[id] = r.msa_cbsa_name;
       }
     }
 
-    return { stateMatrix, stateSettings, nationalTotals, nationalBySetting, msaByState, msaNames };
+    return { stateMatrix, stateSettings, nationalTotals, nationalBySetting, msaByState, msaSettings, msaNames };
   }, [rows]);
 
   const statesWithMsa = useMemo(() => {
@@ -120,11 +126,28 @@ export function ProductionRunSummariesView() {
 
   const handleCellClick = (state: string, carrier: Carrier, row: PRRow | null) => {
     if (!row) return;
-    setOpenCell({ state, carrier });
+    if (row.row_grain === 'MSA') {
+      setOpenCell({ state, carrier, msaId: row.msa_id || undefined, msaName: row.msa_cbsa_name || undefined });
+    } else {
+      setOpenCell({ state, carrier });
+    }
   };
 
-  const cellTotalRow = openCell && indexed ? indexed.stateMatrix[openCell.state]?.[openCell.carrier] ?? null : null;
-  const cellSettingRows = openCell && indexed ? indexed.stateSettings[openCell.state]?.[openCell.carrier] ?? [] : [];
+  const cellTotalRow = useMemo(() => {
+    if (!openCell || !indexed) return null;
+    if (openCell.msaId) {
+      return indexed.msaByState[openCell.state]?.[openCell.msaId]?.[openCell.carrier] ?? null;
+    }
+    return indexed.stateMatrix[openCell.state]?.[openCell.carrier] ?? null;
+  }, [openCell, indexed]);
+
+  const cellSettingRows = useMemo(() => {
+    if (!openCell || !indexed) return [];
+    if (openCell.msaId) {
+      return indexed.msaSettings?.[openCell.state]?.[openCell.msaId]?.[openCell.carrier] ?? [];
+    }
+    return indexed.stateSettings[openCell.state]?.[openCell.carrier] ?? [];
+  }, [openCell, indexed]);
 
   return (
     <div className="flex h-screen flex-col bg-mma-light-bg">
@@ -294,6 +317,7 @@ export function ProductionRunSummariesView() {
         open={!!openCell}
         state={openCell?.state ?? ''}
         carrier={openCell?.carrier ?? ''}
+        msaName={openCell?.msaName}
         totalRow={cellTotalRow}
         settingRows={cellSettingRows}
         onClose={() => setOpenCell(null)}

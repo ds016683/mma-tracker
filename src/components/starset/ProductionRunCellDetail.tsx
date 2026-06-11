@@ -9,9 +9,11 @@ interface Props {
   open: boolean;
   state: string;
   carrier: string;
-  // STATE/TOTAL/TOTAL row for headline metrics
+  // When set, popup is MSA-scoped rather than state-scoped
+  msaName?: string;
+  // MSA/STATE TOTAL/TOTAL row for headline metrics
   totalRow: PRRow | null;
-  // Setting-breakdown rows for the same state+carrier (all billing_class/setting_type combos)
+  // Setting-breakdown rows for the same scope+carrier (all billing_class/setting_type combos)
   settingRows: PRRow[];
   onClose: () => void;
 }
@@ -58,10 +60,11 @@ function directionBadge(direction: string) {
   return map[direction] ?? null;
 }
 
-export function ProductionRunCellDetail({ open, state, carrier, totalRow, settingRows, onClose }: Props) {
+export function ProductionRunCellDetail({ open, state, carrier, msaName, totalRow, settingRows, onClose }: Props) {
   if (!open) return null;
 
   const stateFull = STATE_NAMES[state] ?? state;
+  const scopeLabel = msaName ?? stateFull;
   const dirInfo = totalRow ? directionBadge(totalRow.review_direction) : null;
   const newFlags = totalRow
     ? [
@@ -82,16 +85,21 @@ export function ProductionRunCellDetail({ open, state, carrier, totalRow, settin
         className="fixed right-0 top-0 z-[1101] flex h-screen w-full max-w-[540px] flex-col bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
-        aria-label={`Quality detail for ${stateFull} ${carrier}`}
+        aria-label={`Quality detail for ${scopeLabel} ${carrier}`}
       >
         <div className="flex items-start justify-between border-b border-gray-200 px-5 py-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">Cell Detail</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {msaName ? 'MSA Detail' : 'Cell Detail'}
+            </div>
             <div className="mt-1 flex items-center gap-2 text-base font-bold text-[#001A41]">
-              <span>{stateFull}</span>
+              <span>{scopeLabel}</span>
               <span className="text-gray-300">|</span>
               <span>{carrier}</span>
             </div>
+            {msaName && (
+              <div className="mt-0.5 text-xs text-gray-400">{stateFull}</div>
+            )}
             <div className="mt-1 text-xs text-gray-500">v8.2 <ArrowRight className="inline h-3 w-3" /> v9</div>
           </div>
           <button
