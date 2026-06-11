@@ -21,6 +21,9 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Deploy dist/ to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -30,3 +33,4 @@ jobs:
           keep_files: false
           force_orphan: false
           commit_message: "deploy: ${{ github.sha }}"
+
