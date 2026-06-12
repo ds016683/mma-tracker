@@ -466,8 +466,15 @@ export function MSACarrierCoverageView() {
         )}
       </div>
 
+      {/* Color legend - sticky above scroll area */}
+      {rows && indexed && orderedMsaIds.length > 0 && visibleCarriers.length > 0 && (
+        <div className="border-b border-gray-200 bg-white">
+          <Legend metric={metric} />
+        </div>
+      )}
+
       {/* Content */}
-      <div className="flex-1 overflow-auto px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto overflow-x-auto px-6 py-4 space-y-4">
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             Failed to load data: {error}
@@ -492,11 +499,7 @@ export function MSACarrierCoverageView() {
         )}
 
         {rows && indexed && orderedMsaIds.length > 0 && visibleCarriers.length > 0 && (
-          <>
-            <Legend metric={metric} />
-
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="overflow-x-auto">
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                 <table className="w-full border-separate border-spacing-0 text-sm">
                   <colgroup>
                     <col style={{ width: '16rem' }} />
@@ -554,9 +557,7 @@ export function MSACarrierCoverageView() {
                     })}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          </>
+          </div>
         )}
       </div>
 
