@@ -75,8 +75,9 @@ export function ProductionRunMSA({
   }, [effectiveMatrix, msaNames, order]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex h-full flex-col gap-3">
+      {/* Locked: dropdowns + count */}
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-3">
         {/* STATE dropdown */}
         <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">State</label>
         <select
@@ -112,29 +113,33 @@ export function ProductionRunMSA({
           No MSA-level data for {selectedState === 'ALL' ? 'any state' : (STATE_NAMES[selectedState] ?? selectedState)}.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          {/* Locked table header */}
+          <div className="flex-shrink-0">
+            <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+              <colgroup>
+                <col style={{ width: '16rem' }} />
+                {visibleCarriers.map((c) => <col key={c} />)}
+              </colgroup>
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">MSA</th>
+                  {visibleCarriers.map((c) => (
+                    <th key={c} className="border-b border-gray-200 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      {CARRIER_SHORT[c]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            </table>
+          </div>
+          {/* Scrollable tbody */}
+          <div className="flex-1 overflow-y-auto">
+          <table className="w-full table-fixed border-separate border-spacing-0 text-sm">            
             <colgroup>
               <col style={{ width: '16rem' }} />
-              {visibleCarriers.map((c) => (
-                <col key={c} />
-              ))}
+              {visibleCarriers.map((c) => <col key={c} />)}
             </colgroup>
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="border-b border-gray-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                  MSA
-                </th>
-                {visibleCarriers.map((c) => (
-                  <th
-                    key={c}
-                    className="border-b border-gray-200 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500"
-                  >
-                    {CARRIER_SHORT[c]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
             <tbody>
               {orderedMsaIds.map((msaId) => {
                 const name = msaNames[msaId] ?? msaId;
@@ -193,6 +198,7 @@ export function ProductionRunMSA({
               })}
             </tbody>
           </table>
+          </div>{/* /scrollable tbody */}
         </div>
       )}
     </div>

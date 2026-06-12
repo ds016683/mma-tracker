@@ -230,7 +230,7 @@ export function ProductionRunSummariesView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto px-6 py-5">
+      <div className={grain === 'msa' ? 'flex min-h-0 flex-1 flex-col overflow-hidden px-6 py-5' : 'flex-1 overflow-auto px-6 py-5'}>
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             Failed to load comparison data: {error}
