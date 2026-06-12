@@ -3,7 +3,13 @@ import { Download, Upload, FileText, Plus, ChevronDown, ChevronRight, X, Loader2
 import { supabase } from '../../lib/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
-const UPLOAD_ALLOWED_EMAILS = ['tanner@thirdhorizon.com', 'bobby@thirdhorizon.com'];
+const UPLOAD_ALLOWED_EMAILS = [
+  'tanner@thirdhorizon.com',
+  'bobby@thirdhorizon.com',
+  'david@thirdhorizon.com',
+  'andy@thirdhorizon.com',
+  'chris@thirdhorizon.com',
+];
 
 interface ReleaseDocument {
   id: string;
