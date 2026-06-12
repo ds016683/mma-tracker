@@ -26,7 +26,8 @@ export type AppView =
   | 'reports-release-notes'
   | 'production-run-summaries'
   | 'tier-shift-summary'
-  | 'msa-carrier-coverage';
+  | 'msa-carrier-coverage'
+  | 'carrier-ranking';
 
 interface NavItem {
   id: AppView;
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
       { id: 'tier-shift-summary', label: 'Tier Shift Summary', icon: Activity },
       { id: 'msa-carrier-coverage', label: 'MSA Carrier Coverage', icon: Grid3x3 },
+      { id: 'carrier-ranking', label: 'Carrier Ranking', icon: BarChart2 },
     ],
   },
   {

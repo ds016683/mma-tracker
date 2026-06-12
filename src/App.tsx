@@ -22,6 +22,7 @@ import { HorizonSignalView } from './components/horizon-signal/HorizonSignalView
 import { ProductionRunSummariesView } from './components/starset/ProductionRunSummariesView';
 import { TierShiftSummaryView } from './components/starset/TierShiftSummaryView';
 import { MSACarrierCoverageView } from './components/starset/MSACarrierCoverageView';
+import { CarrierRankingView } from './components/starset/CarrierRankingView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -89,6 +90,7 @@ function AppInner({
         {activeView === 'production-run-summaries' && <ProductionRunSummariesView />}
         {activeView === 'tier-shift-summary' && <TierShiftSummaryView />}
         {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
+        {activeView === 'carrier-ranking' && <CarrierRankingView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
