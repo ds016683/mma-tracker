@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Download, Upload, FileText, Plus, ChevronDown, ChevronRight, X, Loader2 } from 'lucide-react';
+import { Download, Upload, FileText, Plus, ChevronDown, ChevronRight, X, Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -39,6 +39,32 @@ export function ReportsAndReleaseNotesView() {
   const [versions, setVersions] = useState<number[]>([]);
 
   const canUpload = UPLOAD_ALLOWED_EMAILS.includes(user?.email?.toLowerCase() ?? '');
+  const [deleteTarget, setDeleteTarget] = useState<ReleaseDocument | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const { error: storageErr } = await supabase.storage
+        .from('release-documents')
+        .remove([deleteTarget.storage_path]);
+      if (storageErr) throw storageErr;
+      const { error: dbErr } = await supabase
+        .from('release_documents')
+        .delete()
+        .eq('id', deleteTarget.id);
+      if (dbErr) throw dbErr;
+      setDeleteTarget(null);
+      fetchDocuments();
+    } catch (e: unknown) {
+      setDeleteError((e as Error)?.message ?? 'Delete failed');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -149,16 +175,27 @@ export function ReportsAndReleaseNotesView() {
                           )}
                         </div>
                       </div>
-                      <a
-                        href={doc.public_url}
-                        download={doc.file_name}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-[#009DE0] px-3 py-1.5 text-xs font-semibold text-[#009DE0] transition hover:bg-[#009DE0] hover:text-white"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        Download
-                      </a>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <a
+                          href={doc.public_url}
+                          download={doc.file_name}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 rounded-lg border border-[#009DE0] px-3 py-1.5 text-xs font-semibold text-[#009DE0] transition hover:bg-[#009DE0] hover:text-white"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Download
+                        </a>
+                        {canUpload && (
+                          <button
+                            onClick={() => { setDeleteTarget(doc); setDeleteError(null); }}
+                            className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-400 transition hover:border-red-400 hover:bg-red-50 hover:text-red-600"
+                            title="Delete file"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -169,6 +206,55 @@ export function ReportsAndReleaseNotesView() {
       )}
 
       {/* Upload Modal */}
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <h2 className="font-bold text-[#001A41]">Delete File</h2>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="rounded-md p-1 text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to permanently delete this file? This cannot be undone.
+              </p>
+              <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="text-sm font-semibold text-gray-800">{deleteTarget.file_name.replace(/_/g, ' ')}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  v{deleteTarget.version_number} · {formatDate(deleteTarget.uploaded_at)}
+                  {deleteTarget.file_size ? ` · ${formatBytes(deleteTarget.file_size)}` : ''}
+                </p>
+              </div>
+              {deleteError && (
+                <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{deleteError}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-red-700"
+              >
+                {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {deleting ? 'Deleting…' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showUploadModal && canUpload && (
         <UploadModal
           existingVersions={versions}
