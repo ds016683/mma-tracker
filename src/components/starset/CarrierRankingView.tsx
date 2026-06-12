@@ -23,10 +23,10 @@ interface CarrierRow {
 type SortKey = 'rank_pop_v9' | 'rank_str_v9' | 'gy_v9' | 'cb_v9';
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'cb_v9',       label: '% Codebasket' },
+  { key: 'gy_v9',       label: '% Green/Yellow' },
   { key: 'rank_pop_v9', label: 'Avg Rank (Pop-Weighted)' },
   { key: 'rank_str_v9', label: 'Avg Rank (Straight)' },
-  { key: 'gy_v9',       label: '% Green/Yellow' },
-  { key: 'cb_v9',       label: '% Codebasket' },
 ];
 
 const ASCENDING_KEYS = new Set<SortKey>(['rank_pop_v9', 'rank_str_v9']);
@@ -146,7 +146,7 @@ export function CarrierRankingView() {
   const [data, setData]       = useState<CarrierRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>('rank_pop_v9');
+  const [sortKey, setSortKey] = useState<SortKey>('rank_str_v9');
 
   useEffect(() => {
     fetch(DATA_URL)
