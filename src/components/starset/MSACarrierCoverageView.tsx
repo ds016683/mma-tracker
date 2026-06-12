@@ -11,6 +11,18 @@ const CSV_URL = '/mma-tracker/data/carrier-coverage-comparison.csv';
 // Carriers selected by default (those present in the chosen state)
 const DEFAULT_CARRIERS = ['Aetna Choice POS', 'BCBS PPO', 'Cigna OAP', 'UHC Choice POS Plus'];
 
+// ─── Priority MSA list ─────────────────────────────────────────────────────
+const PRIORITY_MSA_IDS = new Set([
+  '10180','10900','11020','11100','11700','12420','13140','14010','15180','15500',
+  '16580','16740','16980','17020','17780','18580','19100','19180','19500','20500',
+  '21340','21500','22180','23420','24140','24660','24780','25420','25860','26420',
+  '27340','27780','28660','29540','29700','30140','30980','31080','31180','32580',
+  '33260','34820','35620','36220','37900','37980','38300','39580','39740','40420',
+  '40580','40900','41660','41700','41740','41860','41940','42540','43300','44100',
+  '44300','45500','46340','47020','47260','47380','48660','48700','48900','49180',
+  '49620','49660','99032','99037','99041',
+]);
+
 // ─── State / MSA helpers ────────────────────────────────────────────────────
 
 const STATE_NAMES: Record<string, string> = {
@@ -359,13 +371,26 @@ export function MSACarrierCoverageView() {
 
   // Set default state once data loads
   useEffect(() => {
-    if (indexed && !selectedState && indexed.states.length > 0) {
-      setSelectedState(indexed.states[0]);
+    if (indexed && !selectedState) {
+      setSelectedState('PRIORITY');
     }
   }, [indexed, selectedState]);
 
   const stateMsaMap = useMemo(() => {
     if (!indexed || !selectedState) return {};
+    if (selectedState === 'PRIORITY') {
+      const merged: Record<string, Record<string, Record<BucketKey, CCRow>>> = {};
+      for (const stMatrix of Object.values(indexed.byState)) {
+        for (const [msaId, carrierMap] of Object.entries(stMatrix)) {
+          if (!PRIORITY_MSA_IDS.has(msaId)) continue;
+          if (!merged[msaId]) merged[msaId] = {};
+          for (const [carrier, buckets] of Object.entries(carrierMap)) {
+            if (!merged[msaId][carrier]) merged[msaId][carrier] = buckets as Record<BucketKey, CCRow>;
+          }
+        }
+      }
+      return merged;
+    }
     return indexed.byState[selectedState] ?? {};
   }, [indexed, selectedState]);
 
@@ -405,7 +430,14 @@ export function MSACarrierCoverageView() {
   };
 
   const openCellRows = useMemo(() => {
-    if (!openCell || !indexed || !selectedState) return [];
+    if (!openCell || !indexed) return [];
+    if (selectedState === 'PRIORITY') {
+      for (const stMatrix of Object.values(indexed.byState)) {
+        const buckets = stMatrix[openCell.msaId]?.[openCell.carrier];
+        if (buckets) return Object.values(buckets);
+      }
+      return [];
+    }
     const carrierMap = indexed.byState[selectedState]?.[openCell.msaId]?.[openCell.carrier] ?? {};
     return Object.values(carrierMap);
   }, [openCell, indexed, selectedState]);
@@ -433,6 +465,7 @@ export function MSACarrierCoverageView() {
               onChange={e => setSelectedState(e.target.value)}
               className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-[#001A41] focus:outline-none focus:ring-2 focus:ring-[#009DE0]"
             >
+              <option value="PRIORITY">⭐ Priority MSAs</option>
               {indexed?.states.map(s => (
                 <option key={s} value={s}>{s} — {STATE_NAMES[s] ?? s}</option>
               ))}
@@ -488,7 +521,7 @@ export function MSACarrierCoverageView() {
 
         {rows && indexed && orderedMsaIds.length === 0 && (
           <div className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-8 text-center text-sm text-gray-500">
-            No MSA data for {STATE_NAMES[selectedState] ?? selectedState}.
+            No MSA data for {selectedState === 'PRIORITY' ? 'Priority MSAs' : (STATE_NAMES[selectedState] ?? selectedState)}.
           </div>
         )}
 
