@@ -15,7 +15,8 @@
     line-height: 1.5;
     height: 100vh;
     overflow: hidden;
-    position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
   header {
@@ -56,7 +57,7 @@
     padding: 3px 8px; border-radius: 10px;
   }
 
-  .plan-list { padding: 16px 28px 32px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; position: absolute; left: 0; right: 0; bottom: 0; }
+  .plan-list { padding: 16px 28px 32px; display: flex; flex-direction: column; gap: 14px; }
 
   .plan-card {
     background: #fff;
@@ -146,9 +147,9 @@
   .tab-btn:hover { color: #fff; }
   .tab-btn.active { color: #fff; border-bottom-color: #fff; }
   .tab-panel { display: none; }
-  .tab-panel.active { display: contents; }
+  .tab-panel.active { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
 
-  #fixed-top { flex-shrink: 0; position: relative; z-index: 20; }
+  #fixed-top { flex-shrink: 0; z-index: 20; }
 </style>
 </head>
 <body>
@@ -1496,14 +1497,6 @@ let activeData = DATA_V8V9;
 let activeListId = 'planList';
 let activeTabPrefix = 'v8v9';
 
-function setListTop() {
-  const top = document.getElementById('fixed-top');
-  document.querySelectorAll('.plan-list').forEach(list => {
-    if (top) list.style.top = top.getBoundingClientRect().height + 'px';
-  });
-}
-window.addEventListener('resize', setListTop);
-
 function toggleInfo(tab) {
   const body = document.getElementById('infoBody-' + tab);
   const chevron = document.getElementById('infoChevron-' + tab);
@@ -1531,12 +1524,10 @@ function switchTab(tab, btn) {
     activeListId = 'planList2';
     activeTabPrefix = 'inclexcl';
   }
-  setListTop();
   render();
 }
 
 render();
-setListTop();
 </script>
 
 </div>
