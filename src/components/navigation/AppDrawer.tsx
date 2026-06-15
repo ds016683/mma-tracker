@@ -213,12 +213,11 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
                   {group.items.length === 0 ? (
                     <p className="px-5 py-2 text-xs italic text-white/20">Coming soon</p>
                   ) : (
-                    group.items
-                      .filter(item => !item.restricted || PRIVILEGED_EMAILS.includes(user?.email ?? ''))
-                      .map((item) => {
+                    group.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeView === item.id;
-                      const isDisabled = item.badge === 'Soon';
+                      const isPrivileged = PRIVILEGED_EMAILS.includes(user?.email ?? '');
+                      const isDisabled = item.badge === 'Soon' && !isPrivileged;
                       return (
                         <button
                           key={item.id}
