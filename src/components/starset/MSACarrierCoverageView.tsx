@@ -334,6 +334,7 @@ export function MSACarrierCoverageView() {
   const [visibleCarriers, setVisibleCarriers] = useState<string[]>([]);
   const [openCell, setOpenCell] = useState<OpenCell | null>(null);
   const [metric, setMetric] = useState<Metric>('gy');
+  const [msaOrder, setMsaOrder] = useState<'alpha' | 'largest' | 'smallest'>('alpha');
 
   useEffect(() => {
     fetch(CSV_URL)
@@ -413,15 +414,42 @@ export function MSACarrierCoverageView() {
     setVisibleCarriers(nationalsPresent.length > 0 ? nationalsPresent : stateCarriers);
   }, [stateCarriers]);
 
+  // Helper: get total_pop for an MSA from any available TOTAL row
+  const getMsaPop = (msaId: string): number => {
+    const carrierMap = stateMsaMap[msaId] ?? {};
+    for (const buckets of Object.values(carrierMap)) {
+      const total = (buckets as Record<string, CCRow>)['TOTAL'];
+      if (total?.total_pop) return total.total_pop;
+    }
+    return 0;
+  };
+
   const orderedMsaIds = useMemo(() => {
-    return Object.entries(stateMsaMap)
+    const entries = Object.entries(stateMsaMap);
+    if (msaOrder === 'alpha') {
+      return entries
+        .sort((a, b) => (indexed?.msaNames[a[0]] ?? '').localeCompare(indexed?.msaNames[b[0]] ?? ''))
+        .map(([id]) => id);
+    }
+    if (msaOrder === 'largest') {
+      return entries
+        .sort((a, b) => {
+          const pa = getMsaPop(a[0]), pb = getMsaPop(b[0]);
+          if (pb !== pa) return pb - pa;
+          return (indexed?.msaNames[a[0]] ?? '').localeCompare(indexed?.msaNames[b[0]] ?? '');
+        })
+        .map(([id]) => id);
+    }
+    // smallest
+    return entries
       .sort((a, b) => {
-        const nameA = indexed?.msaNames[a[0]] ?? '';
-        const nameB = indexed?.msaNames[b[0]] ?? '';
-        return nameA.localeCompare(nameB);
+        const pa = getMsaPop(a[0]), pb = getMsaPop(b[0]);
+        if (pa !== pb) return pa - pb;
+        return (indexed?.msaNames[a[0]] ?? '').localeCompare(indexed?.msaNames[b[0]] ?? '');
       })
       .map(([id]) => id);
-  }, [stateMsaMap, indexed]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateMsaMap, indexed, msaOrder]);
 
   const toggleCarrier = (c: string) => {
     setVisibleCarriers(prev =>
@@ -473,6 +501,20 @@ export function MSACarrierCoverageView() {
             {orderedMsaIds.length > 0 && (
               <span className="text-xs text-gray-400">{orderedMsaIds.length} MSAs</span>
             )}
+          </div>
+
+          {/* Order selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Order</span>
+            <select
+              value={msaOrder}
+              onChange={e => setMsaOrder(e.target.value as 'alpha' | 'largest' | 'smallest')}
+              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-[#001A41] focus:outline-none focus:ring-2 focus:ring-[#009DE0]"
+            >
+              <option value="alpha">Alphabetical</option>
+              <option value="largest">Largest to Smallest</option>
+              <option value="smallest">Smallest to Largest</option>
+            </select>
           </div>
 
           {/* Metric selector */}
