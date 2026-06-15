@@ -13,10 +13,6 @@
     color: #1a1a1a;
     font-size: 14px;
     line-height: 1.5;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
   }
 
   header {
@@ -147,9 +143,9 @@
   .tab-btn:hover { color: #fff; }
   .tab-btn.active { color: #fff; border-bottom-color: #fff; }
   .tab-panel { display: none; }
-  .tab-panel.active { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0; }
+  .tab-panel.active { display: block; }
 
-  #fixed-top { flex-shrink: 0; z-index: 20; }
+  #fixed-top { position: sticky; top: 0; z-index: 20; }
 </style>
 </head>
 <body>
@@ -1497,6 +1493,12 @@ let activeData = DATA_V8V9;
 let activeListId = 'planList';
 let activeTabPrefix = 'v8v9';
 
+function updateControlsTop() {
+  const h = document.getElementById('fixed-top').offsetHeight;
+  document.querySelectorAll('.controls').forEach(c => c.style.top = h + 'px');
+}
+window.addEventListener('resize', updateControlsTop);
+
 function toggleInfo(tab) {
   const body = document.getElementById('infoBody-' + tab);
   const chevron = document.getElementById('infoChevron-' + tab);
@@ -1505,7 +1507,7 @@ function toggleInfo(tab) {
   body.style.display = collapsed ? 'flex' : 'none';
   chevron.style.transform = collapsed ? '' : 'rotate(180deg)';
   btn.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
-  setListTop();
+  updateControlsTop();
 }
 
 function switchTab(tab, btn) {
@@ -1528,6 +1530,7 @@ function switchTab(tab, btn) {
 }
 
 render();
+updateControlsTop();
 </script>
 
 </div>
