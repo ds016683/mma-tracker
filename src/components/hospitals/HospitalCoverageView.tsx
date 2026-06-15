@@ -64,6 +64,7 @@ export function HospitalCoverageView() {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [uniqueNpis, setUniqueNpis] = useState(0);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 100;
 
@@ -101,6 +102,21 @@ export function HospitalCoverageView() {
       setHospitals(data);
       setTotal(count ?? 0);
     }
+
+    // Fetch unique NPI count with same filters applied
+    let npiQ = supabase.from('hospital_directory').select('npi', { count: 'exact', head: false });
+    if (stateFilter) npiQ = npiQ.eq('state', stateFilter);
+    if (activeMrfOnly) npiQ = npiQ.eq('active_mrf', true);
+    if (noMrfOnly) npiQ = npiQ.eq('active_mrf', false);
+    if (typeFilter) npiQ = npiQ.eq('facility_type', typeFilter);
+    if (nameSearch.trim()) npiQ = npiQ.ilike('facility_name', `%${nameSearch.trim()}%`);
+    if (cbsaSearch.trim()) npiQ = npiQ.ilike('cbsa_name', `%${cbsaSearch.trim()}%`);
+    const { data: npiData } = await npiQ;
+    if (npiData) {
+      const unique = new Set(npiData.map((r: { npi: number }) => r.npi)).size;
+      setUniqueNpis(unique);
+    }
+
     setLoading(false);
   }, [page, stateFilter, cbsaSearch, nameSearch, activeMrfOnly, noMrfOnly, typeFilter, sortField, sortDir]);
 
@@ -164,7 +180,7 @@ export function HospitalCoverageView() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-[#001A41]">Hospital Coverage</h1>
-            <p className="text-sm text-gray-500">AHD master hospital directory — {total.toLocaleString()} matching facilities</p>
+            <p className="text-sm text-gray-500">AHD master hospital directory — {uniqueNpis.toLocaleString()} unique NPIs (NPIs with multiple locations may appear below multiple times)</p>
           </div>
           <button onClick={exportCSV}
             className="flex items-center gap-2 rounded-lg bg-[#001A41] px-4 py-2 text-sm font-medium text-white hover:bg-[#003366] transition-colors">
@@ -230,7 +246,7 @@ export function HospitalCoverageView() {
 
           {/* Stats */}
           <div className="ml-auto flex items-center gap-3 text-xs text-gray-400">
-            <span>{total.toLocaleString()} facilities</span>
+            <span>{uniqueNpis.toLocaleString()} unique NPIs</span>
             {total > PAGE_SIZE && <span>Page {page + 1} of {totalPages}</span>}
           </div>
         </div>
