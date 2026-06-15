@@ -29,12 +29,15 @@ export type AppView =
   | 'msa-carrier-coverage'
   | 'carrier-ranking';
 
+const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
+
 interface NavItem {
   id: AppView;
   label: string;
   icon: React.ElementType;
   badge?: string;
   href?: string;
+  restricted?: boolean;
 }
 
 interface NavGroup {
@@ -92,7 +95,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Hospital MRF Processing Details',
     defaultOpen: true,
     items: [
-      { id: 'hospital-mrf-pipeline', label: 'Hospital MRF Pipeline', icon: Activity },
+      { id: 'hospital-mrf-pipeline', label: 'Hospital MRF Pipeline', icon: Activity, badge: 'Soon', restricted: true },
       { id: 'hospital-coverage',     label: 'Hospital Coverage',      icon: Map },
     ],
   },
@@ -118,7 +121,7 @@ interface AppDrawerProps {
 }
 
 export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -213,7 +216,8 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
                     group.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeView === item.id;
-                      const isDisabled = item.badge === 'Soon';
+                      const isRestricted = item.restricted && !PRIVILEGED_EMAILS.includes(user?.email ?? '');
+                      const isDisabled = item.badge === 'Soon' || isRestricted;
                       return (
                         <button
                           key={item.id}
