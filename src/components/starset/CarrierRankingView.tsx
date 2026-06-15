@@ -134,10 +134,10 @@ function DataRow({ row, rank, isDefault, sortKey }: { row: CarrierRow; rank: num
       <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.gy_delta} /></td>
       <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmt(row.rank_pop_v82)}</td>
       <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_pop_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmt(row.rank_pop_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_pop_delta} invert /></td>
+      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_pop_delta !== null ? -row.rank_pop_delta : null} /></td>
       <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmt(row.rank_str_v82)}</td>
       <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_str_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmt(row.rank_str_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_str_delta} invert /></td>
+      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_str_delta !== null ? -row.rank_str_delta : null} /></td>
     </tr>
   );
 }
