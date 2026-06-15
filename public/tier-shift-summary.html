@@ -200,9 +200,7 @@
 </div>
 </div>
 
-</div><!-- /fixed-top -->
-
-<div id="tab-v8v9" class="tab-panel active">
+<div id="legend-slot-v8v9">
 <div class="legend">
   <span style="font-weight:600; color:#444;">Δ G+Y per combo:</span>
   <span class="legend-item"><span class="legend-dot" style="background:#639922"></span>Box = IQR (P25–P75)</span>
@@ -210,6 +208,7 @@
   <span class="legend-item"><span style="display:inline-block;width:2px;height:12px;background:#444;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>Avg (dashed)</span>
   <span class="legend-item"><span style="display:inline-block;width:14px;height:7px;background:#639922;opacity:0.8;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>Count bar: green = improved, red = worsened</span>
   <span>Scale: −80 pp to +80 pp. Unit: MSA (up to 977 per combo).</span>
+</div>
 </div>
 
 <div class="controls">
@@ -239,6 +238,9 @@
   </div>
 </div>
 
+</div><!-- /fixed-top -->
+
+<div id="tab-v8v9" class="tab-panel active">
 <div class="plan-list" id="planList"></div>
 
 <script>
@@ -1532,6 +1534,7 @@ function switchTab(tab, btn) {
     document.getElementById('tab-v8v9').classList.add('active');
     document.getElementById('info-slot-v8v9').style.display = '';
     document.getElementById('info-slot-inclexcl').style.display = 'none';
+    document.getElementById('legend-slot-v8v9').style.display = '';
     activeData = DATA_V8V9;
     activeListId = 'planList';
     activeTabPrefix = 'v8v9';
@@ -1539,6 +1542,7 @@ function switchTab(tab, btn) {
     document.getElementById('tab-inclexcl').classList.add('active');
     document.getElementById('info-slot-v8v9').style.display = 'none';
     document.getElementById('info-slot-inclexcl').style.display = '';
+    document.getElementById('legend-slot-v8v9').style.display = 'none';
     activeData = DATA_INCL;
     activeListId = 'planList2';
     activeTabPrefix = 'inclexcl';
