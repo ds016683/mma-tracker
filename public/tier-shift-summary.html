@@ -31,9 +31,6 @@
     gap: 12px;
     align-items: center;
     flex-wrap: wrap;
-    position: sticky;
-    top: 0;
-    z-index: 10;
   }
   .controls label { font-size: 12px; color: #666; }
   .controls select, .controls input[type=text] {
@@ -1493,12 +1490,6 @@ let activeData = DATA_V8V9;
 let activeListId = 'planList';
 let activeTabPrefix = 'v8v9';
 
-function updateControlsTop() {
-  const h = document.getElementById('fixed-top').offsetHeight;
-  document.querySelectorAll('.controls').forEach(c => c.style.top = h + 'px');
-}
-window.addEventListener('resize', updateControlsTop);
-
 function toggleInfo(tab) {
   const body = document.getElementById('infoBody-' + tab);
   const chevron = document.getElementById('infoChevron-' + tab);
@@ -1507,7 +1498,6 @@ function toggleInfo(tab) {
   body.style.display = collapsed ? 'flex' : 'none';
   chevron.style.transform = collapsed ? '' : 'rotate(180deg)';
   btn.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
-  updateControlsTop();
 }
 
 function switchTab(tab, btn) {
@@ -1530,7 +1520,6 @@ function switchTab(tab, btn) {
 }
 
 render();
-updateControlsTop();
 </script>
 
 </div>
