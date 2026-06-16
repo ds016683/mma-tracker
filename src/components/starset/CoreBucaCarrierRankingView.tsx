@@ -124,14 +124,7 @@ function RankCard({ row, position, metric }: { row: SummaryRow; position: number
       {/* v8.2 comparison */}
       <p className="mt-2 text-xs text-gray-400">v8.2: <span className="font-semibold text-gray-600">{fmt2(v82)}</span></p>
 
-      {/* MSA count */}
-      <div className="mt-3 flex items-center gap-1 border-t border-gray-200/80 pt-3">
-        <span className="text-xs text-gray-400">MSAs present:</span>
-        <span className="text-xs font-semibold text-gray-600">{row.msas_v9 ?? '—'}</span>
-        {row.msas_v82 !== null && row.msas_v9 !== null && row.msas_v82 !== row.msas_v9 && (
-          <span className="text-[10px] text-gray-400">(was {row.msas_v82})</span>
-        )}
-      </div>
+
     </div>
   );
 }
@@ -263,11 +256,10 @@ export function CoreBucaCarrierRankingView() {
                     <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-white/80">Carrier</th>
                     <th colSpan={3} className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60">Straight Avg Rank</th>
                     <th colSpan={3} className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60">Pop-Weighted Avg Rank</th>
-                    <th colSpan={2} className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60"># MSAs Present</th>
                   </tr>
                   <tr className="bg-[#001A41]/80">
                     <th className="border-b border-white/10 px-4 py-1.5" />
-                    {['v8.2','v9','Δ','v8.2','v9','Δ','v8.2','v9'].map((h, i) => (
+                    {['v8.2','v9','Δ','v8.2','v9','Δ'].map((h, i) => (
                       <th key={i} className="border-b border-white/10 px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-white/50">{h}</th>
                     ))}
                   </tr>
@@ -291,8 +283,7 @@ export function CoreBucaCarrierRankingView() {
                         <td className="px-3 py-3 text-center text-sm text-gray-500">{fmt2(row.rank_pop_v82)}</td>
                         <td className="px-3 py-3 text-center text-sm font-semibold text-gray-900">{fmt2(row.rank_pop_v9)}</td>
                         <td className="px-3 py-3 text-center"><DeltaBadge v={row.rank_pop_delta} /></td>
-                        <td className="px-3 py-3 text-center text-sm text-gray-500">{row.msas_v82 ?? '—'}</td>
-                        <td className="px-3 py-3 text-center text-sm font-semibold text-gray-900">{row.msas_v9 ?? '—'}</td>
+
                       </tr>
                     );
                   })}
