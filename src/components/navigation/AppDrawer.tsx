@@ -51,36 +51,32 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Engagement Manager',
     defaultOpen: true,
     items: [
-      { id: 'project-plan', label: 'Project Plan',   icon: FileText },
-      { id: 'timeline',     label: 'Gantt Chart',    icon: GanttChart },
-      { id: 'tracker',      label: 'Work Orders',    icon: LayoutGrid },
-      { id: 'call-notes',   label: 'Call Notes',     icon: NotebookPen },
-    ],
-  },
-  {
-    label: 'Engagement Documentation',
-    defaultOpen: true,
-    items: [
+      { id: 'project-plan',          label: 'Project Plan',    icon: FileText },
+      { id: 'timeline',              label: 'Gantt Chart',     icon: GanttChart },
+      { id: 'tracker',               label: 'Work Orders',     icon: LayoutGrid },
+      { id: 'call-notes',            label: 'Call Notes',      icon: NotebookPen },
       { id: 'reports-release-notes', label: 'Shared Documents', icon: BookOpen },
     ],
   },
   {
-    label: 'Network Navigator Deployment',
+    label: 'Starset Data Reporting',
     defaultOpen: true,
     items: [
-      { id: 'reporting-queries',        label: 'Reporting Queries',        icon: BarChart2 },
+      { id: 'hospital-coverage',        label: 'Hospital Coverage',        icon: Map },
+      { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',    icon: Activity, badge: 'Soon', restricted: true },
       { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
-      { id: 'tier-shift-summary', label: 'Tier Shift Summary', icon: Activity },
-      { id: 'msa-carrier-coverage', label: 'MSA Carrier Coverage', icon: Grid3x3 },
-      { id: 'carrier-ranking', label: 'Carrier Ranking', icon: BarChart2 },
+      { id: 'tier-shift-summary',       label: 'Tier Shift Summary',       icon: Activity },
+      { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',     icon: Grid3x3 },
+      { id: 'carrier-ranking',          label: 'Carrier Ranking',          icon: BarChart2 },
     ],
   },
   {
     label: 'Region Engagement',
     defaultOpen: true,
     items: [
-      { id: 'regional-map', label: 'Regional Map', icon: Map },
-      { id: 'horizon-signal', label: 'The Horizon Signal', icon: Radio },
+      { id: 'reporting-queries', label: 'Reporting Queries', icon: BarChart2 },
+      { id: 'regional-map',      label: 'Regional Map',      icon: Map },
+      { id: 'horizon-signal',    label: 'The Horizon Signal', icon: Radio },
     ],
   },
   {
@@ -91,14 +87,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'payer-mrf-pipeline',  label: 'Payer MRF Pipeline', icon: BarChart2, badge: 'Soon' },
     ],
   },
-  {
-    label: 'Hospital MRF Processing Details',
-    defaultOpen: true,
-    items: [
-      { id: 'hospital-mrf-pipeline', label: 'Hospital MRF Pipeline', icon: Activity, badge: 'Soon', restricted: true },
-      { id: 'hospital-coverage',     label: 'Hospital Coverage',      icon: Map },
-    ],
-  },
+
   {
     label: 'Collateral',
     defaultOpen: true,
