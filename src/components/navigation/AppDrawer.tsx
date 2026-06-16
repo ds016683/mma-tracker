@@ -67,7 +67,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
       { id: 'tier-shift-summary',       label: 'Tier Shift Summary',       icon: Activity },
       { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',     icon: Grid3x3 },
-      { id: 'carrier-ranking',          label: 'Carrier Ranking',          icon: BarChart2 },
+      { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',  icon: BarChart2 },
     ],
   },
   {

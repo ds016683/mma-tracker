@@ -117,7 +117,7 @@ function TableHead({ sortKey }: { sortKey: SortKey }) {
 
 function DataRow({ row, rank, isDefault, sortKey }: { row: CarrierRow; rank: number; isDefault: boolean; sortKey: SortKey }) {
   return (
-    <tr className={`transition-colors hover:bg-blue-50/40 ${isDefault ? 'bg-[#001A41]/[0.05]' : (rank % 2 === 1 ? 'bg-white' : 'bg-gray-50/60')}`}>
+    <tr className={`transition-colors ${isDefault ? 'bg-[#EEF6FB] hover:bg-[#ddeef7]' : (rank % 2 === 1 ? 'bg-white hover:bg-blue-50/40' : 'bg-gray-50/60 hover:bg-blue-50/40')}`}>
       <td className="px-3 py-2.5 text-center text-xs font-bold text-gray-400">{rank}</td>
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -155,8 +155,7 @@ export function CarrierRankingView() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  const defaultRows = sortRows(data.filter(r => r.is_default), sortKey);
-  const otherRows   = sortRows(data.filter(r => !r.is_default), sortKey);
+  const allRows = sortRows(data, sortKey);
 
   return (
     <div className="flex h-screen flex-col bg-gray-50/50">
@@ -166,9 +165,9 @@ export function CarrierRankingView() {
 
         {/* Title */}
         <div className="mb-4">
-          <h1 className="text-xl font-bold text-[#001A41]">Carrier Ranking</h1>
+          <h1 className="text-xl font-bold text-[#001A41]">Overall Carrier Ranking</h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            v8.2 → v9 national summary · spend-weighted metrics &amp; MSA avg rank · 104 carriers
+            v8.2 → v9 national summary · spend-weighted metrics &amp; MSA avg rank · {data.length || 104} carriers
           </p>
         </div>
 
@@ -194,7 +193,7 @@ export function CarrierRankingView() {
         <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#009DE0]/20 ring-1 ring-[#009DE0]/40" />
-            Core network — pinned to top
+            Core network
           </span>
           <span className="flex items-center gap-1.5">
             <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-emerald-700">New v9</span>
@@ -210,36 +209,19 @@ export function CarrierRankingView() {
         </div>
       </div>
 
-      {/* ── Fixed table: header + core rows + all-carriers divider ── */}
+      {/* ── Fixed thead ── */}
       {!loading && !error && (
         <div className="flex-shrink-0 overflow-x-auto px-4 sm:px-6">
           <div className="rounded-t-xl border border-b-0 border-gray-200 shadow-sm">
             <table className="w-full min-w-[1000px] table-fixed border-collapse">
               <ColGroup />
               <TableHead sortKey={sortKey} />
-              {/* Core Networks divider */}
-              <tbody>
-                <tr>
-                  <td colSpan={14} className="bg-[#001A41]/[0.06] px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#001A41]/50">
-                    Core Networks
-                  </td>
-                </tr>
-                {defaultRows.map((row, i) => (
-                  <DataRow key={row.name} row={row} rank={i + 1} isDefault sortKey={sortKey} />
-                ))}
-                {/* All Carriers divider — this is the lock line */}
-                <tr>
-                  <td colSpan={14} className="bg-gray-100 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    All Carriers ({otherRows.length})
-                  </td>
-                </tr>
-              </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* ── Scrollable all-carriers rows ── */}
+      {/* ── Scrollable body ── */}
       {loading && (
         <div className="flex flex-1 items-center justify-center text-sm text-gray-400">Loading carrier data…</div>
       )}
@@ -252,8 +234,8 @@ export function CarrierRankingView() {
             <table className="w-full min-w-[1000px] table-fixed border-collapse">
               <ColGroup />
               <tbody>
-                {otherRows.map((row, i) => (
-                  <DataRow key={row.name} row={row} rank={i + 1} isDefault={false} sortKey={sortKey} />
+                {allRows.map((row, i) => (
+                  <DataRow key={row.name} row={row} rank={i + 1} isDefault={row.is_default} sortKey={sortKey} />
                 ))}
               </tbody>
             </table>
