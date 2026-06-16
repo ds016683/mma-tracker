@@ -67,7 +67,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'tier-shift-summary',       label: 'Tier Shift Summary',             icon: Activity },
       { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',           icon: Grid3x3 },
       { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',        icon: BarChart2 },
-      { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2, badge: 'Soon' },
+      { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2 },
       { id: 'hospital-coverage',        label: 'Hospital Coverage',              icon: Map },
       { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',          icon: Activity, badge: 'Soon', restricted: true },
     ],

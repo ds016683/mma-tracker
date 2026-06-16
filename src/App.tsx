@@ -23,6 +23,7 @@ import { ProductionRunSummariesView } from './components/starset/ProductionRunSu
 import { TierShiftSummaryView } from './components/starset/TierShiftSummaryView';
 import { MSACarrierCoverageView } from './components/starset/MSACarrierCoverageView';
 import { CarrierRankingView } from './components/starset/CarrierRankingView';
+import { CoreBucaCarrierRankingView } from './components/starset/CoreBucaCarrierRankingView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -91,7 +92,7 @@ function AppInner({
         {activeView === 'tier-shift-summary' && <TierShiftSummaryView />}
         {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
         {activeView === 'carrier-ranking' && <CarrierRankingView />}
-        {activeView === 'core-buca-carrier-ranking' && <CarrierRankingView />}
+        {activeView === 'core-buca-carrier-ranking' && <CoreBucaCarrierRankingView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>
