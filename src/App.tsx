@@ -91,6 +91,7 @@ function AppInner({
         {activeView === 'tier-shift-summary' && <TierShiftSummaryView />}
         {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
         {activeView === 'carrier-ranking' && <CarrierRankingView />}
+        {activeView === 'core-buca-carrier-ranking' && <CarrierRankingView />}
       </main>
       <HaikuAssistant projects={projects} />
     </div>

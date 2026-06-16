@@ -27,7 +27,8 @@ export type AppView =
   | 'production-run-summaries'
   | 'tier-shift-summary'
   | 'msa-carrier-coverage'
-  | 'carrier-ranking';
+  | 'carrier-ranking'
+  | 'core-buca-carrier-ranking';
 
 const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
 
@@ -62,12 +63,13 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Starset Data Reporting',
     defaultOpen: true,
     items: [
-      { id: 'hospital-coverage',        label: 'Hospital Coverage',        icon: Map },
-      { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',    icon: Activity, badge: 'Soon', restricted: true },
-      { id: 'production-run-summaries', label: 'Production Run Summaries', icon: TableProperties },
-      { id: 'tier-shift-summary',       label: 'Tier Shift Summary',       icon: Activity },
-      { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',     icon: Grid3x3 },
-      { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',  icon: BarChart2 },
+      { id: 'production-run-summaries', label: 'Production Run Summaries',       icon: TableProperties },
+      { id: 'tier-shift-summary',       label: 'Tier Shift Summary',             icon: Activity },
+      { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',           icon: Grid3x3 },
+      { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',        icon: BarChart2 },
+      { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2, badge: 'Soon' },
+      { id: 'hospital-coverage',        label: 'Hospital Coverage',              icon: Map },
+      { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',          icon: Activity, badge: 'Soon', restricted: true },
     ],
   },
   {
