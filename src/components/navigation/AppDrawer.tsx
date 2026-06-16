@@ -61,7 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Engagement Documentation',
     defaultOpen: true,
     items: [
-      { id: 'reports-release-notes', label: 'Reports & Release Notes', icon: BookOpen },
+      { id: 'reports-release-notes', label: 'Shared Documents', icon: BookOpen },
     ],
   },
   {
