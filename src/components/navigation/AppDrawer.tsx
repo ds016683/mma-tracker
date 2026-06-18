@@ -70,7 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',        icon: BarChart2 },
       { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2 },
       { id: 'hospital-coverage',        label: 'Hospital Coverage',              icon: Map },
-      { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',          icon: Activity },
+      { id: 'hospital-mrf-pipeline',    label: 'Pipeline Lineage Reporting',     icon: Activity },
       { id: 'pipeline-intelligence',    label: 'Pipeline Intelligence',          icon: GitBranch, badge: 'New' },
     ],
   },
