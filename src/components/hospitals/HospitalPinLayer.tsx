@@ -36,26 +36,29 @@ export function HospitalPinLayer({ filterState, filterTier, onStatsReady }: Prop
   const projection = useMemo(() =>
     geoAlbersUsa().scale(1300).translate([WIDTH / 2, HEIGHT / 2]), []);
 
+  // Compute projected pins (pure — no side effects)
   const pins = useMemo(() => {
     let filtered = hospitals;
     if (filterState) filtered = filtered.filter(h => h[2] === filterState);
     if (filterTier?.length) filtered = filtered.filter(h => filterTier.includes(h[5]));
-
-    // Emit stats
-    const stats = { red: 0, yellow: 0, green: 0, total: filtered.length };
-    filtered.forEach(h => {
-      if (h[5] === 'r') stats.red++;
-      else if (h[5] === 'y') stats.yellow++;
-      else stats.green++;
-    });
-    onStatsReady?.(stats);
-
     return filtered.map(h => {
       const pt = projection([h[4], h[3]]);
       if (!pt) return null;
       return { h, x: pt[0], y: pt[1] };
-    }).filter(Boolean);
-  }, [hospitals, filterState, filterTier, projection, onStatsReady]);
+    }).filter(Boolean) as { h: HospitalRow; x: number; y: number }[];
+  }, [hospitals, filterState, filterTier, projection]);
+
+  // Emit stats as side effect — separate from rendering
+  useEffect(() => {
+    if (!onStatsReady) return;
+    const stats = { red: 0, yellow: 0, green: 0, total: pins.length };
+    pins.forEach(p => {
+      if (p.h[5] === 'r') stats.red++;
+      else if (p.h[5] === 'y') stats.yellow++;
+      else stats.green++;
+    });
+    onStatsReady(stats);
+  }, [pins, onStatsReady]);
 
   if (loading) return (
     <text x={10} y={20} fontSize={11} fill="#6b7280">Loading hospital pins…</text>
