@@ -24,7 +24,7 @@ export function HospitalPinLayer({ filterState, filterTier, onStatsReady }: Prop
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
 
   useEffect(() => {
-    fetch('/data/hospital-pins.json')
+    fetch(`${import.meta.env.BASE_URL}data/hospital-pins.json`)
       .then(r => r.json())
       .then(data => {
         setHospitals(data);
