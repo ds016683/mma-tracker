@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { MSABubbleMap } from './MSABubbleMap';
+import { PipelineCoverageMap } from './PipelineCoverageMap';
 import { NetworkVersionDiff } from './NetworkVersionDiff';
 import {
   MSA_BUBBLE_DATA, MSA_NETWORK_DETAIL, NETWORK_VERSION_CHANGES, STATE_HOSPITAL_COVERAGE
@@ -28,8 +28,10 @@ function fmt(n: number) {
 export function CoverageAnalyticsPanel() {
   const [version, setVersion] = useState<'v8' | 'v9' | 'both'>('v9');
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
-  const [selectedMsa, setSelectedMsa] = useState<typeof MSA_BUBBLE_DATA[0] | null>(null);
   const [activeTab, setActiveTab] = useState<'map' | 'diff' | 'hospital'>('map');
+  const [showDots, setShowDots] = useState(false);
+  const [colorMetric, setColorMetric] = useState<'score' | 'providers' | 'plans' | 'msas'>('score');
+  const [selectedState, setSelectedState] = useState<string | null>(null);
 
   // Aggregate stats for top cards
   const stats = useMemo(() => {
@@ -49,11 +51,12 @@ export function CoverageAnalyticsPanel() {
     return { totalProviders, totalRecords, totalMsas, totalHospitals, totalInMrf };
   }, [version, selectedNetwork]);
 
-  // MSA drill-down: get network detail for selected MSA
+  // State drill-down: get network detail for priority MSAs in selected state
   const msaDetail = useMemo(() => {
-    if (!selectedMsa) return [];
-    return MSA_NETWORK_DETAIL.filter(d => d.msa_id === selectedMsa.msa_id);
-  }, [selectedMsa]);
+    if (!selectedState) return [];
+    const stateMsas = MSA_BUBBLE_DATA.filter(m => m.state === selectedState).map(m => m.msa_id);
+    return MSA_NETWORK_DETAIL.filter(d => stateMsas.includes(d.msa_id));
+  }, [selectedState]);
 
   return (
     <div className="space-y-4">
@@ -111,32 +114,58 @@ export function CoverageAnalyticsPanel() {
       {/* Map tab */}
       {activeTab === 'map' && (
         <div className="space-y-3">
-          <MSABubbleMap
-            data={MSA_BUBBLE_DATA}
-            selectedVersion={version}
+          {/* Map controls */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Color by</label>
+              <div className="flex rounded-md overflow-hidden border border-gray-200">
+                {(['score', 'providers', 'plans', 'msas'] as const).map(m => (
+                  <button key={m} onClick={() => setColorMetric(m)}
+                    className={`px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
+                      colorMetric === m ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}>
+                    {m === 'score' ? 'Coverage Score' : m === 'providers' ? 'Providers' : m === 'plans' ? 'Plans' : 'MSA Count'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-end gap-2">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
+                <input type="checkbox" checked={showDots} onChange={e => setShowDots(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded" />
+                Show priority MSA markers
+              </label>
+            </div>
+            {selectedState && (
+              <button onClick={() => setSelectedState(null)}
+                className="ml-auto text-xs text-gray-400 hover:text-gray-600">
+                ✕ Clear state filter ({selectedState})
+              </button>
+            )}
+          </div>
+
+          <PipelineCoverageMap
+            msaDots={MSA_BUBBLE_DATA}
+            showDots={showDots}
             selectedNetwork={selectedNetwork}
-            onMsaClick={setSelectedMsa}
+            colorMetric={colorMetric}
+            onStateClick={setSelectedState}
           />
 
-          {/* MSA drill-down panel */}
-          {selectedMsa && (
+          {/* State drill-down */}
+          {selectedState && (
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="font-semibold text-gray-800">{selectedMsa.msa_name}</div>
-                  <div className="text-xs text-gray-500">MSA {selectedMsa.msa_id} · {selectedMsa.state}</div>
-                </div>
-                <button onClick={() => setSelectedMsa(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕ Close</button>
+                <div className="font-semibold text-gray-800">State: {selectedState}</div>
+                <button onClick={() => setSelectedState(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
               </div>
               {msaDetail.length > 0 ? (
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left pb-1 text-gray-500 font-medium">Network</th>
-                      <th className="text-left pb-1 text-gray-500 font-medium">Version</th>
-                      <th className="text-right pb-1 text-gray-500 font-medium">Providers</th>
-                      <th className="text-right pb-1 text-gray-500 font-medium">Records</th>
-                      <th className="text-right pb-1 text-gray-500 font-medium">Plans</th>
+                      {['Network', 'Version', 'Providers', 'Records', 'Plans'].map(h => (
+                        <th key={h} className="text-left pb-1 text-gray-500 font-medium">{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -156,7 +185,7 @@ export function CoverageAnalyticsPanel() {
                   </tbody>
                 </table>
               ) : (
-                <div className="text-xs text-gray-400">No core network detail for this MSA</div>
+                <div className="text-xs text-gray-400">Drill-down detail for priority MSAs only</div>
               )}
             </div>
           )}
