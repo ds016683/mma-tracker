@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Search, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
+
+interface AhdRecord { npi: number; name: string; state: string; city: string; }
 
 interface TraceResult {
   provider: Record<string, string | null> | null;
@@ -12,6 +14,8 @@ interface TraceResult {
 }
 
 const NETWORKS = ['Aetna', 'BCBS PPO', 'Cigna', 'UHC', 'BCBS Home Plan', 'BCBS HPN', 'HealthPartners', 'UHC Choice Plus'];
+
+type NpiInputMode = 'npi' | 'name';
 
 function StageCard({
   stage, label, status, summary, children, defaultOpen
@@ -100,10 +104,49 @@ function MmaRow({ r }: { r: Record<string, string | null> }) {
   );
 }
 
-export function BillingCodeTracePanel() {
+interface BillingCodeTracePanelProps {
+  initialNpi?: string;
+  initialName?: string;
+  onNpiUsed?: () => void;
+}
+
+export function BillingCodeTracePanel({ initialNpi, initialName, onNpiUsed }: BillingCodeTracePanelProps) {
   const [billingCode, setBillingCode] = useState('');
   const [npi, setNpi] = useState('');
   const [network, setNetwork] = useState('');
+  const [npiMode, setNpiMode] = useState<NpiInputMode>('npi');
+  const [nameSearch, setNameSearch] = useState('');
+  const [nameDropdownOpen, setNameDropdownOpen] = useState(false);
+  const [selectedHospitalName, setSelectedHospitalName] = useState('');
+
+  // Pre-fill NPI when coming from hospital side panel
+  useEffect(() => {
+    if (initialNpi) {
+      setNpi(initialNpi);
+      setNpiMode('npi');
+      if (initialName) setSelectedHospitalName(initialName);
+      onNpiUsed?.();
+    }
+  }, [initialNpi, initialName, onNpiUsed]);
+
+  // Lazy-load AHD autocomplete when name mode is selected
+  const [ahdData, setAhdData] = useState<AhdRecord[]>([]);
+  useEffect(() => {
+    if (npiMode === 'name' && ahdData.length === 0) {
+      fetch(`${import.meta.env.BASE_URL}data/ahd-autocomplete.json`)
+        .then(r => r.json())
+        .then(setAhdData)
+        .catch(() => {});
+    }
+  }, [npiMode, ahdData.length]);
+
+  const nameSuggestions = useMemo(() => {
+    if (!nameSearch || nameSearch.length < 3) return [];
+    const q = nameSearch.toLowerCase();
+    return ahdData
+      .filter((h: AhdRecord) => h.name?.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [nameSearch, ahdData]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TraceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -163,14 +206,59 @@ export function BillingCodeTracePanel() {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-600 mb-1">NPI</label>
-            <input
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-              placeholder="10-digit NPI"
-              value={npi}
-              onChange={e => setNpi(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && runTrace()}
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-gray-600">Provider</label>
+              <div className="flex rounded overflow-hidden border border-gray-200">
+                <button onClick={() => setNpiMode('npi')}
+                  className={`px-2 py-0.5 text-xs font-medium transition-colors ${npiMode==='npi' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  NPI
+                </button>
+                <button onClick={() => setNpiMode('name')}
+                  className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium transition-colors ${npiMode==='name' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  <Building2 size={10} /> Name
+                </button>
+              </div>
+            </div>
+            {npiMode === 'npi' ? (
+              <input
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="10-digit NPI"
+                value={npi}
+                onChange={e => setNpi(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && runTrace()}
+              />
+            ) : (
+              <div className="relative">
+                <input
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="Type hospital name…"
+                  value={nameSearch}
+                  onChange={e => { setNameSearch(e.target.value); setNameDropdownOpen(true); }}
+                  onFocus={() => setNameDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setNameDropdownOpen(false), 150)}
+                />
+                {nameDropdownOpen && nameSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-52 overflow-y-auto">
+                    {nameSuggestions.map(h => (
+                      <button key={h.npi} className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+                        onMouseDown={() => {
+                          setNpi(String(h.npi));
+                          setSelectedHospitalName(h.name);
+                          setNameSearch(h.name);
+                          setNameDropdownOpen(false);
+                          setNpiMode('npi');
+                        }}>
+                        <div className="text-sm font-medium text-gray-800">{h.name}</div>
+                        <div className="text-xs text-gray-400">{h.city}, {h.state} · NPI {h.npi}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {npi && selectedHospitalName && (
+                  <div className="mt-1 text-xs text-blue-600">→ NPI {npi} selected</div>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex-1">
             <label className="block text-xs font-medium text-gray-600 mb-1">Network (optional)</label>

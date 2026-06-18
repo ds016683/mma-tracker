@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { PipelineCoverageMap } from './PipelineCoverageMap';
+import { HospitalSidePanel } from './HospitalSidePanel';
+import type { HospitalRow } from './HospitalPinLayer';
 import { NetworkVersionDiff } from './NetworkVersionDiff';
 import {
   MSA_BUBBLE_DATA, MSA_NETWORK_DETAIL, NETWORK_VERSION_CHANGES, STATE_HOSPITAL_COVERAGE
@@ -25,12 +27,17 @@ function fmt(n: number) {
   return String(n);
 }
 
-export function CoverageAnalyticsPanel() {
+interface CoverageAnalyticsPanelProps {
+  onTraceHospital?: (npi: string, name: string) => void;
+}
+
+export function CoverageAnalyticsPanel({ onTraceHospital }: CoverageAnalyticsPanelProps) {
   const [version, setVersion] = useState<'v8' | 'v9' | 'both'>('v9');
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'map' | 'diff' | 'hospital'>('map');
   const [showDots, setShowDots] = useState(false);
   const [showHospitals, setShowHospitals] = useState(false);
+  const [selectedHospital, setSelectedHospital] = useState<HospitalRow | null>(null);
   const [hospitalTiers, setHospitalTiers] = useState<('r'|'y'|'g')[]>(['r','y','g']);
   const [hospitalStats, setHospitalStats] = useState<{red:number;yellow:number;green:number;total:number}|null>(null);
   const [colorMetric, setColorMetric] = useState<'score' | 'providers' | 'plans' | 'msas'>('score');
@@ -180,7 +187,17 @@ export function CoverageAnalyticsPanel() {
             colorMetric={colorMetric}
             onStateClick={setSelectedState}
             onHospitalStats={setHospitalStats}
+            onHospitalPinClick={setSelectedHospital}
             selectedState={selectedState}
+          />
+
+          <HospitalSidePanel
+            hospital={selectedHospital}
+            onClose={() => setSelectedHospital(null)}
+            onTrace={(npi, name) => {
+              setSelectedHospital(null);
+              onTraceHospital?.(npi, name);
+            }}
           />
 
           {/* State drill-down */}

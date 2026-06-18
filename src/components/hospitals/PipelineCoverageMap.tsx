@@ -50,10 +50,11 @@ interface Props {
   colorMetric: ColorMetric;
   onStateClick?: (state: string) => void;
   onHospitalStats?: (s: HospitalStats) => void;
+  onHospitalPinClick?: (h: import('./HospitalPinLayer').HospitalRow) => void;
   selectedState?: string | null;
 }
 
-export function PipelineCoverageMap({ msaDots, showDots, showHospitals, hospitalTiers, selectedNetwork, colorMetric, onStateClick, onHospitalStats, selectedState }: Props) {
+export function PipelineCoverageMap({ msaDots, showDots, showHospitals, hospitalTiers, selectedNetwork, colorMetric, onStateClick, onHospitalStats, onHospitalPinClick, selectedState }: Props) {
   const [hoveredState, setHoveredState] = useState<StateTooltipData | null>(null);
   const [hoveredMsa, setHoveredMsa] = useState<{ msa: MsaBubble; x: number; y: number } | null>(null);
 
@@ -145,6 +146,7 @@ export function PipelineCoverageMap({ msaDots, showDots, showHospitals, hospital
             filterState={selectedState}
             filterTier={hospitalTiers.length < 3 ? hospitalTiers : null}
             onStatsReady={onHospitalStats}
+            onPinClick={onHospitalPinClick}
           />
         )}
 

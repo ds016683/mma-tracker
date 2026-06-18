@@ -7,6 +7,14 @@ type Mode = 'coverage' | 'trace';
 
 export function PipelineIntelligenceView() {
   const [mode, setMode] = useState<Mode>('coverage');
+  const [traceNpi, setTraceNpi] = useState<string>('');
+  const [traceName, setTraceName] = useState<string>('');
+
+  function handleTraceHospital(npi: string, name: string) {
+    setTraceNpi(npi);
+    setTraceName(name);
+    setMode('trace');
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -19,18 +27,28 @@ export function PipelineIntelligenceView() {
               MRF → PP.0 → Network Classification → MMA Transfer · Hospital provider lineage
             </p>
           </div>
-          {/* Mode switcher */}
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+
+          {/* Mode switcher — prominent tab-style */}
+          <div className="flex rounded-xl border-2 border-blue-200 overflow-hidden shadow-sm bg-white">
             <button
               onClick={() => setMode('coverage')}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${mode === 'coverage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all ${
+                mode === 'coverage'
+                  ? 'bg-blue-600 text-white shadow-inner'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
             >
               <BarChart2 size={15} />
               Coverage Analytics
             </button>
+            <div className="w-px bg-blue-200" />
             <button
               onClick={() => setMode('trace')}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-l border-gray-200 ${mode === 'trace' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all ${
+                mode === 'trace'
+                  ? 'bg-blue-600 text-white shadow-inner'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
             >
               <GitBranch size={15} />
               Billing Code Trace
@@ -38,15 +56,24 @@ export function PipelineIntelligenceView() {
           </div>
         </div>
 
-        {/* Mode description */}
-        <div className="mt-2 text-xs text-gray-400">
-          {mode === 'coverage'
-            ? 'Geographic breadth and descriptive statistics across the price transparency pipeline by payer and provider.'
-            : 'Trace a specific billing code + NPI + network through each pipeline stage from MRF source to MMA transfer output.'}
+        {/* Mode pill description */}
+        <div className="mt-2">
+          <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${
+            mode === 'coverage'
+              ? 'bg-blue-50 text-blue-700'
+              : 'bg-indigo-50 text-indigo-700'
+          }`}>
+            {mode === 'coverage'
+              ? '📊 Geographic coverage breadth and descriptive stats across the pipeline'
+              : '🔍 Trace a specific billing code + provider through each pipeline stage'}
+          </span>
         </div>
       </div>
 
-      {mode === 'coverage' ? <CoverageAnalyticsPanel /> : <BillingCodeTracePanel />}
+      {mode === 'coverage'
+        ? <CoverageAnalyticsPanel onTraceHospital={handleTraceHospital} />
+        : <BillingCodeTracePanel initialNpi={traceNpi} initialName={traceName} onNpiUsed={() => { setTraceNpi(''); setTraceName(''); }} />
+      }
     </div>
   );
 }
