@@ -30,7 +30,7 @@ export type AppView =
   | 'carrier-ranking'
   | 'core-buca-carrier-ranking';
 
-const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
+const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com'/*, 'tanner@thirdhorizon.com' — temporarily removed for non-admin view testing */];
 
 interface NavItem {
   id: AppView;
