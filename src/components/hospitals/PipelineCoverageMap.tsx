@@ -4,6 +4,7 @@ import { geoAlbersUsa, geoPath } from 'd3-geo';
 import statesJson from 'us-atlas/states-10m.json';
 import type { MsaBubble } from '../../data/pipeline-intelligence-data';
 import { STATE_CARRIER_COVERAGE } from '../../data/state-carrier-coverage';
+import { HospitalPinLayer } from './HospitalPinLayer';
 
 const WIDTH = 975;
 const HEIGHT = 610;
@@ -38,15 +39,21 @@ interface StateTooltipData {
   y: number;
 }
 
+interface HospitalStats { red: number; yellow: number; green: number; total: number }
+
 interface Props {
   msaDots: MsaBubble[];
   showDots: boolean;
+  showHospitals: boolean;
+  hospitalTiers: ('r' | 'y' | 'g')[];
   selectedNetwork: string | null;
   colorMetric: ColorMetric;
   onStateClick?: (state: string) => void;
+  onHospitalStats?: (s: HospitalStats) => void;
+  selectedState?: string | null;
 }
 
-export function PipelineCoverageMap({ msaDots, showDots, selectedNetwork, colorMetric, onStateClick }: Props) {
+export function PipelineCoverageMap({ msaDots, showDots, showHospitals, hospitalTiers, selectedNetwork, colorMetric, onStateClick, onHospitalStats, selectedState }: Props) {
   const [hoveredState, setHoveredState] = useState<StateTooltipData | null>(null);
   const [hoveredMsa, setHoveredMsa] = useState<{ msa: MsaBubble; x: number; y: number } | null>(null);
 
@@ -131,6 +138,15 @@ export function PipelineCoverageMap({ msaDots, showDots, selectedNetwork, colorM
             />
           );
         })}
+
+        {/* Hospital pins */}
+        {showHospitals && (
+          <HospitalPinLayer
+            filterState={selectedState}
+            filterTier={hospitalTiers.length < 3 ? hospitalTiers : null}
+            onStatsReady={onHospitalStats}
+          />
+        )}
 
         {/* MSA dot overlay */}
         {showDots && projectedDots.map((p, i) => p && (

@@ -30,6 +30,9 @@ export function CoverageAnalyticsPanel() {
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'map' | 'diff' | 'hospital'>('map');
   const [showDots, setShowDots] = useState(false);
+  const [showHospitals, setShowHospitals] = useState(false);
+  const [hospitalTiers, setHospitalTiers] = useState<('r'|'y'|'g')[]>(['r','y','g']);
+  const [hospitalStats, setHospitalStats] = useState<{red:number;yellow:number;green:number;total:number}|null>(null);
   const [colorMetric, setColorMetric] = useState<'score' | 'providers' | 'plans' | 'msas'>('score');
   const [selectedState, setSelectedState] = useState<string | null>(null);
 
@@ -135,6 +138,11 @@ export function CoverageAnalyticsPanel() {
                   className="w-3.5 h-3.5 rounded" />
                 Show priority MSA markers
               </label>
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
+                <input type="checkbox" checked={showHospitals} onChange={e => setShowHospitals(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded" />
+                Show hospital coverage pins
+              </label>
             </div>
             {selectedState && (
               <button onClick={() => setSelectedState(null)}
@@ -144,12 +152,35 @@ export function CoverageAnalyticsPanel() {
             )}
           </div>
 
+          {/* Hospital tier legend — shown when pins active */}
+          {showHospitals && hospitalStats && (
+            <div className="flex items-center gap-4 px-3 py-2 bg-white rounded-lg border border-gray-200 text-xs flex-wrap">
+              <span className="font-medium text-gray-600">Hospital coverage pins:</span>
+              {([['r','red','#ef4444','Poor','≤1 network'],['y','yellow','#f59e0b','Decent','2–3 networks'],['g','green','#22c55e','Strong','4 networks + MRF']] as const).map(([tier, key, color, label, desc]) => (
+                <label key={tier} className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input type="checkbox"
+                    checked={hospitalTiers.includes(tier)}
+                    onChange={e => setHospitalTiers(prev => e.target.checked ? [...prev, tier] : prev.filter(t => t !== tier))}
+                    className="w-3 h-3" />
+                  <span className="w-3 h-3 rounded-full inline-block" style={{background: color}} />
+                  <span className="text-gray-700">{label}</span>
+                  <span className="text-gray-400">({hospitalStats[key as 'red'|'yellow'|'green'].toLocaleString()} · {desc})</span>
+                </label>
+              ))}
+              <span className="ml-auto text-gray-400">{hospitalStats.total.toLocaleString()} total</span>
+            </div>
+          )}
+
           <PipelineCoverageMap
             msaDots={MSA_BUBBLE_DATA}
             showDots={showDots}
+            showHospitals={showHospitals}
+            hospitalTiers={hospitalTiers}
             selectedNetwork={selectedNetwork}
             colorMetric={colorMetric}
             onStateClick={setSelectedState}
+            onHospitalStats={setHospitalStats}
+            selectedState={selectedState}
           />
 
           {/* State drill-down */}
