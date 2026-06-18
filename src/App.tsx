@@ -15,6 +15,7 @@ import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
 import { GanttView } from './components/gantt/GanttView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 import { HospitalCoverageView } from './components/hospitals/HospitalCoverageView';
+import { PipelineIntelligenceView } from './components/hospitals/PipelineIntelligenceView';
 // ProductionProgressView archived — see ProductionProgressView.ARCHIVED.tsx
 import { HospitalMrfPipelineView } from './components/hospitals/HospitalMrfPipelineView';
 import { CallNotesView } from './components/call-notes/CallNotesView';
@@ -85,6 +86,7 @@ function AppInner({
         {activeView === 'payer-networks' && <ProductionNetworksView />}
         {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
         {activeView === 'hospital-coverage' && <HospitalCoverageView />}
+        {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}
         {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
         {activeView === 'call-notes' && <CallNotesView />}
         {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}

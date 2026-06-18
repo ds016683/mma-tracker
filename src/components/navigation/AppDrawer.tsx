@@ -3,7 +3,7 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties, Grid3x3
+  TableProperties, Grid3x3, GitBranch
 } from 'lucide-react';
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
@@ -28,7 +28,8 @@ export type AppView =
   | 'tier-shift-summary'
   | 'msa-carrier-coverage'
   | 'carrier-ranking'
-  | 'core-buca-carrier-ranking';
+  | 'core-buca-carrier-ranking'
+  | 'pipeline-intelligence';
 
 const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
 
@@ -70,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2 },
       { id: 'hospital-coverage',        label: 'Hospital Coverage',              icon: Map },
       { id: 'hospital-mrf-pipeline',    label: 'Hospital MRF Pipeline',          icon: Activity },
+      { id: 'pipeline-intelligence',    label: 'Pipeline Intelligence',          icon: GitBranch, badge: 'New' },
     ],
   },
   {
