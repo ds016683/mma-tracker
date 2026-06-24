@@ -43,7 +43,7 @@ function formatDate(iso: string): string {
 }
 
 function isOtherDoc(doc: ReleaseDocument): boolean {
-  return OTHER_DOCS_PATTERN.test(doc.file_name);
+  return OTHER_DOCS_PATTERN.test(doc.file_name) || doc.version_number === 0 || doc.storage_path?.startsWith('other/');
 }
 
 export function ReportsAndReleaseNotesView() {
