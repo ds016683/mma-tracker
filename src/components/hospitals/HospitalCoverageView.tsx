@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Download, Filter, ChevronUp, ChevronDown, MapPin, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase/client';
 
 interface Hospital {
   id: number;
@@ -21,10 +22,8 @@ interface Hospital {
   commercial_payer_mix: number | null;
   ownership_type: string;
   active_mrf: boolean;
-  mrf_failure_reason: string;
   latest_production_version: string;
   mrf_download_status: string;
-  mrf_processing_status: string;
   qa_status: string;
 }
 
@@ -39,11 +38,11 @@ interface CollapsedHospital {
   bed_size: number | null;
   net_patient_revenue: number | null;
   active_mrf: boolean;
-  mrf_failure_reason: string;
   latest_production_version: string;
-  displayState: string;
-  displayMsa: string;
-  locationCount: number;
+  // Collapsed fields
+  displayState: string;   // actual state or 'XX'
+  displayMsa: string;     // actual MSA or count pill sentinel
+  locationCount: number;  // number of raw rows
   locations: Array<{ state: string; cbsa_name: string; cbsa_code: string }>;
 }
 
@@ -80,79 +79,6 @@ function fmtVersion(v: string) {
   return m ? m[1] : v.split('_').slice(-1)[0];
 }
 
-/** Minimal RFC-4180-compliant CSV parser */
-function parseCsv(text: string): Record<string, string>[] {
-  const lines: string[] = [];
-  let cur = '';
-  let inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '"') {
-      if (inQ && text[i + 1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if ((ch === '\n' || ch === '\r') && !inQ) {
-      if (ch === '\r' && text[i + 1] === '\n') i++;
-      lines.push(cur); cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  if (cur) lines.push(cur);
-
-  const splitRow = (row: string) => {
-    const cols: string[] = [];
-    let val = ''; let inq = false;
-    for (let i = 0; i < row.length; i++) {
-      const c = row[i];
-      if (c === '"') {
-        if (inq && row[i + 1] === '"') { val += '"'; i++; }
-        else inq = !inq;
-      } else if (c === ',' && !inq) { cols.push(val); val = ''; }
-      else val += c;
-    }
-    cols.push(val);
-    return cols;
-  };
-
-  if (lines.length < 2) return [];
-  const headers = splitRow(lines[0]);
-  return lines.slice(1).filter(l => l.trim()).map(l => {
-    const cols = splitRow(l);
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => { obj[h.trim()] = (cols[i] ?? '').trim(); });
-    return obj;
-  });
-}
-
-function rowToHospital(r: Record<string, string>): Hospital {
-  return {
-    id: parseInt(r.id) || 0,
-    npi: parseInt(r.npi) || 0,
-    cms_number: r.cms_number || '',
-    facility_name: r.facility_name || '',
-    facility_type: r.facility_type || '',
-    system_affiliation: r.system_affiliation || '',
-    address: r.address || '',
-    city: r.city || '',
-    state: r.state || '',
-    zip: r.zip || '',
-    cbsa_code: r.cbsa_code || '',
-    cbsa_name: r.cbsa_name || '',
-    cbsa_type: r.cbsa_type || '',
-    urban_rural: r.urban_rural || '',
-    bed_size: r.bed_size ? parseInt(r.bed_size) : null,
-    net_patient_revenue: r.net_patient_revenue ? parseFloat(r.net_patient_revenue) : null,
-    commercial_payer_mix: r.commercial_payer_mix ? parseFloat(r.commercial_payer_mix) : null,
-    ownership_type: r.ownership_type || '',
-    active_mrf: r.active_mrf === 'true',
-    mrf_failure_reason: r.mrf_failure_reason || '',
-    latest_production_version: r.latest_production_version || '',
-    mrf_download_status: r.mrf_download_status || '',
-    mrf_processing_status: r.mrf_processing_status || '',
-    qa_status: r.qa_status || '',
-  };
-}
-
 function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
   const map = new Map<number, Hospital[]>();
   for (const row of rows) {
@@ -166,7 +92,7 @@ function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
     const states = [...new Set(group.map(r => r.state).filter(Boolean))];
     const displayState = states.length === 1 ? states[0] : 'XX';
     const locationCount = group.length;
-    const displayMsa = locationCount === 1 ? (first.cbsa_name || '—') : `${locationCount} Locations`;
+    const displayMsa = locationCount === 1 ? (first.cbsa_name || '—') : `${locationCount} MSAs`;
     const locations = group.map(r => ({
       state: r.state,
       cbsa_name: r.cbsa_name,
@@ -183,7 +109,6 @@ function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
       bed_size: first.bed_size,
       net_patient_revenue: first.net_patient_revenue,
       active_mrf: group.some(r => r.active_mrf),
-      mrf_failure_reason: first.mrf_failure_reason || '',
       latest_production_version: first.latest_production_version,
       displayState,
       displayMsa,
@@ -196,8 +121,10 @@ function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
 }
 
 export function HospitalCoverageView() {
-  const [allRows, setAllRows] = useState<Hospital[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [collapsed, setCollapsed] = useState<CollapsedHospital[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Modal state
   const [modalRow, setModalRow] = useState<CollapsedHospital | null>(null);
 
   // Filters
@@ -210,50 +137,33 @@ export function HospitalCoverageView() {
   const [sortField, setSortField] = useState<SortField>('net_patient_revenue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  // Load CSV once on mount
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    fetch('https://raw.githubusercontent.com/ds016683/mma-tracker/main/public/data/tracker_hospital_directory_reasons.csv')
-      .then(r => r.text())
-      .then(text => {
-        const parsed = parseCsv(text).map(rowToHospital);
-        setAllRows(parsed);
-      })
-      .catch(err => console.error('Failed to load hospital directory CSV', err))
-      .finally(() => setLoading(false));
-  }, []);
 
-  // Client-side filter + sort + collapse
-  const collapsed = useMemo(() => {
-    let rows = allRows;
-    if (stateFilter)          rows = rows.filter(r => r.state === stateFilter);
-    if (activeMrfOnly)        rows = rows.filter(r => r.active_mrf);
-    if (noMrfOnly)            rows = rows.filter(r => !r.active_mrf);
-    if (typeFilter)           rows = rows.filter(r => r.facility_type === typeFilter);
-    if (nameSearch.trim())    rows = rows.filter(r => r.facility_name.toLowerCase().includes(nameSearch.trim().toLowerCase()));
-    if (cbsaSearch.trim())    rows = rows.filter(r => r.cbsa_name.toLowerCase().includes(cbsaSearch.trim().toLowerCase()));
+    // Fetch up to 5K rows, collapse client-side
+    let q = supabase
+      .from('hospital_directory')
+      .select('*', { count: 'exact' })
+      .limit(5000);
 
-    const c = collapseByNpi(rows);
+    if (stateFilter) q = q.eq('state', stateFilter);
+    if (activeMrfOnly) q = q.eq('active_mrf', true);
+    if (noMrfOnly) q = q.eq('active_mrf', false);
+    if (typeFilter) q = q.eq('facility_type', typeFilter);
+    if (nameSearch.trim()) q = q.ilike('facility_name', `%${nameSearch.trim()}%`);
+    if (cbsaSearch.trim()) q = q.ilike('cbsa_name', `%${cbsaSearch.trim()}%`);
 
-    c.sort((a, b) => {
-      let av: number | string | null = null;
-      let bv: number | string | null = null;
-      if (sortField === 'net_patient_revenue') { av = a.net_patient_revenue; bv = b.net_patient_revenue; }
-      else if (sortField === 'bed_size')       { av = a.bed_size;            bv = b.bed_size; }
-      else if (sortField === 'facility_name')  { av = a.facility_name;       bv = b.facility_name; }
-      else if (sortField === 'state')          { av = a.displayState;        bv = b.displayState; }
+    q = q.order(sortField, { ascending: sortDir === 'asc', nullsFirst: false });
 
-      if (av === null && bv === null) return 0;
-      if (av === null) return 1;
-      if (bv === null) return -1;
-      if (typeof av === 'string' && typeof bv === 'string') {
-        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-      }
-      return sortDir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number);
-    });
+    const { data, error } = await q;
+    if (!error && data) {
+      setCollapsed(collapseByNpi(data));
+    }
 
-    return c;
-  }, [allRows, stateFilter, cbsaSearch, nameSearch, activeMrfOnly, noMrfOnly, typeFilter, sortField, sortDir]);
+    setLoading(false);
+  }, [stateFilter, cbsaSearch, nameSearch, activeMrfOnly, noMrfOnly, typeFilter, sortField, sortDir]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const toggleActiveMrf = () => {
     setActiveMrfOnly(v => { if (!v) setNoMrfOnly(false); return !v; });
@@ -267,16 +177,28 @@ export function HospitalCoverageView() {
     else { setSortField(field); setSortDir('desc'); }
   };
 
-  const exportCSV = () => {
-    if (collapsed.length === 0) return;
-    const headers = ['NPI','CMS #','Facility Name','Type','System','State','Location','Urban/Rural','NPR','Active MRF','MRF Usage Barrier','Production Version'];
-    const rows = collapsed.map(h => [
+  const exportCSV = async () => {
+    // Export raw records for full fidelity
+    let q = supabase.from('hospital_directory').select('*').limit(10000);
+    if (stateFilter) q = q.eq('state', stateFilter);
+    if (activeMrfOnly) q = q.eq('active_mrf', true);
+    if (noMrfOnly) q = q.eq('active_mrf', false);
+    if (typeFilter) q = q.eq('facility_type', typeFilter);
+    if (nameSearch.trim()) q = q.ilike('facility_name', `%${nameSearch.trim()}%`);
+    if (cbsaSearch.trim()) q = q.ilike('cbsa_name', `%${cbsaSearch.trim()}%`);
+    q = q.order(sortField, { ascending: sortDir === 'asc', nullsFirst: false });
+
+    const { data } = await q;
+    if (!data || data.length === 0) return;
+
+    const headers = ['NPI','CMS #','Facility Name','Type','System','City','State','ZIP','MSA','Urban/Rural','Beds','NPR','Comm Mix','Ownership','Active MRF','Production Version'];
+    const rows = data.map((h: Hospital) => [
       h.npi, h.cms_number, h.facility_name, h.facility_type, h.system_affiliation,
-      h.displayState, h.displayMsa, h.urban_rural,
-      h.net_patient_revenue ?? '', h.active_mrf ? 'Yes' : 'No',
-      h.mrf_failure_reason, fmtVersion(h.latest_production_version)
+      h.city, h.state, h.zip, h.cbsa_name, h.urban_rural,
+      h.bed_size ?? '', h.net_patient_revenue ?? '', h.commercial_payer_mix ?? '',
+      h.ownership_type, h.active_mrf ? 'Yes' : 'No', fmtVersion(h.latest_production_version)
     ]);
-    const csv = [headers, ...rows].map(r => r.map((v) => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const csv = [headers, ...rows].map(r => r.map((v: unknown) => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url;
@@ -315,12 +237,14 @@ export function HospitalCoverageView() {
       {/* Filter bar */}
       <div className="border-b border-gray-200 bg-white px-6 py-3">
         <div className="flex flex-wrap items-center gap-3">
+          {/* State */}
           <select value={stateFilter} onChange={e => setStateFilter(e.target.value)}
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#009DE0] focus:outline-none">
             <option value="">All States</option>
             {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          {/* MSA search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Search MSA / metro..." value={cbsaSearch}
@@ -328,6 +252,7 @@ export function HospitalCoverageView() {
               className="rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:border-[#009DE0] focus:outline-none w-52" />
           </div>
 
+          {/* Name search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Search hospital name..." value={nameSearch}
@@ -335,12 +260,14 @@ export function HospitalCoverageView() {
               className="rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:border-[#009DE0] focus:outline-none w-56" />
           </div>
 
+          {/* Facility type */}
           <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#009DE0] focus:outline-none">
             <option value="">All Types</option>
             {Object.keys(FACILITY_TYPE_COLORS).map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
+          {/* Active MRF toggle */}
           <button onClick={toggleActiveMrf}
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
               activeMrfOnly
@@ -361,6 +288,7 @@ export function HospitalCoverageView() {
             No Hospital MRF
           </button>
 
+          {/* Stats */}
           <div className="ml-auto flex items-center gap-3 text-xs text-gray-400">
             <span>{uniqueNpiCount.toLocaleString()} unique NPIs</span>
           </div>
@@ -385,14 +313,13 @@ export function HospitalCoverageView() {
                   onClick={() => toggleSort('state')}>
                   State <SortIcon field="state" />
                 </th>
-                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Location</th>
+                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">MSA</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Urban/Rural</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41]"
                   onClick={() => toggleSort('net_patient_revenue')}>
                   NPR <SortIcon field="net_patient_revenue" />
                 </th>
                 <th className="border-b border-gray-200 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">Active MRF</th>
-                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">MRF Usage Barrier</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Production</th>
               </tr>
             </thead>
@@ -408,8 +335,8 @@ export function HospitalCoverageView() {
                       isMulti ? 'cursor-pointer hover:bg-blue-50/40' : 'hover:bg-blue-50/20'
                     }`}
                   >
-                    <td className="px-4 py-2.5 max-w-[200px]">
-                      <div className="font-medium text-[#001A41] truncate" title={h.facility_name}>{h.facility_name}</div>
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium text-[#001A41]">{h.facility_name}</div>
                       {h.system_affiliation && (
                         <div className="text-xs text-gray-400">{h.system_affiliation}</div>
                       )}
@@ -429,7 +356,7 @@ export function HospitalCoverageView() {
                       {isMulti ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                           <MapPin className="h-3 w-3" />
-                          {h.locationCount} Locations
+                          {h.locationCount} MSAs
                         </span>
                       ) : (
                         <span className="truncate block" title={h.displayMsa}>{h.displayMsa}</span>
@@ -450,11 +377,6 @@ export function HospitalCoverageView() {
                         ? <span className="inline-block h-2 w-2 rounded-full bg-green-500" title="Active MRF" />
                         : <span className="inline-block h-2 w-2 rounded-full bg-gray-200" title="No MRF" />
                       }
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[180px]">
-                      {h.mrf_failure_reason && h.mrf_failure_reason !== 'NA'
-                        ? <span className="truncate block text-red-500" title={h.mrf_failure_reason}>{h.mrf_failure_reason}</span>
-                        : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-gray-400">
                       {fmtVersion(h.latest_production_version)}
@@ -486,43 +408,18 @@ export function HospitalCoverageView() {
             <h2 className="mb-1 text-base font-bold text-[#001A41]">{modalRow.facility_name}</h2>
             <p className="mb-4 text-xs text-gray-500">NPI {modalRow.npi} · {modalRow.locationCount} locations</p>
             <div className="divide-y divide-gray-100">
-              {(() => {
-                const countMap = new Map<string, number>();
-                for (const loc of modalRow.locations) {
-                  const key = loc.cbsa_name || '—';
-                  countMap.set(key, (countMap.get(key) || 0) + 1);
-                }
-                const seen = new Set<string>();
-                const deduped = modalRow.locations.filter(loc => {
-                  const key = loc.cbsa_name || '—';
-                  if (seen.has(key)) return false;
-                  seen.add(key);
-                  return true;
-                });
-                deduped.sort((a, b) => {
-                  const aCount = countMap.get(a.cbsa_name || '—') || 1;
-                  const bCount = countMap.get(b.cbsa_name || '—') || 1;
-                  if (aCount > 1 && bCount === 1) return -1;
-                  if (aCount === 1 && bCount > 1) return 1;
-                  return (a.cbsa_name || '').localeCompare(b.cbsa_name || '');
-                });
-                return deduped.map((loc, idx) => {
-                  const count = countMap.get(loc.cbsa_name || '—') || 1;
-                  const label = count > 1 ? `${loc.cbsa_name || '—'} (${count})` : (loc.cbsa_name || '—');
-                  return (
-                    <div key={idx} className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5 text-[#009DE0]" />
-                        <span className="text-sm text-gray-700">{label}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-400">
-                        <span className="font-semibold text-gray-600">{loc.state}</span>
-                        {loc.cbsa_code && <span className="font-mono">{loc.cbsa_code}</span>}
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
+              {modalRow.locations.map((loc, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-[#009DE0]" />
+                    <span className="text-sm text-gray-700">{loc.cbsa_name || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <span className="font-semibold text-gray-600">{loc.state}</span>
+                    {loc.cbsa_code && <span className="font-mono">{loc.cbsa_code}</span>}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
