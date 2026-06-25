@@ -38,6 +38,7 @@ interface CollapsedHospital {
   bed_size: number | null;
   net_patient_revenue: number | null;
   active_mrf: boolean;
+  mrf_usage_barrier: string;
   latest_production_version: string;
   // Collapsed fields
   displayState: string;   // actual state or 'XX'
@@ -92,7 +93,7 @@ function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
     const states = [...new Set(group.map(r => r.state).filter(Boolean))];
     const displayState = states.length === 1 ? states[0] : 'XX';
     const locationCount = group.length;
-    const displayMsa = locationCount === 1 ? (first.cbsa_name || '—') : `${locationCount} MSAs`;
+    const displayMsa = locationCount === 1 ? (first.cbsa_name || '—') : `${locationCount} Locations`;
     const locations = group.map(r => ({
       state: r.state,
       cbsa_name: r.cbsa_name,
@@ -109,6 +110,7 @@ function collapseByNpi(rows: Hospital[]): CollapsedHospital[] {
       bed_size: first.bed_size,
       net_patient_revenue: first.net_patient_revenue,
       active_mrf: group.some(r => r.active_mrf),
+      mrf_usage_barrier: first.qa_status || '',
       latest_production_version: first.latest_production_version,
       displayState,
       displayMsa,
@@ -303,7 +305,7 @@ export function HospitalCoverageView() {
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 bg-gray-50 z-10">
               <tr>
-                <th className="border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41]"
+                <th className="border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41] max-w-[200px]" style={{width:'180px'}}
                   onClick={() => toggleSort('facility_name')}>
                   Facility Name <SortIcon field="facility_name" />
                 </th>
@@ -313,13 +315,14 @@ export function HospitalCoverageView() {
                   onClick={() => toggleSort('state')}>
                   State <SortIcon field="state" />
                 </th>
-                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">MSA</th>
+                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Location</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Urban/Rural</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41]"
                   onClick={() => toggleSort('net_patient_revenue')}>
                   NPR <SortIcon field="net_patient_revenue" />
                 </th>
                 <th className="border-b border-gray-200 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">Active MRF</th>
+                <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">MRF Usage Barrier</th>
                 <th className="border-b border-gray-200 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Production</th>
               </tr>
             </thead>
@@ -335,8 +338,8 @@ export function HospitalCoverageView() {
                       isMulti ? 'cursor-pointer hover:bg-blue-50/40' : 'hover:bg-blue-50/20'
                     }`}
                   >
-                    <td className="px-4 py-2.5">
-                      <div className="font-medium text-[#001A41]">{h.facility_name}</div>
+                    <td className="px-4 py-2.5 max-w-[200px]" style={{width:'180px'}}>
+                      <div className="font-medium text-[#001A41] truncate" title={h.facility_name}>{h.facility_name}</div>
                       {h.system_affiliation && (
                         <div className="text-xs text-gray-400">{h.system_affiliation}</div>
                       )}
@@ -356,7 +359,7 @@ export function HospitalCoverageView() {
                       {isMulti ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                           <MapPin className="h-3 w-3" />
-                          {h.locationCount} MSAs
+                          {h.locationCount} Locations
                         </span>
                       ) : (
                         <span className="truncate block" title={h.displayMsa}>{h.displayMsa}</span>
@@ -377,6 +380,11 @@ export function HospitalCoverageView() {
                         ? <span className="inline-block h-2 w-2 rounded-full bg-green-500" title="Active MRF" />
                         : <span className="inline-block h-2 w-2 rounded-full bg-gray-200" title="No MRF" />
                       }
+                    </td>
+                    <td className="px-3 py-2.5 text-xs max-w-[180px]">
+                      {h.mrf_usage_barrier && h.mrf_usage_barrier !== 'NA'
+                        ? <span className="truncate block text-red-500" title={h.mrf_usage_barrier}>{h.mrf_usage_barrier}</span>
+                        : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2.5 font-mono text-xs text-gray-400">
                       {fmtVersion(h.latest_production_version)}
@@ -408,18 +416,42 @@ export function HospitalCoverageView() {
             <h2 className="mb-1 text-base font-bold text-[#001A41]">{modalRow.facility_name}</h2>
             <p className="mb-4 text-xs text-gray-500">NPI {modalRow.npi} · {modalRow.locationCount} locations</p>
             <div className="divide-y divide-gray-100">
-              {modalRow.locations.map((loc, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-[#009DE0]" />
-                    <span className="text-sm text-gray-700">{loc.cbsa_name || '—'}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="font-semibold text-gray-600">{loc.state}</span>
-                    {loc.cbsa_code && <span className="font-mono">{loc.cbsa_code}</span>}
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const countMap = new Map<string, number>();
+                for (const loc of modalRow.locations) {
+                  const key = loc.cbsa_name || '—';
+                  countMap.set(key, (countMap.get(key) || 0) + 1);
+                }
+                const seen = new Set<string>();
+                const deduped = modalRow.locations.filter(loc => {
+                  const key = loc.cbsa_name || '—';
+                  if (seen.has(key)) return false;
+                  seen.add(key); return true;
+                });
+                deduped.sort((a, b) => {
+                  const aC = countMap.get(a.cbsa_name || '—') ?? 1;
+                  const bC = countMap.get(b.cbsa_name || '—') ?? 1;
+                  if (aC > 1 && bC === 1) return -1;
+                  if (aC === 1 && bC > 1) return 1;
+                  return (a.cbsa_name || '').localeCompare(b.cbsa_name || '');
+                });
+                return deduped.map((loc, idx) => {
+                  const count = countMap.get(loc.cbsa_name || '—') ?? 1;
+                  const label = count > 1 ? `${loc.cbsa_name || '—'} (${count})` : (loc.cbsa_name || '—');
+                  return (
+                    <div key={idx} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-[#009DE0]" />
+                        <span className="text-sm text-gray-700">{label}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <span className="font-semibold text-gray-600">{loc.state}</span>
+                        {loc.cbsa_code && <span className="font-mono">{loc.cbsa_code}</span>}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
