@@ -213,7 +213,7 @@ export function HospitalCoverageView() {
   // Load CSV once on mount
   useEffect(() => {
     setLoading(true);
-    fetch('/data/tracker_hospital_directory_reasons.csv')
+    fetch(`${import.meta.env.BASE_URL}data/tracker_hospital_directory_reasons.csv`)
       .then(r => r.text())
       .then(text => {
         const parsed = parseCsv(text).map(rowToHospital);
