@@ -305,7 +305,7 @@ export function HospitalCoverageView() {
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 bg-gray-50 z-10">
               <tr>
-                <th className="border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41] max-w-[280px]" style={{width:'260px'}}
+                <th className="border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 cursor-pointer hover:text-[#001A41] max-w-[360px]" style={{width:'340px'}}
                   onClick={() => toggleSort('facility_name')}>
                   Facility Name <SortIcon field="facility_name" />
                 </th>
@@ -338,7 +338,7 @@ export function HospitalCoverageView() {
                       isMulti ? 'cursor-pointer hover:bg-blue-50/40' : 'hover:bg-blue-50/20'
                     }`}
                   >
-                    <td className="px-4 py-2.5 max-w-[280px]" style={{width:'260px'}}>
+                    <td className="px-4 py-2.5 max-w-[360px]" style={{width:'340px'}}>
                       <div className="font-medium text-[#001A41] truncate" title={h.facility_name}>{h.facility_name}</div>
                       {h.system_affiliation && (
                         <div className="text-xs text-gray-400">{h.system_affiliation}</div>
