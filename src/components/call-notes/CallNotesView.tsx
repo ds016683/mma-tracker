@@ -176,27 +176,27 @@ export function CallNotesView() {
           </div>
           <div className="flex flex-col gap-2 items-end">
             {/* Meeting type pills */}
-            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+            <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
               {([['regular', 'Regular Meetings'], ['quarterly', 'Quarterly Strategy']] as const).map(([val, label]) => (
                 <button key={val} onClick={() => { setMeetingType(val); setFilter('all'); setExpandedId(null); }}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                    meetingType === val ? 'bg-[#224057] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    meetingType === val ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
                   }`}>
                   {label}
                 </button>
               ))}
-            </div>
+            </nav>
             {/* Secondary filter */}
-            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+            <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
               {(['all', 'peter', '8am'] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all capitalize ${
-                    filter === f ? 'bg-[#234D8B] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    filter === f ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
                   }`}>
                   {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All'}
                 </button>
               ))}
-            </div>
+            </nav>
           </div>
         </div>
       </div>
