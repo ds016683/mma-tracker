@@ -314,7 +314,7 @@ export function StrategicPlanView() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Timeline Bars</p>
                 <div className="space-y-1.5">
                   {selectedTrack.bars.map((bar, _i) => (
-                    <div key={i} className="flex items-center gap-2">
+                    <div key={_i} className="flex items-center gap-2">
                       <div className={`h-2.5 w-2.5 rounded-sm flex-shrink-0 ${COLORS[bar.color].bar}`} />
                       <span className="text-xs text-gray-600">{bar.label}</span>
                       <span className="text-[10px] text-gray-400 ml-auto">{bar.start}{bar.end !== bar.start ? `–${bar.end}` : ''}</span>
