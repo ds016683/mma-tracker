@@ -125,6 +125,7 @@ function NoteCard({ note, expanded, onToggle }: { note: CallNote; expanded: bool
 export function CallNotesView() {
   const [notes, setNotes] = useState<CallNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meetingType, setMeetingType] = useState<'regular' | 'quarterly'>('regular');
   const [filter, setFilter] = useState<'all' | 'peter' | '8am'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
@@ -146,7 +147,13 @@ export function CallNotesView() {
     load();
   }, []);
 
-  const filtered = notes.filter(n => {
+  const byType = notes.filter(n => {
+    const s = (n.subject || '').toLowerCase();
+    const isQuarterly = s.includes('quarterly') || s.includes('strategy') || s.includes('qbr');
+    return meetingType === 'quarterly' ? isQuarterly : !isQuarterly;
+  });
+
+  const filtered = byType.filter(n => {
     if (filter === 'peter') return n.has_peter;
     if (filter === '8am') return n.is_8am;
     return true;
@@ -161,22 +168,35 @@ export function CallNotesView() {
       <div className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-[#224057]">Call Notes</h1>
+            <h1 className="text-lg font-bold text-[#224057]">Meeting Notes</h1>
             <p className="text-xs text-gray-400 mt-0.5">
               Granola-powered · MMA meetings · Last 35 days
               {lastSync && <> · Synced {new Date(lastSync).toLocaleDateString()}</>}
             </p>
           </div>
-          {/* Filter toggle */}
-          <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
-            {(['all', 'peter', '8am'] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all capitalize ${
-                  filter === f ? 'bg-[#224057] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}>
-                {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All MMA'}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2 items-end">
+            {/* Meeting type pills */}
+            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+              {([['regular', 'Regular Meetings'], ['quarterly', 'Quarterly Strategy']] as const).map(([val, label]) => (
+                <button key={val} onClick={() => { setMeetingType(val); setFilter('all'); setExpandedId(null); }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    meetingType === val ? 'bg-[#224057] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* Secondary filter */}
+            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+              {(['all', 'peter', '8am'] as const).map(f => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all capitalize ${
+                    filter === f ? 'bg-[#234D8B] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}>
+                  {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -184,9 +204,9 @@ export function CallNotesView() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {loading ? (
-          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading call notes...</div>
+          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading meeting notes...</div>
         ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No calls found for this filter.</div>
+          <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No meetings found for this filter.</div>
         ) : (
           <div className="space-y-3 max-w-4xl">
             {withNotes.map(note => (
