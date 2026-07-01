@@ -296,7 +296,7 @@ const QUARTERLY_MEETINGS: QuarterlyMeeting[] = [
     attendees: 'Peter Schultz, Chris Kalvig, Jeremy Matson, Chris Hart, David Smith, Tanner Johnson',
     summary: JUN18_SUMMARY,
     notes: JUN18_NOTES,
-    recordingUrl: null, // pending — David to provide Zoom URL
+    recordingUrl: 'https://github.com/ds016683/mma-tracker/releases/download/media-v1/mma-june-18.mp4',
     timestamps: [
       { time: '0:00',  label: 'Welcome and framing — year in review' },
       { time: '8:00',  label: 'V9 pipeline results: 2.07T elements, 200B retained' },
