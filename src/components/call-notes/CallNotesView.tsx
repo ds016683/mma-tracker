@@ -126,7 +126,6 @@ export function CallNotesView() {
   const [notes, setNotes] = useState<CallNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [meetingType, setMeetingType] = useState<'regular' | 'quarterly'>('regular');
-  const [filter, setFilter] = useState<'all' | 'peter' | '8am'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
@@ -153,11 +152,7 @@ export function CallNotesView() {
     return meetingType === 'quarterly' ? isQuarterly : !isQuarterly;
   });
 
-  const filtered = byType.filter(n => {
-    if (filter === 'peter') return n.has_peter;
-    if (filter === '8am') return n.is_8am;
-    return true;
-  });
+  const filtered = byType;
 
   const withNotes = filtered.filter(n => n.summary_markdown);
   const withoutNotes = filtered.filter(n => !n.summary_markdown);
@@ -177,7 +172,7 @@ export function CallNotesView() {
       <div className="border-b border-gray-200 bg-[#f5f6f8] px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
           {([['regular', 'Regular Meetings'], ['quarterly', 'Quarterly Strategy']] as const).map(([val, label]) => (
-            <button key={val} onClick={() => { setMeetingType(val); setFilter('all'); setExpandedId(null); }}
+            <button key={val} onClick={() => { setMeetingType(val); setExpandedId(null); }}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 meetingType === val ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
               }`}>
@@ -185,16 +180,7 @@ export function CallNotesView() {
             </button>
           ))}
         </nav>
-        <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
-          {(['all', 'peter', '8am'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                filter === f ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
-              }`}>
-              {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All'}
-            </button>
-          ))}
-        </nav>
+
       </div>
 
       {/* Content */}
