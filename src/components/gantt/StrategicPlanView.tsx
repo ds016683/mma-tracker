@@ -242,7 +242,7 @@ export function StrategicPlanView() {
           </div>
 
           {/* Rows */}
-          {filtered.map((track, i) => (
+          {filtered.map((track) => (
             <div
               key={track.track}
               onClick={() => setSelectedTrack(selectedTrack?.track === track.track ? null : track)}
