@@ -166,39 +166,35 @@ export function CallNotesView() {
     <div className="flex h-screen flex-col bg-[#f5f6f8]">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-[#224057]">Meeting Notes</h1>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Granola-powered · MMA meetings · Last 35 days
-              {lastSync && <> · Synced {new Date(lastSync).toLocaleDateString()}</>}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 items-end">
-            {/* Meeting type pills */}
-            <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
-              {([['regular', 'Regular Meetings'], ['quarterly', 'Quarterly Strategy']] as const).map(([val, label]) => (
-                <button key={val} onClick={() => { setMeetingType(val); setFilter('all'); setExpandedId(null); }}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    meetingType === val ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
-                  }`}>
-                  {label}
-                </button>
-              ))}
-            </nav>
-            {/* Secondary filter */}
-            <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
-              {(['all', 'peter', '8am'] as const).map(f => (
-                <button key={f} onClick={() => setFilter(f)}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    filter === f ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
-                  }`}>
-                  {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All'}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
+        <h1 className="text-lg font-bold text-[#224057]">Meeting Notes</h1>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Granola-powered · MMA meetings · Last 35 days
+          {lastSync && <> · Synced {new Date(lastSync).toLocaleDateString()}</>}
+        </p>
+      </div>
+
+      {/* Nav bar — sits on gray bg so tint is visible */}
+      <div className="border-b border-gray-200 bg-[#f5f6f8] px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
+          {([['regular', 'Regular Meetings'], ['quarterly', 'Quarterly Strategy']] as const).map(([val, label]) => (
+            <button key={val} onClick={() => { setMeetingType(val); setFilter('all'); setExpandedId(null); }}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                meetingType === val ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
+              }`}>
+              {label}
+            </button>
+          ))}
+        </nav>
+        <nav className="flex gap-1 rounded-lg bg-[#224057]/5 p-1">
+          {(['all', 'peter', '8am'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                filter === f ? 'bg-white text-[#224057] shadow-sm' : 'text-[#224057]/60 hover:text-[#224057]'
+              }`}>
+              {f === 'peter' ? 'Peter Only' : f === '8am' ? '8 AM Calls' : 'All'}
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Content */}
