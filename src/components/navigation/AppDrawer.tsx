@@ -10,6 +10,7 @@ import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
 export type AppView =
+  | 'strategic-plan'
   | 'tracker'
   | 'project-plan'
   | 'timeline'
@@ -54,6 +55,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'project-plan',          label: 'Project Plan',    icon: FileText },
+      { id: 'strategic-plan',        label: '2H 2026 Strategic Plan', icon: GanttChart },
       { id: 'timeline',              label: 'Gantt Chart',     icon: GanttChart },
       { id: 'tracker',               label: 'Work Orders',     icon: LayoutGrid },
       { id: 'call-notes',            label: 'Meeting Notes',   icon: NotebookPen },

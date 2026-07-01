@@ -13,6 +13,7 @@ import { ProductionNetworksView } from './components/starset/ProductionNetworksV
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 import { ProjectPlanView } from './components/project-plan/ProjectPlanView';
 import { GanttView } from './components/gantt/GanttView';
+import { StrategicPlanView } from './components/gantt/StrategicPlanView';
 import { PromiseHealthPlanView } from './components/promise/PromiseHealthPlanView';
 import { HospitalCoverageView } from './components/hospitals/HospitalCoverageView';
 import { PipelineIntelligenceView } from './components/hospitals/PipelineIntelligenceView';
@@ -75,6 +76,11 @@ function AppInner({
           </div>
         )}
         {activeView === 'project-plan' && <ProjectPlanView />}
+        {activeView === 'strategic-plan' && (
+          <div className="flex-1 overflow-hidden">
+            <StrategicPlanView />
+          </div>
+        )}
         {activeView === 'timeline' && (
           <div className="p-4 sm:p-6">
             <GanttView />
