@@ -297,7 +297,22 @@ const QUARTERLY_MEETINGS: QuarterlyMeeting[] = [
     summary: JUN18_SUMMARY,
     notes: JUN18_NOTES,
     recordingUrl: 'https://mma-video-proxy.vercel.app/mma-june-18.mp4',
-    timestamps: [],
+    timestamps: [
+      { time: '0:10:31', label: 'Meeting kickoff with Rick' },
+      { time: '0:40:43', label: 'AI and machine capabilities discussion' },
+      { time: '0:48:54', label: 'Data schemas and carrier updates' },
+      { time: '0:52:56', label: 'GitHub repository and database architecture' },
+      { time: '0:57:05', label: 'Carrier networks and BCBS demo' },
+      { time: '1:11:32', label: 'Back office tooling and UI discussion' },
+      { time: '1:36:02', label: 'Strategic narrative and platform evolution' },
+      { time: '1:52:27', label: 'RAG architecture whiteboard session' },
+      { time: '1:58:35', label: 'LendWork platform demo' },
+      { time: '3:07:17', label: 'Data flows and imputation discussion' },
+      { time: '3:37:00', label: 'Provider analytics and episode review' },
+      { time: '3:53:32', label: 'Future design and benefits strategy' },
+      { time: '4:44:01', label: 'IT infrastructure and compute decisions' },
+      { time: '5:55:29', label: 'Wrap-up and next steps planning' },
+    ],
   },
 ];
 
@@ -526,18 +541,31 @@ function QuarterlyContent() {
             selected.recordingUrl ? (
               <div className="flex gap-6 items-start">
                 <div className="flex-1 bg-black rounded-xl overflow-hidden shadow-sm">
-                  <video controls className="w-full" src={selected.recordingUrl} />
+                  <video
+                    ref={(el) => { if (el) (window as any)._mmaVideo = el; }}
+                    controls
+                    className="w-full"
+                    src={selected.recordingUrl}
+                  />
                 </div>
                 {selected.timestamps.length > 0 && (
                   <div className="w-64 flex-shrink-0 pt-1">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Key Moments</p>
                     <div className="space-y-3">
-                      {selected.timestamps.map((ts, i) => (
-                        <div key={i} className="flex gap-3 items-start">
-                          <span className="text-xs font-mono text-[#224057] font-semibold flex-shrink-0 w-14 text-right tabular-nums">{ts.time}</span>
-                          <span className="text-xs text-gray-600 leading-snug">{ts.label}</span>
-                        </div>
-                      ))}
+                      {selected.timestamps.map((ts, i) => {
+                        const parts = ts.time.split(':').map(Number);
+                        const secs = parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts[0]*60+parts[1];
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { const v = (window as any)._mmaVideo; if (v) { v.currentTime = secs; v.play(); } }}
+                            className="flex gap-3 items-start w-full text-left hover:bg-gray-50 rounded px-1 py-0.5 group transition-colors"
+                          >
+                            <span className="text-xs font-mono text-[#224057] font-semibold flex-shrink-0 w-14 text-right tabular-nums group-hover:text-blue-600">{ts.time}</span>
+                            <span className="text-xs text-gray-600 leading-snug group-hover:text-gray-900">{ts.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
