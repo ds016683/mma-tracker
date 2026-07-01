@@ -296,20 +296,8 @@ const QUARTERLY_MEETINGS: QuarterlyMeeting[] = [
     attendees: 'Peter Schultz, Chris Kalvig, Jeremy Matson, Chris Hart, David Smith, Tanner Johnson',
     summary: JUN18_SUMMARY,
     notes: JUN18_NOTES,
-    recordingUrl: 'https://github.com/ds016683/mma-tracker/releases/download/media-v1/mma-june-18.mp4',
-    timestamps: [
-      { time: '0:00',  label: 'Welcome and framing — year in review' },
-      { time: '8:00',  label: 'V9 pipeline results: 2.07T elements, 200B retained' },
-      { time: '22:00', label: 'Aetna V2 schema — current status and resolution plan' },
-      { time: '38:00', label: 'Imputation: current state problems and field credibility gap' },
-      { time: '58:00', label: 'Imputation: NPI-level future state architecture' },
-      { time: '1:18:00', label: 'V10 workstream assignments — Tanner, Chris Kalvig, core team' },
-      { time: '1:35:00', label: 'Hospital directory automation scoping' },
-      { time: '1:52:00', label: 'Network Navigator v2 preview (Schedule F)' },
-      { time: '2:10:00', label: 'MMA field feedback and producer use cases' },
-      { time: '2:28:00', label: 'Handle/IRIS schema alignment discussion' },
-      { time: '2:45:00', label: 'Next steps and closing' },
-    ],
+    recordingUrl: 'https://mma-video-proxy.vercel.app/mma-june-18.mp4',
+    timestamps: [],
   },
 ];
 
