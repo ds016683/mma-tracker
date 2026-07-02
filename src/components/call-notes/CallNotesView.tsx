@@ -105,10 +105,6 @@ function NoteCard({ note, expanded, onToggle }: { note: CallNote; expanded: bool
           </div>
           <div className="text-xs text-gray-400">
             {formatTime(note.meeting_date)}
-            {note.attendees.length > 0 && (
-              <> · {note.attendees.slice(0, 5).map(a => a.name || a.email.split('@')[0]).join(', ')}
-              {note.attendees.length > 5 && ` +${note.attendees.length - 5} more`}</>
-            )}
           </div>
           {!expanded && hasSummary && (
             <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">
@@ -466,7 +462,7 @@ function QuarterlyContent() {
                       Quarterly
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400 mb-1">{m.subtitle} · {m.attendees}</div>
+                  <div className="text-xs text-gray-400 mb-1">{m.subtitle}</div>
                   <p className="text-xs text-gray-500 line-clamp-2">{m.summary.substring(0, 180)}...</p>
                 </div>
                 <div className="flex-shrink-0 text-gray-300 mt-1">
@@ -526,7 +522,7 @@ function QuarterlyContent() {
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="max-w-4xl">
-          <div className="text-xs text-gray-400 mb-4">{selected.attendees}</div>
+
 
           {tab === 'summary' && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
