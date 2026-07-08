@@ -107,20 +107,7 @@ export function ProjectPlanView() {
     }
   }, [refetchBaseballCards, dirtyComments]);
 
-  // Build children map: parentId → sub-items
-  const childrenByParent = projects.reduce<Record<string, ProjectWithTasks[]>>((acc, p) => {
-    if (p.parent_id) {
-      if (!acc[p.parent_id]) acc[p.parent_id] = [];
-      acc[p.parent_id].push(p);
-    }
-    return acc;
-  }, {});
-  // Sort sub-items by target date as well
-  Object.keys(childrenByParent).forEach(k => {
-    childrenByParent[k].sort(sortByTarget);
-  });
-
-  // Group by category — top-level items only (no parent_id), sorted by target date asc
+  // Sort helper — ascending by target date, nulls last
   const sortByTarget = (a: ProjectWithTasks, b: ProjectWithTasks) => {
     if (!a.target_date && !b.target_date) return 0;
     if (!a.target_date) return 1;
@@ -128,6 +115,19 @@ export function ProjectPlanView() {
     return a.target_date.localeCompare(b.target_date);
   };
 
+  // Build children map: parentId → sub-items, sorted by target date
+  const childrenByParent = projects.reduce<Record<string, ProjectWithTasks[]>>((acc, p) => {
+    if (p.parent_id) {
+      if (!acc[p.parent_id]) acc[p.parent_id] = [];
+      acc[p.parent_id].push(p);
+    }
+    return acc;
+  }, {});
+  Object.keys(childrenByParent).forEach(k => {
+    childrenByParent[k].sort(sortByTarget);
+  });
+
+  // Group by category — top-level items only (no parent_id), sorted by target date asc
   const grouped = CATEGORY_ORDER.reduce<Record<string, ProjectWithTasks[]>>((acc, cat) => {
     acc[cat] = projects.filter(p => !p.parent_id && p.category === cat).sort(sortByTarget);
     return acc;
