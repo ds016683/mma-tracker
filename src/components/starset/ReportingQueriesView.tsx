@@ -29,10 +29,10 @@ Key facts about the data:
 Answer questions clearly and concisely. Use bullet points for comparisons. Be specific about version differences. If asked about something you don't have data for (like specific dollar amounts from the raw files), explain what the data structure shows and what would need to be queried directly.`;
 
 const SUGGESTED_QUERIES = [
-  'Which carriers improved the most from V7 to V8?',
-  'What MSAs have the highest data quality scores?',
+  'Which carriers improved the most from V8 to V9?',
+  'What MSAs have the highest data quality scores in V9?',
   'Compare Aetna vs BCBS coverage in the Midwest',
-  'Show hospital NPI coverage changes V7 to V8',
+  'Show hospital NPI coverage changes V8 to V9',
   'Which carriers have the lowest rate rankings in Chicago?',
 ];
 
@@ -330,8 +330,8 @@ export function ReportingQueriesView() {
           <div className="rounded-xl border border-[#FF8C00]/20 bg-[#FF8C00]/5 px-4 py-3">
             <p className="text-xs font-semibold text-[#FF8C00] mb-1">About this tool</p>
             <p className="text-xs text-gray-600">
-              AI-powered analysis of Starset Analytics V7 &amp; V8 reporting packages. 
-              Answers are based on the data structure and known facts ΓÇö not live queries of raw files.
+              AI-powered analysis of Starset Analytics V8 &amp; V9 reporting packages.
+              Answers are based on the data structure and known facts — not live queries of raw files.
             </p>
           </div>
         </div>
