@@ -115,10 +115,21 @@ export function ProjectPlanView() {
     }
     return acc;
   }, {});
+  // Sort sub-items by target date as well
+  Object.keys(childrenByParent).forEach(k => {
+    childrenByParent[k].sort(sortByTarget);
+  });
 
-  // Group by category — top-level items only (no parent_id)
+  // Group by category — top-level items only (no parent_id), sorted by target date asc
+  const sortByTarget = (a: ProjectWithTasks, b: ProjectWithTasks) => {
+    if (!a.target_date && !b.target_date) return 0;
+    if (!a.target_date) return 1;
+    if (!b.target_date) return -1;
+    return a.target_date.localeCompare(b.target_date);
+  };
+
   const grouped = CATEGORY_ORDER.reduce<Record<string, ProjectWithTasks[]>>((acc, cat) => {
-    acc[cat] = projects.filter(p => !p.parent_id && p.category === cat);
+    acc[cat] = projects.filter(p => !p.parent_id && p.category === cat).sort(sortByTarget);
     return acc;
   }, {});
 
