@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUp, ArrowDown, Minus, X, Info } from 'lucide-react';
 import {
-  parseCSV, BUCKET_LABELS, BUCKET_ORDER,
+  BUCKET_LABELS, BUCKET_ORDER,
   NATIONAL_CARRIERS, deltaColorClasses, deltaColor, fmtPct, fmtDelta,
   type CCRow, type BucketKey,
 } from './MSACarrierCoverageData';
-
-const CSV_URL = '/mma-tracker/data/carrier-coverage-comparison.csv';
+import { supabase } from '../../lib/supabase/client';
 
 // Carriers selected by default (those present in the chosen state)
 const DEFAULT_CARRIERS = ['Aetna Choice POS', 'BCBS PPO', 'Cigna OAP', 'UHC Choice POS Plus'];
@@ -337,10 +336,37 @@ export function MSACarrierCoverageView() {
   const [msaOrder, setMsaOrder] = useState<'alpha' | 'largest' | 'smallest'>('alpha');
 
   useEffect(() => {
-    fetch(CSV_URL)
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-      .then(text => setRows(parseCSV(text)))
-      .catch(e => setError(String(e?.message ?? e)));
+    async function loadData() {
+      const { data, error: sbError } = await supabase
+        .from('msa_carrier_coverage')
+        .select('*')
+        .limit(50000);
+      if (sbError) {
+        setError(sbError.message);
+      } else {
+        // Map snake_case DB columns to CCRow shape
+        const mapped: CCRow[] = (data ?? []).map((r: Record<string, unknown>) => ({
+          msa_id:    String(r.msa_id ?? ''),
+          msa_name:  String(r.msa_name ?? ''),
+          carrier:   String(r.carrier ?? ''),
+          bucket:    String(r.bucket ?? '') as BucketKey,
+          state:     r.state != null ? String(r.state) : null,
+          seg_pop:   r.seg_pop != null ? Number(r.seg_pop) : null,
+          total_pop: r.total_pop != null ? Number(r.total_pop) : null,
+          ooa:       Number(r.ooa ?? 0) === 1,
+          gy9:       r.gy9 != null ? Number(r.gy9) : null,
+          gy8:       r.gy8 != null ? Number(r.gy8) : null,
+          gyd:       r.gyd != null ? Number(r.gyd) : null,
+          cb9:       r.cb9 != null ? Number(r.cb9) : null,
+          cb8:       r.cb8 != null ? Number(r.cb8) : null,
+          cbd:       r.cbd != null ? Number(r.cbd) : null,
+          rate9:     r.rate9 != null ? Number(r.rate9) : null,
+          rank9:     r.rank9 != null ? Number(r.rank9) : null,
+        }));
+        setRows(mapped);
+      }
+    }
+    loadData();
   }, []);
 
   // Index: state → msa_id → carrier → bucket → row
