@@ -26,6 +26,7 @@ import { TierShiftSummaryView } from './components/starset/TierShiftSummaryView'
 import { MSACarrierCoverageView } from './components/starset/MSACarrierCoverageView';
 import { CarrierRankingView } from './components/starset/CarrierRankingView';
 import { CoreBucaCarrierRankingView } from './components/starset/CoreBucaCarrierRankingView';
+import { CoverageMap } from './components/region/CoverageMap';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -83,6 +84,7 @@ function AppInner({
         {activeView === 'data-intelligence' && <DataIntelligenceView />}
         {activeView === 'reporting-queries' && <ReportingQueriesView />}
         {activeView === 'regional-map' && <RegionalMapView />}
+        {activeView === 'coverage-map' && <CoverageMap />}
         {activeView === 'payer-networks' && <ProductionNetworksView />}
         {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
         {activeView === 'hospital-coverage' && <HospitalCoverageView />}
