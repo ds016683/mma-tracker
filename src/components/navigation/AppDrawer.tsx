@@ -3,7 +3,7 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties, Grid3x3, MapPinned, Users, AlertCircle, ClipboardList
+  TableProperties, Grid3x3, MapPinned, Users, AlertCircle, ClipboardList, GitBranch
 } from 'lucide-react';
 
 import mmaLogo from '../../assets/mma-logo.png';
@@ -87,6 +87,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'coverage-map',      label: 'Coverage Map',            icon: MapPinned },
       { id: 'hospital-mrf-pipeline', label: 'Pipeline Lineage Reporting', icon: Activity },
       { id: 'payer-networks',      label: 'Payer Networks',          icon: Network },
+      { id: 'pipeline-intelligence', label: 'Pipeline Intelligence',   icon: GitBranch },
       { id: 'data-gap-report',      label: 'Report a Gap',            icon: AlertCircle },
     ],
   },
@@ -195,7 +196,9 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
 
         {/* Nav groups */}
         <nav className="flex flex-1 flex-col overflow-y-auto py-3">
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.filter(group =>
+            isPrivileged || group.label === REGION_ENGAGEMENT_LABEL
+          ).map((group) => (
             <div key={group.label} className="mb-1">
               {/* Group header */}
               <button

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { REGIONS } from '../starset/USMap';
 
 // State abbreviation → full name
@@ -131,12 +131,6 @@ export function DataGapReportView() {
             <p className="text-sm text-blue-800">
               Check the <strong>Payer Networks</strong> page to see which networks are currently planned or in progress before submitting.
             </p>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'payer-networks' }))}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#009DE0] hover:underline"
-            >
-              View Payer Networks <ExternalLink className="h-3 w-3" />
-            </button>
           </div>
 
           <label className="flex cursor-pointer items-start gap-3">

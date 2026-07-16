@@ -44,7 +44,7 @@ const ViewLoader = () => (
 );
 
 // Region-only views — the only section mma_regional can access
-const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks', 'data-gap-report'];
+const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks', 'pipeline-intelligence', 'data-gap-report'];
 
 function getDefaultView(role: string | null): AppView {
   if (role === 'mma_regional') return 'coverage-map';
@@ -143,8 +143,7 @@ function AppInner({
               {activeView === 'carrier-ranking' && <CarrierRankingView />}
               {activeView === 'hospital-coverage' && <HospitalCoverageView />}
               {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
-              {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}
-              {activeView === 'payer-networks' && <ProductionNetworksView />}
+
               {activeView === 'call-notes' && <CallNotesView />}
               {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
               {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
@@ -153,12 +152,14 @@ function AppInner({
             </>
           )}
 
-          {/* Region Engagement — accessible to all roles */}
+          {/* Region Engagement + shared views — accessible to all roles */}
           {activeView === 'reporting-queries' && <ReportingQueriesView />}
           {activeView === 'regional-map' && <RegionalMapView />}
           {activeView === 'coverage-map' && <CoverageMap />}
           {activeView === 'horizon-signal' && <HorizonSignalView />}
           {activeView === 'data-gap-report' && <DataGapReportView />}
+          {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}
+          {activeView === 'payer-networks' && <ProductionNetworksView />}
 
           {/* Fallback for mma_regional landing on wrong view */}
           {isRegionOnly && !REGION_VIEWS.includes(activeView) && (
