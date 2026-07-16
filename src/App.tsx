@@ -44,7 +44,7 @@ const ViewLoader = () => (
 );
 
 // Region-only views — the only section mma_regional can access
-const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks', 'pipeline-intelligence', 'data-gap-report'];
+const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks', 'data-gap-report'];
 
 function getDefaultView(role: string | null): AppView {
   if (role === 'mma_regional') return 'coverage-map';
@@ -142,7 +142,7 @@ function AppInner({
               {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
               {activeView === 'carrier-ranking' && <CarrierRankingView />}
               {activeView === 'hospital-coverage' && <HospitalCoverageView />}
-              {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
+
 
               {activeView === 'call-notes' && <CallNotesView />}
               {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
@@ -158,6 +158,7 @@ function AppInner({
           {activeView === 'coverage-map' && <CoverageMap />}
           {activeView === 'horizon-signal' && <HorizonSignalView />}
           {activeView === 'data-gap-report' && <DataGapReportView />}
+          {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
           {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}
           {activeView === 'payer-networks' && <ProductionNetworksView />}
 
