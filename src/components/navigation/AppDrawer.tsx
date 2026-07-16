@@ -3,8 +3,9 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties, Grid3x3, GitBranch, MapPinned
+  TableProperties, Grid3x3, GitBranch, MapPinned, Users
 } from 'lucide-react';
+
 import mmaLogo from '../../assets/mma-logo.png';
 import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
@@ -30,7 +31,8 @@ export type AppView =
   | 'carrier-ranking'
   | 'core-buca-carrier-ranking'
   | 'pipeline-intelligence'
-  | 'coverage-map';
+  | 'coverage-map'
+  | 'user-management';
 
 const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
 
@@ -106,6 +108,13 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake, href: 'https://promise-rate-intelligence.vercel.app' },
+    ],
+  },
+  {
+    label: 'Administration',
+    defaultOpen: true,
+    items: [
+      { id: 'user-management', label: 'User Management', icon: Users },
     ],
   },
 ];

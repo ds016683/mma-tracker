@@ -79,7 +79,7 @@ export function AuthPage() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
 
-          <div className="text-center">
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => setShowReset(true)}
@@ -87,6 +87,12 @@ export function AuthPage() {
             >
               Forgot password?
             </button>
+            <a
+              href="?page=request-account"
+              className="text-xs text-[#009DE0]/70 hover:text-[#009DE0] transition-colors"
+            >
+              Request access
+            </a>
           </div>
         </form>
       </div>
