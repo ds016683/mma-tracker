@@ -62,7 +62,9 @@ function getSpecialPage(): 'approve-request' | 'accept-invitation' | 'request-ac
 }
 
 function AppContent() {
-  const { user, role, loading } = useAuth();
+  const { user, role: rawRole, loading } = useAuth();
+  // If profile loaded but no role found, default mma domain users to regional
+  const role = rawRole ?? (user?.email?.includes('marshmma.com') ? 'mma_regional' as const : null);
   const specialPage = getSpecialPage();
 
   const [activeView, setActiveViewRaw] = useState<AppView>(() => getDefaultView(null));
