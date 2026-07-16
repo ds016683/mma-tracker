@@ -11,6 +11,7 @@ import { AppDrawer } from './components/navigation/AppDrawer';
 import type { AppView } from './components/navigation/AppDrawer';
 import { HaikuAssistant } from './components/ai/HaikuAssistant';
 import { ROLE_ACCESS } from './lib/roles';
+import { supabaseMisconfigured } from './lib/supabase/client';
 
 // Lazy-load all views
 const DataIntelligenceView       = lazy(() => import('./components/starset/DataIntelligenceView').then(m => ({ default: m.DataIntelligenceView })));
@@ -169,6 +170,16 @@ function AppInner({
 }
 
 export default function App() {
+  if (supabaseMisconfigured) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0d1a26] px-4">
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center max-w-sm">
+          <p className="text-sm font-semibold text-red-400">Configuration Error</p>
+          <p className="mt-2 text-xs text-white/50">Supabase environment variables are missing. Please contact your administrator.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <AuthProvider>
       <AppContent />
