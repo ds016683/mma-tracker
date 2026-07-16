@@ -95,7 +95,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Administration',
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       { id: 'user-management', label: 'User Management', icon: Users },
     ],
