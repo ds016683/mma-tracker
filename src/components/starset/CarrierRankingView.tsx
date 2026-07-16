@@ -1,25 +1,296 @@
-import { useEffect, useState } from 'react';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { ArrowUp, ArrowDown, Minus, ChevronDown, ChevronRight, Search } from 'lucide-react';
 
-const DATA_URL = '/mma-tracker/data/carrier-ranking.json';
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function fmt2(v: number | null): string {
+  if (v === null) return '—';
+  return v.toFixed(2);
+}
+function fmtPct(v: number | null): string {
+  if (v === null || v === undefined || v === 0) return '—';
+  return v.toFixed(1) + '%';
+}
+function fmtNum(v: number | null): string {
+  if (v === null || v === undefined || v === 0) return '—';
+  return v.toFixed(1);
+}
+function fmtPop(v: number | null): string {
+  if (v === null) return '—';
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `${(v / 1_000).toFixed(0)}K`;
+  return String(v);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB 1 — Core BUCA Carrier Ranking
+// ─────────────────────────────────────────────────────────────────────────────
+const BUCA_DATA_URL = '/mma-tracker/data/buca-ranking.json';
+
+interface SummaryRow {
+  name: string;
+  short_name: string;
+  rank_str_v82: number | null;
+  rank_str_v9:  number | null;
+  rank_str_delta: number | null;
+  rank_pop_v82: number | null;
+  rank_pop_v9:  number | null;
+  rank_pop_delta: number | null;
+  msas_v82: number | null;
+  msas_v9:  number | null;
+}
+interface DetailRow {
+  msa_id: number;
+  msa_name: string;
+  population: number | null;
+  rate_aetna: number | null; rate_bcbs: number | null; rate_cigna: number | null; rate_uhc: number | null;
+  all_rank_aetna: number | null; all_rank_bcbs: number | null; all_rank_cigna: number | null; all_rank_uhc: number | null;
+  buca_rank_aetna: number | null; buca_rank_bcbs: number | null; buca_rank_cigna: number | null; buca_rank_uhc: number | null;
+}
+type MetricKey   = 'str' | 'pop';
+type DetailSort  = 'msa_name' | 'population' | 'buca_rank_aetna' | 'buca_rank_bcbs' | 'buca_rank_cigna' | 'buca_rank_uhc';
+
+const CARRIER_STYLE: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+  'Aetna Choice POS':    { bg: 'bg-rose-50',   border: 'border-rose-200',   text: 'text-rose-700',   badge: 'bg-rose-100 text-rose-700' },
+  'BCBS PPO':            { bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-700',   badge: 'bg-blue-100 text-blue-700' },
+  'Cigna OAP':           { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-700' },
+  'UHC Choice POS Plus': { bg: 'bg-teal-50',   border: 'border-teal-200',   text: 'text-teal-700',   badge: 'bg-teal-100 text-teal-700' },
+};
+const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉', 4: '4th' };
+
+function DeltaBadge({ v, invert = true }: { v: number | null; invert?: boolean }) {
+  if (v === null) return <span className="text-gray-400 text-xs">—</span>;
+  const improved = invert ? v < 0 : v > 0;
+  const worsened = invert ? v > 0 : v < 0;
+  const abs = Math.abs(v).toFixed(2);
+  if (improved) return <span className="inline-flex items-center gap-0.5 text-emerald-600 text-xs font-semibold"><ArrowDown className="h-3 w-3" />−{abs}</span>;
+  if (worsened) return <span className="inline-flex items-center gap-0.5 text-red-500 text-xs font-semibold"><ArrowUp className="h-3 w-3" />+{abs}</span>;
+  return <span className="inline-flex items-center gap-0.5 text-gray-400 text-xs"><Minus className="h-3 w-3" />0.00</span>;
+}
+
+function RankPill({ v }: { v: number | null }) {
+  if (v === null || v === 0) return <span className="text-gray-300 text-xs">—</span>;
+  const colors = ['', 'bg-emerald-100 text-emerald-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-rose-100 text-rose-700'];
+  return <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${colors[v] ?? 'bg-gray-100 text-gray-500'}`}>{v}</span>;
+}
+
+function RankCard({ row, position, metric }: { row: SummaryRow; position: number; metric: MetricKey }) {
+  const v82   = metric === 'str' ? row.rank_str_v82   : row.rank_pop_v82;
+  const v9    = metric === 'str' ? row.rank_str_v9    : row.rank_pop_v9;
+  const delta = metric === 'str' ? row.rank_str_delta : row.rank_pop_delta;
+  const style = CARRIER_STYLE[row.name] ?? { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700', badge: 'bg-gray-100 text-gray-700' };
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border-2 ${style.border} ${style.bg} p-5 shadow-sm transition-shadow hover:shadow-md`}>
+      <div className="absolute right-4 top-4 text-2xl leading-none opacity-70">{RANK_MEDAL[position]}</div>
+      <div className="mb-4 pr-10">
+        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}>{row.short_name}</span>
+        <p className={`mt-1 text-[13px] font-semibold ${style.text}`}>{row.name}</p>
+      </div>
+      <div className="flex items-end gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">v9 Rank</p>
+          <p className={`text-3xl font-extrabold leading-none ${style.text}`}>{fmt2(v9)}</p>
+        </div>
+        <div className="mb-0.5"><DeltaBadge v={delta} /></div>
+      </div>
+      <p className="mt-2 text-xs text-gray-400">v8.2: <span className="font-semibold text-gray-600">{fmt2(v82)}</span></p>
+    </div>
+  );
+}
+
+function CoreBucaTab() {
+  const [summary, setSummary] = useState<SummaryRow[]>([]);
+  const [detail,  setDetail]  = useState<DetailRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState<string | null>(null);
+  const [metric,  setMetric]  = useState<MetricKey>('str');
+  const [showDetail, setShowDetail] = useState(false);
+  const [search,  setSearch]  = useState('');
+  const [detailSort, setDetailSort] = useState<DetailSort>('buca_rank_aetna');
+  const [detailSortDir, setDetailSortDir] = useState<'asc' | 'desc'>('asc');
+
+  useEffect(() => {
+    fetch(BUCA_DATA_URL)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => { setSummary(d.summary); setDetail(d.detail); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  const rankedSummary = useMemo(() => {
+    const key = metric === 'str' ? 'rank_str_v9' : 'rank_pop_v9';
+    return [...summary].sort((a, b) => ((a[key] ?? Infinity) - (b[key] ?? Infinity)));
+  }, [summary, metric]);
+
+  const filteredDetail = useMemo(() => {
+    let rows = detail;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter(r => r.msa_name.toLowerCase().includes(q));
+    }
+    return [...rows].sort((a, b) => {
+      const av = (a[detailSort] as number | null) ?? (detailSortDir === 'asc' ? Infinity : -Infinity);
+      const bv = (b[detailSort] as number | null) ?? (detailSortDir === 'asc' ? Infinity : -Infinity);
+      return detailSortDir === 'asc' ? av - bv : bv - av;
+    });
+  }, [detail, search, detailSort, detailSortDir]);
+
+  const handleDetailSort = (col: DetailSort) => {
+    if (detailSort === col) setDetailSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setDetailSort(col); setDetailSortDir('asc'); }
+  };
+
+  const SortTh = ({ col, label }: { col: DetailSort; label: string }) => (
+    <th onClick={() => handleDetailSort(col)} className="cursor-pointer select-none border-b border-white/10 px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-white">
+      <span className="inline-flex items-center gap-1 justify-center">
+        {label}
+        {detailSort === col ? (detailSortDir === 'asc' ? <ArrowUp className="h-3 w-3 text-[#009DE0]" /> : <ArrowDown className="h-3 w-3 text-[#009DE0]" />) : <span className="h-3 w-3" />}
+      </span>
+    </th>
+  );
+
+  if (loading) return <div className="flex items-center justify-center py-20 text-sm text-gray-400">Loading…</div>;
+  if (error)   return <div className="flex items-center justify-center py-20 text-sm text-red-500">Failed to load: {error}</div>;
+
+  return (
+    <div className="p-4 sm:p-6">
+      <p className="mb-5 text-sm text-gray-500">Aetna · BCBS · Cigna · UHC ranked against each other only (1 = lowest spend) · v8.2 → v9</p>
+
+      {/* Metric toggle */}
+      <div className="mb-5 flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Rank metric</span>
+        {([['str', 'Straight Avg'], ['pop', 'Pop-Weighted Avg']] as [MetricKey, string][]).map(([key, label]) => (
+          <button key={key} onClick={() => setMetric(key as MetricKey)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-all ${metric === key ? 'border-[#009DE0] bg-[#009DE0] text-white shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-[#009DE0]/50 hover:text-[#009DE0]'}`}>
+            {label}
+          </button>
+        ))}
+        <span className="ml-2 text-xs text-gray-400 italic">Lower rank = lower spend</span>
+      </div>
+
+      {/* Ranking cards */}
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {rankedSummary.map((row, i) => <RankCard key={row.name} row={row} position={i + 1} metric={metric} />)}
+      </div>
+
+      {/* Summary table */}
+      <div className="mb-6 overflow-hidden rounded-xl bg-white shadow">
+        <div className="border-b border-gray-100 px-5 py-3.5">
+          <h2 className="text-sm font-bold text-[#001A41]">Summary Comparison</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Both metrics side-by-side · lower rank = better</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse">
+            <thead>
+              <tr className="bg-[#001A41] text-white">
+                <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-white/80">Carrier</th>
+                <th colSpan={3} className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60">Straight Avg Rank</th>
+                <th colSpan={3} className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60">Pop-Weighted Avg Rank</th>
+              </tr>
+              <tr className="bg-[#001A41]/80">
+                <th className="border-b border-white/10 px-4 py-1.5" />
+                {['v8.2','v9','Δ','v8.2','v9','Δ'].map((h, i) => (
+                  <th key={i} className="border-b border-white/10 px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-white/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rankedSummary.map((row, i) => {
+                const style = CARRIER_STYLE[row.name];
+                return (
+                  <tr key={row.name} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'} transition-colors hover:bg-blue-50/30`}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg leading-none">{RANK_MEDAL[i + 1]}</span>
+                        <p className={`text-sm font-semibold ${style?.text ?? 'text-gray-800'}`}>{row.name}</p>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-center text-sm text-gray-500">{fmt2(row.rank_str_v82)}</td>
+                    <td className="px-3 py-3 text-center text-sm font-semibold text-gray-900">{fmt2(row.rank_str_v9)}</td>
+                    <td className="px-3 py-3 text-center"><DeltaBadge v={row.rank_str_delta} /></td>
+                    <td className="px-3 py-3 text-center text-sm text-gray-500">{fmt2(row.rank_pop_v82)}</td>
+                    <td className="px-3 py-3 text-center text-sm font-semibold text-gray-900">{fmt2(row.rank_pop_v9)}</td>
+                    <td className="px-3 py-3 text-center"><DeltaBadge v={row.rank_pop_delta} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* MSA Detail */}
+      <div className="overflow-hidden rounded-xl bg-white shadow">
+        <button onClick={() => setShowDetail(v => !v)} className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-gray-50">
+          <div>
+            <h2 className="text-sm font-bold text-[#001A41]">MSA Detail — v9 BUCA Rankings</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{detail.length.toLocaleString()} MSAs · BUCA rank + all-network rank</p>
+          </div>
+          {showDetail ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
+        </button>
+        {showDetail && (
+          <div className="border-t border-gray-100">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100">
+              <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <input type="text" placeholder="Search MSA…" value={search} onChange={e => setSearch(e.target.value)} className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none" />
+              {search && <span className="text-xs text-gray-400">{filteredDetail.length} result{filteredDetail.length !== 1 ? 's' : ''}</span>}
+            </div>
+            <div className="max-h-[520px] overflow-auto">
+              <table className="w-full min-w-[960px] border-collapse">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#001A41] text-white">
+                    <th className="border-b border-white/10 px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-white/80" rowSpan={2}>MSA</th>
+                    <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60" rowSpan={2}>Pop</th>
+                    <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/60" colSpan={4}>BUCA Rank</th>
+                    <th className="border-b border-white/10 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-white/40" colSpan={4}>All-Network Rank</th>
+                  </tr>
+                  <tr className="bg-[#001A41]/80">
+                    {(['buca_rank_aetna','buca_rank_bcbs','buca_rank_cigna','buca_rank_uhc'] as DetailSort[]).map((col, i) => (
+                      <SortTh key={col} col={col} label={['Aetna','BCBS','Cigna','UHC'][i]} />
+                    ))}
+                    {['Aetna','BCBS','Cigna','UHC'].map(l => (
+                      <th key={l} className="border-b border-white/10 px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-white/40">{l}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDetail.map((row, i) => (
+                    <tr key={row.msa_id} className={i % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-gray-50/60 hover:bg-blue-50/30'}>
+                      <td className="px-4 py-2.5 text-sm font-medium text-gray-800">{row.msa_name}</td>
+                      <td className="px-3 py-2.5 text-center text-xs text-gray-500">{fmtPop(row.population)}</td>
+                      <td className="px-3 py-2.5 text-center"><RankPill v={row.buca_rank_aetna} /></td>
+                      <td className="px-3 py-2.5 text-center"><RankPill v={row.buca_rank_bcbs} /></td>
+                      <td className="px-3 py-2.5 text-center"><RankPill v={row.buca_rank_cigna} /></td>
+                      <td className="px-3 py-2.5 text-center"><RankPill v={row.buca_rank_uhc} /></td>
+                      <td className="px-3 py-2.5 text-center text-xs text-gray-400">{row.all_rank_aetna ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-center text-xs text-gray-400">{row.all_rank_bcbs ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-center text-xs text-gray-400">{row.all_rank_cigna ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-center text-xs text-gray-400">{row.all_rank_uhc ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB 2 — Overall Carrier Ranking
+// ─────────────────────────────────────────────────────────────────────────────
+const OVERALL_DATA_URL = '/mma-tracker/data/carrier-ranking.json';
 
 interface CarrierRow {
   name: string;
   is_default: boolean;
-  cb_v82: number | null;
-  cb_v9: number | null;
-  cb_delta: number | null;
-  gy_v82: number | null;
-  gy_v9: number | null;
-  gy_delta: number | null;
-  rank_pop_v82: number | null;
-  rank_pop_v9: number | null;
-  rank_pop_delta: number | null;
-  rank_str_v82: number | null;
-  rank_str_v9: number | null;
-  rank_str_delta: number | null;
+  cb_v82: number | null; cb_v9: number | null; cb_delta: number | null;
+  gy_v82: number | null; gy_v9: number | null; gy_delta: number | null;
+  rank_pop_v82: number | null; rank_pop_v9: number | null; rank_pop_delta: number | null;
+  rank_str_v82: number | null; rank_str_v9: number | null; rank_str_delta: number | null;
 }
-
 type SortKey = 'rank_pop_v9' | 'rank_str_v9' | 'gy_v9' | 'cb_v9';
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -28,7 +299,6 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'rank_pop_v9', label: 'Avg Rank (Pop-Weighted)' },
   { key: 'rank_str_v9', label: 'Avg Rank (Straight)' },
 ];
-
 const ASCENDING_KEYS = new Set<SortKey>(['rank_pop_v9', 'rank_str_v9']);
 
 function sortValue(row: CarrierRow, key: SortKey): number {
@@ -36,40 +306,20 @@ function sortValue(row: CarrierRow, key: SortKey): number {
   if (v === null || v === 0) return ASCENDING_KEYS.has(key) ? Infinity : -Infinity;
   return v;
 }
-
 function sortRows(rows: CarrierRow[], key: SortKey): CarrierRow[] {
   return [...rows].sort((a, b) => {
-    const av = sortValue(a, key);
-    const bv = sortValue(b, key);
+    const av = sortValue(a, key), bv = sortValue(b, key);
     return ASCENDING_KEYS.has(key) ? av - bv : bv - av;
   });
 }
 
-function fmt(v: number | null): string {
-  if (v === null || v === undefined || v === 0) return '—';
-  return v.toFixed(1);
-}
-
-function fmtPct(v: number | null): string {
-  if (v === null || v === undefined || v === 0) return '—';
-  return v.toFixed(1) + '%';
-}
-
-function Delta({ v, invert = false }: { v: number | null; invert?: boolean }) {
+function OverallDelta({ v, invert = false }: { v: number | null; invert?: boolean }) {
   if (v === null || v === undefined) return <span className="text-gray-400">—</span>;
   const pos = invert ? v < 0 : v > 0;
   const neg = invert ? v > 0 : v < 0;
   const abs = Math.abs(v).toFixed(2);
-  if (pos) return (
-    <span className="inline-flex items-center gap-0.5 text-emerald-600 font-medium">
-      <ArrowUp className="h-3 w-3" />+{abs}
-    </span>
-  );
-  if (neg) return (
-    <span className="inline-flex items-center gap-0.5 text-red-500 font-medium">
-      <ArrowDown className="h-3 w-3" />-{abs}
-    </span>
-  );
+  if (pos) return <span className="inline-flex items-center gap-0.5 text-emerald-600 font-medium"><ArrowUp className="h-3 w-3" />+{abs}</span>;
+  if (neg) return <span className="inline-flex items-center gap-0.5 text-red-500 font-medium"><ArrowDown className="h-3 w-3" />-{abs}</span>;
   return <span className="inline-flex items-center gap-0.5 text-gray-400"><Minus className="h-3 w-3" />0.00</span>;
 }
 
@@ -81,21 +331,12 @@ function StatusBadge({ row }: { row: CarrierRow }) {
   return null;
 }
 
-// Shared column widths — must match between both tables
-const COL_WIDTHS = 'w-[40px] w-[260px] w-[72px] w-[72px] w-[60px] w-[72px] w-[72px] w-[60px] w-[72px] w-[72px] w-[60px] w-[72px] w-[72px] w-[60px]';
-void COL_WIDTHS; // suppress unused warning — widths applied inline below
-
 const colWidths = [40, 260, 72, 72, 60, 72, 72, 60, 72, 72, 60, 72, 72, 60];
-
 function ColGroup() {
-  return (
-    <colgroup>
-      {colWidths.map((w, i) => <col key={i} style={{ width: w }} />)}
-    </colgroup>
-  );
+  return <colgroup>{colWidths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>;
 }
 
-function TableHead({ sortKey }: { sortKey: SortKey }) {
+function OverallTableHead({ sortKey }: { sortKey: SortKey }) {
   return (
     <thead>
       <tr className="bg-[#001A41] text-white">
@@ -115,41 +356,41 @@ function TableHead({ sortKey }: { sortKey: SortKey }) {
   );
 }
 
-function DataRow({ row, rank, isDefault, sortKey }: { row: CarrierRow; rank: number; isDefault: boolean; sortKey: SortKey }) {
+function OverallDataRow({ row, rank, sortKey }: { row: CarrierRow; rank: number; sortKey: SortKey }) {
   return (
-    <tr className={`transition-colors ${isDefault ? 'bg-[#EEF6FB] hover:bg-[#ddeef7]' : (rank % 2 === 1 ? 'bg-white hover:bg-blue-50/40' : 'bg-gray-50/60 hover:bg-blue-50/40')}`}>
+    <tr className={`transition-colors ${row.is_default ? 'bg-[#EEF6FB] hover:bg-[#ddeef7]' : (rank % 2 === 1 ? 'bg-white hover:bg-blue-50/40' : 'bg-gray-50/60 hover:bg-blue-50/40')}`}>
       <td className="px-3 py-2.5 text-center text-xs font-bold text-gray-400">{rank}</td>
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-medium ${isDefault ? 'text-[#001A41]' : 'text-gray-800'}`}>{row.name}</span>
-          {isDefault && <span className="rounded bg-[#009DE0]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#009DE0]">Core</span>}
+          <span className={`text-sm font-medium ${row.is_default ? 'text-[#001A41]' : 'text-gray-800'}`}>{row.name}</span>
+          {row.is_default && <span className="rounded bg-[#009DE0]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#009DE0]">Core</span>}
           <StatusBadge row={row} />
         </div>
       </td>
       <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmtPct(row.cb_v82)}</td>
       <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'cb_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmtPct(row.cb_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.cb_delta} /></td>
+      <td className="px-3 py-2.5 text-center text-xs"><OverallDelta v={row.cb_delta} /></td>
       <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmtPct(row.gy_v82)}</td>
       <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'gy_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmtPct(row.gy_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.gy_delta} /></td>
-      <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmt(row.rank_pop_v82)}</td>
-      <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_pop_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmt(row.rank_pop_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_pop_delta} /></td>
-      <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmt(row.rank_str_v82)}</td>
-      <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_str_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmt(row.rank_str_v9)}</td>
-      <td className="px-3 py-2.5 text-center text-xs"><Delta v={row.rank_str_delta} /></td>
+      <td className="px-3 py-2.5 text-center text-xs"><OverallDelta v={row.gy_delta} /></td>
+      <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmtNum(row.rank_pop_v82)}</td>
+      <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_pop_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmtNum(row.rank_pop_v9)}</td>
+      <td className="px-3 py-2.5 text-center text-xs"><OverallDelta v={row.rank_pop_delta} /></td>
+      <td className="px-3 py-2.5 text-center text-sm text-gray-500">{fmtNum(row.rank_str_v82)}</td>
+      <td className={`px-3 py-2.5 text-center text-sm font-semibold ${sortKey === 'rank_str_v9' ? 'text-[#009DE0]' : 'text-gray-900'}`}>{fmtNum(row.rank_str_v9)}</td>
+      <td className="px-3 py-2.5 text-center text-xs"><OverallDelta v={row.rank_str_delta} /></td>
     </tr>
   );
 }
 
-export function CarrierRankingView() {
+function OverallTab() {
   const [data, setData]       = useState<CarrierRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('rank_str_v9');
 
   useEffect(() => {
-    fetch(DATA_URL)
+    fetch(OVERALL_DATA_URL)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d: CarrierRow[]) => { setData(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
@@ -158,91 +399,99 @@ export function CarrierRankingView() {
   const allRows = sortRows(data, sortKey);
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50/50">
-
-      {/* ── Fixed top block ── */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-0 sm:px-6 sm:pt-6">
-
-        {/* Title */}
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-[#001A41]">Overall Carrier Ranking</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            v8.2 → v9 national summary · spend-weighted metrics &amp; MSA avg rank · {data.length || 104} carriers
-          </p>
-        </div>
-
-        {/* Sort controls */}
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)' }}>
+      {/* Controls */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-0 sm:px-6">
+        <p className="mb-4 text-sm text-gray-500">v8.2 → v9 national summary · spend-weighted metrics &amp; MSA avg rank · {data.length || 104} carriers</p>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Sort by</span>
           {SORT_OPTIONS.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setSortKey(opt.key)}
-              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-all ${
-                sortKey === opt.key
-                  ? 'border-[#009DE0] bg-[#009DE0] text-white shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-[#009DE0]/50 hover:text-[#009DE0]'
-              }`}
-            >
+            <button key={opt.key} onClick={() => setSortKey(opt.key)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-all ${sortKey === opt.key ? 'border-[#009DE0] bg-[#009DE0] text-white shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-[#009DE0]/50 hover:text-[#009DE0]'}`}>
               {opt.label}
             </button>
           ))}
         </div>
-
-        {/* Legend */}
         <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-500">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#009DE0]/20 ring-1 ring-[#009DE0]/40" />
-            Core network
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-emerald-700">New v9</span>
-            Added in v9
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Dropped</span>
-            Present in v8.2, absent in v9
-          </span>
-          <span className="ml-auto text-gray-400 italic">
-            Rank = lower is better &nbsp;·&nbsp; % = higher is better &nbsp;·&nbsp; — = not in that version
-          </span>
+          <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#009DE0]/20 ring-1 ring-[#009DE0]/40" />Core network</span>
+          <span className="flex items-center gap-1.5"><span className="rounded bg-emerald-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-emerald-700">New v9</span>Added in v9</span>
+          <span className="flex items-center gap-1.5"><span className="rounded bg-amber-100 px-1 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Dropped</span>Present in v8.2, absent in v9</span>
+          <span className="ml-auto text-gray-400 italic">Rank = lower is better · % = higher is better · — = not in that version</span>
         </div>
       </div>
 
-      {/* ── Fixed thead ── */}
+      {/* Fixed header */}
       {!loading && !error && (
         <div className="flex-shrink-0 overflow-x-auto px-4 sm:px-6">
           <div className="rounded-t-xl border border-b-0 border-gray-200 shadow-sm">
             <table className="w-full min-w-[1000px] table-fixed border-collapse">
-              <ColGroup />
-              <TableHead sortKey={sortKey} />
+              <ColGroup /><OverallTableHead sortKey={sortKey} />
             </table>
           </div>
         </div>
       )}
 
-      {/* ── Scrollable body ── */}
-      {loading && (
-        <div className="flex flex-1 items-center justify-center text-sm text-gray-400">Loading carrier data…</div>
-      )}
-      {error && (
-        <div className="flex flex-1 items-center justify-center text-sm text-red-500">Failed to load: {error}</div>
-      )}
+      {/* Scrollable body */}
+      {loading && <div className="flex flex-1 items-center justify-center text-sm text-gray-400">Loading carrier data…</div>}
+      {error   && <div className="flex flex-1 items-center justify-center text-sm text-red-500">Failed to load: {error}</div>}
       {!loading && !error && (
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto px-4 pb-6 sm:px-6">
           <div className="rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
             <table className="w-full min-w-[1000px] table-fixed border-collapse">
               <ColGroup />
               <tbody>
-                {allRows.map((row, i) => (
-                  <DataRow key={row.name} row={row} rank={i + 1} isDefault={row.is_default} sortKey={sortKey} />
-                ))}
+                {allRows.map((row, i) => <OverallDataRow key={row.name} row={row} rank={i + 1} sortKey={sortKey} />)}
               </tbody>
             </table>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Combined view with tab bar
+// ─────────────────────────────────────────────────────────────────────────────
+type TabId = 'buca' | 'overall';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'buca',    label: 'Core BUCA Carrier Ranking' },
+  { id: 'overall', label: 'Overall Carrier Ranking'   },
+];
+
+export function CarrierRankingView() {
+  const [activeTab, setActiveTab] = useState<TabId>('buca');
+
+  return (
+    <div className="flex h-screen flex-col bg-gray-50/50">
+      {/* Tab bar */}
+      <div className="flex-shrink-0 border-b border-gray-200 bg-white px-4 sm:px-6">
+        <div className="flex items-end gap-0 pt-4">
+          <div className="mr-6">
+            <h1 className="text-xl font-bold text-[#001A41]">Carrier Ranking</h1>
+          </div>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative px-4 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+                activeTab === tab.id
+                  ? 'border-[#009DE0] text-[#009DE0]'
+                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {activeTab === 'buca'    && <CoreBucaTab />}
+        {activeTab === 'overall' && <OverallTab />}
+      </div>
     </div>
   );
 }

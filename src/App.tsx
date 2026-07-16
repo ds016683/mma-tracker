@@ -21,7 +21,7 @@ const ProductionRunSummariesView = lazy(() => import('./components/starset/Produ
 const TierShiftSummaryView       = lazy(() => import('./components/starset/TierShiftSummaryView').then(m => ({ default: m.TierShiftSummaryView })));
 const MSACarrierCoverageView     = lazy(() => import('./components/starset/MSACarrierCoverageView').then(m => ({ default: m.MSACarrierCoverageView })));
 const CarrierRankingView         = lazy(() => import('./components/starset/CarrierRankingView').then(m => ({ default: m.CarrierRankingView })));
-const CoreBucaCarrierRankingView = lazy(() => import('./components/starset/CoreBucaCarrierRankingView').then(m => ({ default: m.CoreBucaCarrierRankingView })));
+
 const ProjectPlanView            = lazy(() => import('./components/project-plan/ProjectPlanView').then(m => ({ default: m.ProjectPlanView })));
 const GanttView                  = lazy(() => import('./components/gantt/GanttView').then(m => ({ default: m.GanttView })));
 const PromiseHealthPlanView      = lazy(() => import('./components/promise/PromiseHealthPlanView').then(m => ({ default: m.PromiseHealthPlanView })));
@@ -41,7 +41,7 @@ const ViewLoader = () => (
 );
 
 // Region-only views — the only section mma_regional can access
-const REGION_VIEWS: AppView[] = ['reporting-queries', 'regional-map', 'coverage-map', 'horizon-signal'];
+const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline'];
 
 function getDefaultView(role: string | null): AppView {
   if (role === 'mma_regional') return 'coverage-map';
@@ -138,7 +138,6 @@ function AppInner({
               {activeView === 'tier-shift-summary' && <TierShiftSummaryView />}
               {activeView === 'msa-carrier-coverage' && <MSACarrierCoverageView />}
               {activeView === 'carrier-ranking' && <CarrierRankingView />}
-              {activeView === 'core-buca-carrier-ranking' && <CoreBucaCarrierRankingView />}
               {activeView === 'hospital-coverage' && <HospitalCoverageView />}
               {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
               {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}

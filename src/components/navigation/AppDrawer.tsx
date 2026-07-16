@@ -3,7 +3,7 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties, Grid3x3, GitBranch, MapPinned, Users
+  TableProperties, Grid3x3, MapPinned, Users
 } from 'lucide-react';
 
 import mmaLogo from '../../assets/mma-logo.png';
@@ -56,56 +56,39 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Engagement Manager',
     defaultOpen: true,
     items: [
-      { id: 'project-plan',          label: 'Project Plan',    icon: FileText },
-      { id: 'timeline',              label: 'Gantt Chart',     icon: GanttChart },
-      { id: 'tracker',               label: 'Work Orders',     icon: LayoutGrid },
-      { id: 'call-notes',            label: 'Meeting Notes',   icon: NotebookPen },
+      { id: 'project-plan',          label: 'Project Plan',     icon: FileText },
+      { id: 'timeline',              label: 'Gantt Chart',      icon: GanttChart },
+      { id: 'tracker',               label: 'Work Orders',      icon: LayoutGrid },
+      { id: 'call-notes',            label: 'Meeting Notes',    icon: NotebookPen },
       { id: 'reports-release-notes', label: 'Shared Documents', icon: BookOpen },
+      { id: 'data-intelligence',     label: 'Data Intelligence', icon: FlaskConical },
     ],
   },
   {
     label: 'Starset Data Reporting',
     defaultOpen: true,
     items: [
-      { id: 'production-run-summaries', label: 'Production Run Summaries',       icon: TableProperties },
-      { id: 'tier-shift-summary',       label: 'Tier Shift Summary',             icon: Activity },
-      { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',           icon: Grid3x3 },
-      { id: 'carrier-ranking',          label: 'Overall Carrier Ranking',        icon: BarChart2 },
-      { id: 'core-buca-carrier-ranking', label: 'Core BUCA Carrier Ranking',      icon: BarChart2 },
-      { id: 'hospital-coverage',        label: 'Hospital Coverage',              icon: Map },
-      { id: 'hospital-mrf-pipeline',    label: 'Pipeline Lineage Reporting',     icon: Activity },
-      { id: 'pipeline-intelligence',    label: 'Pipeline Intelligence',          icon: GitBranch, badge: 'New' },
+      { id: 'production-run-summaries', label: 'Production Run Summaries',   icon: TableProperties },
+      { id: 'tier-shift-summary',       label: 'Tier Shift Summary',         icon: Activity },
+      { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',       icon: Grid3x3 },
+      { id: 'carrier-ranking',          label: 'Carrier Ranking',            icon: BarChart2 },
+      { id: 'hospital-coverage',        label: 'Hospital Coverage',          icon: Map },
+      { id: 'payer-networks',           label: 'Payer Networks',             icon: Network },
     ],
   },
   {
     label: 'Region Engagement',
     defaultOpen: true,
     items: [
-      { id: 'reporting-queries', label: 'Reporting Queries', icon: BarChart2 },
-      { id: 'regional-map',      label: 'Regional Map',      icon: Map },
-      { id: 'coverage-map',      label: 'Coverage Map',      icon: MapPinned, badge: 'New' },
-      { id: 'horizon-signal',    label: 'The Horizon Signal', icon: Radio },
-    ],
-  },
-  {
-    label: 'Payer MRF Processing Details',
-    defaultOpen: true,
-    items: [
-      { id: 'payer-networks',      label: 'Payer Networks',    icon: Network },
-      { id: 'payer-mrf-pipeline',  label: 'Payer MRF Pipeline', icon: BarChart2, badge: 'Soon' },
-    ],
-  },
-
-  {
-    label: 'Collateral',
-    defaultOpen: true,
-    items: [
-      { id: 'data-intelligence', label: 'Data Intelligence', icon: FlaskConical },
+      { id: 'horizon-signal',    label: 'The Horizon Signal',      icon: Radio },
+      { id: 'reporting-queries', label: 'Reporting Queries',        icon: BarChart2 },
+      { id: 'coverage-map',      label: 'Coverage Map',            icon: MapPinned },
+      { id: 'hospital-mrf-pipeline', label: 'Pipeline Lineage Reporting', icon: Activity },
     ],
   },
   {
     label: 'Joint Project Work',
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       { id: 'promise-health-plan', label: '1. Promise Health Plan - Rate Analysis', icon: Handshake, href: 'https://promise-rate-intelligence.vercel.app' },
     ],
