@@ -3,7 +3,7 @@ import {
   LayoutGrid, LogOut, Menu, X,
   GanttChart, Map, Network, FlaskConical, BarChart2,
   ChevronDown, ChevronRight, FileText, Activity, Handshake, NotebookPen, BookOpen, Radio,
-  TableProperties, Grid3x3, MapPinned, Users
+  TableProperties, Grid3x3, MapPinned, Users, AlertCircle, ClipboardList
 } from 'lucide-react';
 
 import mmaLogo from '../../assets/mma-logo.png';
@@ -11,6 +11,8 @@ import thsLogo from '../../assets/ths-logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 
 export type AppView =
+  | 'data-gap-report'
+  | 'requested-data-additions'
   | 'tracker'
   | 'project-plan'
   | 'timeline'
@@ -61,7 +63,8 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'tracker',               label: 'Work Orders',      icon: LayoutGrid },
       { id: 'call-notes',            label: 'Meeting Notes',    icon: NotebookPen },
       { id: 'reports-release-notes', label: 'Shared Documents', icon: BookOpen },
-      { id: 'data-intelligence',     label: 'Data Intelligence', icon: FlaskConical },
+      { id: 'data-intelligence',         label: 'Data Intelligence',         icon: FlaskConical },
+      { id: 'requested-data-additions',   label: 'Requested Data Additions',  icon: ClipboardList },
     ],
   },
   {
@@ -83,7 +86,8 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'reporting-queries', label: 'Reporting Queries',        icon: BarChart2 },
       { id: 'coverage-map',      label: 'Coverage Map',            icon: MapPinned },
       { id: 'hospital-mrf-pipeline', label: 'Pipeline Lineage Reporting', icon: Activity },
-      { id: 'payer-networks',    label: 'Payer Networks',          icon: Network },
+      { id: 'payer-networks',      label: 'Payer Networks',          icon: Network },
+      { id: 'data-gap-report',      label: 'Report a Gap',            icon: AlertCircle },
     ],
   },
   {

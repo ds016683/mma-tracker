@@ -33,7 +33,9 @@ const CallNotesView              = lazy(() => import('./components/call-notes/Ca
 const ReportsAndReleaseNotesView = lazy(() => import('./components/reports/ReportsAndReleaseNotesView').then(m => ({ default: m.ReportsAndReleaseNotesView })));
 const HorizonSignalView          = lazy(() => import('./components/horizon-signal/HorizonSignalView').then(m => ({ default: m.HorizonSignalView })));
 const CoverageMap                = lazy(() => import('./components/region/CoverageMap').then(m => ({ default: m.CoverageMap })));
-const UserManagementView         = lazy(() => import('./components/admin/UserManagementView').then(m => ({ default: m.UserManagementView })));
+const UserManagementView              = lazy(() => import('./components/admin/UserManagementView').then(m => ({ default: m.UserManagementView })));
+const DataGapReportView               = lazy(() => import('./components/region/DataGapReportView').then(m => ({ default: m.DataGapReportView })));
+const RequestedDataAdditionsView      = lazy(() => import('./components/region/RequestedDataAdditionsView').then(m => ({ default: m.RequestedDataAdditionsView })));
 
 const ViewLoader = () => (
   <div className="flex min-h-screen items-center justify-center">
@@ -42,7 +44,7 @@ const ViewLoader = () => (
 );
 
 // Region-only views — the only section mma_regional can access
-const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks'];
+const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks', 'data-gap-report'];
 
 function getDefaultView(role: string | null): AppView {
   if (role === 'mma_regional') return 'coverage-map';
@@ -147,6 +149,7 @@ function AppInner({
               {activeView === 'reports-release-notes' && <ReportsAndReleaseNotesView />}
               {activeView === 'promise-health-plan' && <PromiseHealthPlanView />}
               {activeView === 'user-management' && <UserManagementView />}
+              {activeView === 'requested-data-additions' && <RequestedDataAdditionsView />}
             </>
           )}
 
@@ -155,6 +158,7 @@ function AppInner({
           {activeView === 'regional-map' && <RegionalMapView />}
           {activeView === 'coverage-map' && <CoverageMap />}
           {activeView === 'horizon-signal' && <HorizonSignalView />}
+          {activeView === 'data-gap-report' && <DataGapReportView />}
 
           {/* Fallback for mma_regional landing on wrong view */}
           {isRegionOnly && !REGION_VIEWS.includes(activeView) && (
