@@ -42,7 +42,7 @@ const ViewLoader = () => (
 );
 
 // Region-only views — the only section mma_regional can access
-const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline'];
+const REGION_VIEWS: AppView[] = ['horizon-signal', 'reporting-queries', 'coverage-map', 'hospital-mrf-pipeline', 'payer-networks'];
 
 function getDefaultView(role: string | null): AppView {
   if (role === 'mma_regional') return 'coverage-map';

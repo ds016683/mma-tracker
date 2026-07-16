@@ -73,7 +73,6 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'msa-carrier-coverage',     label: 'MSA Carrier Coverage',       icon: Grid3x3 },
       { id: 'carrier-ranking',          label: 'Carrier Ranking',            icon: BarChart2 },
       { id: 'hospital-coverage',        label: 'Hospital Coverage',          icon: Map },
-      { id: 'payer-networks',           label: 'Payer Networks',             icon: Network },
     ],
   },
   {
@@ -84,6 +83,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'reporting-queries', label: 'Reporting Queries',        icon: BarChart2 },
       { id: 'coverage-map',      label: 'Coverage Map',            icon: MapPinned },
       { id: 'hospital-mrf-pipeline', label: 'Pipeline Lineage Reporting', icon: Activity },
+      { id: 'payer-networks',    label: 'Payer Networks',          icon: Network },
     ],
   },
   {
