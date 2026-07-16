@@ -148,7 +148,7 @@ export function UserManagementView() {
       </div>
 
       {/* Invite form — always visible for authorized roles */}
-      {canInvite(myRole!) && (
+      {myRole && canInvite(myRole) && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-bold text-[#001A41]">Send Invitation</h2>
           <form onSubmit={handleInvite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
