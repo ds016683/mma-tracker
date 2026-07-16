@@ -82,8 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
-  // If profile didn't load (RLS not yet fixed), infer role from email domain
+  // Role priority: user_profiles table → user_metadata (always available) → email domain fallback
   const effectiveRole = profile?.role
+    ?? (user?.user_metadata?.app_role as AppRole | undefined)
     ?? (user?.email?.includes('marshmma.com') ? 'mma_regional' as const : null);
 
   return (
