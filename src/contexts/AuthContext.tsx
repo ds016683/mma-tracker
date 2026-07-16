@@ -30,12 +30,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('id, role, display_name, email')
-      .eq('id', userId)
-      .maybeSingle();
-    setProfile(data ?? null);
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, role, display_name, email')
+        .eq('id', userId)
+        .maybeSingle();
+      // If table doesn't exist yet or any error, treat as no profile (ths_user fallback)
+      if (error) {
+        console.warn('user_profiles fetch failed (table may not exist yet):', error.message);
+        setProfile(null);
+      } else {
+        setProfile(data ?? null);
+      }
+    } catch (e) {
+      console.warn('user_profiles fetch error:', e);
+      setProfile(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -43,13 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        if (newSession?.user) {
-          await fetchProfile(newSession.user.id);
+        if (event === 'INITIAL_SESSION') {
+          // Unblock the UI immediately, then fetch profile in background
+          if (newSession?.user) {
+            fetchProfile(newSession.user.id).finally(() => setLoading(false));
+          } else {
+            setProfile(null);
+            setLoading(false);
+          }
+        } else if (newSession?.user) {
+          fetchProfile(newSession.user.id);
         } else {
           setProfile(null);
-        }
-        if (event === 'INITIAL_SESSION') {
-          setLoading(false);
         }
       }
     );
