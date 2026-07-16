@@ -82,10 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
+  // If profile didn't load (RLS not yet fixed), infer role from email domain
+  const effectiveRole = profile?.role
+    ?? (user?.email?.includes('marshmma.com') ? 'mma_regional' as const : null);
+
   return (
     <AuthContext.Provider value={{
       user, session, profile,
-      role: profile?.role ?? null,
+      role: effectiveRole,
       loading, signIn, signOut,
     }}>
       {children}
