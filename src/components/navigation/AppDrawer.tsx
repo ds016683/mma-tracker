@@ -115,9 +115,20 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
   const { signOut, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  const isPrivileged = PRIVILEGED_EMAILS.includes(user?.email ?? '');
+  const REGION_ENGAGEMENT_LABEL = 'Region Engagement';
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    NAV_GROUPS.forEach(g => { initial[g.label] = g.defaultOpen ?? true; });
+    NAV_GROUPS.forEach(g => {
+      if (!isPrivileged) {
+        // mma_regional: only Region Engagement open, everything else collapsed
+        initial[g.label] = g.label === REGION_ENGAGEMENT_LABEL;
+      } else {
+        initial[g.label] = g.defaultOpen ?? true;
+      }
+    });
     return initial;
   });
 
@@ -143,6 +154,8 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
   };
 
   const toggleGroup = (label: string) => {
+    // mma_regional users cannot expand/collapse groups
+    if (!isPrivileged) return;
     setOpenGroups(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
@@ -187,15 +200,18 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
               {/* Group header */}
               <button
                 onClick={() => toggleGroup(group.label)}
-                className="flex w-full items-center justify-between px-5 py-2 text-left transition-colors hover:bg-white/5"
+                className={`flex w-full items-center justify-between px-5 py-2 text-left transition-colors ${
+                  isPrivileged ? 'hover:bg-white/5 cursor-pointer' : 'cursor-default'
+                }`}
               >
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                   {group.label}
                 </span>
-                {openGroups[group.label]
-                  ? <ChevronDown className="h-3 w-3 text-white/30" />
-                  : <ChevronRight className="h-3 w-3 text-white/30" />
-                }
+                {isPrivileged && (
+                  openGroups[group.label]
+                    ? <ChevronDown className="h-3 w-3 text-white/30" />
+                    : <ChevronRight className="h-3 w-3 text-white/30" />
+                )}
               </button>
 
               {/* Group items */}
@@ -207,7 +223,7 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
                     group.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeView === item.id;
-                      const isPrivileged = PRIVILEGED_EMAILS.includes(user?.email ?? '');
+                      // isPrivileged already defined above
                       const isDisabled = item.badge === 'Soon' && !isPrivileged;
                       return (
                         <button
