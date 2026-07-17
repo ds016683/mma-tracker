@@ -160,7 +160,7 @@ function AppInner({
           {activeView === 'data-gap-report' && <DataGapReportView />}
           {activeView === 'hospital-mrf-pipeline' && <HospitalMrfPipelineView />}
           {activeView === 'pipeline-intelligence' && <PipelineIntelligenceView />}
-          {activeView === 'payer-networks' && <ProductionNetworksView />}
+          {activeView === 'payer-networks' && <ProductionNetworksView onNavigate={setActiveView} />}
 
           {/* Fallback for mma_regional landing on wrong view */}
           {isRegionOnly && !REGION_VIEWS.includes(activeView) && (

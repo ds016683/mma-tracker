@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, X, ExternalLink, Clock, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X, ExternalLink, Clock, AlertCircle, ShieldOff, Flag } from 'lucide-react';
 import tab1Data from './tab1-data.json';
+import { useAuth } from '../../contexts/AuthContext';
+import type { AppView } from '../navigation/AppDrawer';
 
 type TabId = 'mma' | 'future';
 
@@ -124,7 +126,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'future', label: 'Networks for future Starset Versions' },
 ];
 
-export function ProductionNetworksView() {
+export function ProductionNetworksView({ onNavigate }: { onNavigate?: (view: AppView) => void }) {
   const [activeTab, setActiveTab] = useState<TabId>('mma');
 
   return (
@@ -147,7 +149,7 @@ export function ProductionNetworksView() {
       </div>
       <div className="flex-1 overflow-auto p-6">
         {activeTab === 'mma'    && <Tab1MMANetworks />}
-        {activeTab === 'future' && <FutureNetworksTab />}
+        {activeTab === 'future' && <FutureNetworksTab onNavigate={onNavigate} />}
       </div>
     </div>
   );
@@ -174,9 +176,12 @@ function Tab1MMANetworks() {
 
 // ─── Tab 2: Future Networks ────────────────────────────────────────────────────
 
-function FutureNetworksTab() {
+function FutureNetworksTab({ onNavigate }: { onNavigate?: (view: AppView) => void }) {
+  const { profile } = useAuth();
+  const isRegional = profile?.role === 'mma_regional';
   const [networks, setNetworks] = useState<FutureNetwork[]>(SEED_FUTURE_NETWORKS);
   const [showForm, setShowForm] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   const addNetwork = (n: FutureNetwork) => {
     setNetworks(prev => [n, ...prev]);
@@ -207,7 +212,7 @@ function FutureNetworksTab() {
           )}
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => isRegional ? setShowPermissionModal(true) : setShowForm(true)}
           className="flex items-center gap-2 rounded-lg bg-[#001A41] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#002966]"
         >
           <Plus className="h-4 w-4" />
@@ -232,6 +237,9 @@ function FutureNetworksTab() {
 
       {/* Add Network modal */}
       {showForm && <AddNetworkModal onAdd={addNetwork} onClose={() => setShowForm(false)} />}
+
+      {/* Permission denied modal */}
+      {showPermissionModal && <NoPermissionModal onClose={() => setShowPermissionModal(false)} onNavigate={onNavigate} />}
     </div>
   );
 }
@@ -319,6 +327,65 @@ function FutureNetworkCard({ network, onRemove }: { network: FutureNetwork; onRe
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── No Permission Modal ─────────────────────────────────────────────────────
+
+function NoPermissionModal({ onClose, onNavigate }: { onClose: () => void; onNavigate?: (view: AppView) => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="relative w-full max-w-md rounded-xl bg-white shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-gray-100 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50">
+              <ShieldOff className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#001A41]">Permission Required</h2>
+              <p className="text-xs text-gray-400">Network pipeline access</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            MMA Regional users do not have permission to add networks to the future pipeline. Network additions are managed by the MMA Actuarial & Analytics and Third Horizon teams.
+          </p>
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-medium text-amber-800">Noticed a gap in your region?</p>
+            <p className="mt-1 text-xs text-amber-700">
+              Use the <span className="font-semibold">Report a Gap</span> tool to flag missing carriers or networks in your market. Your submission will be reviewed by the analytics team.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          <button
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            Dismiss
+          </button>
+          <button
+            onClick={() => { onClose(); onNavigate?.('data-gap-report'); }}
+            className="flex items-center gap-2 rounded-lg bg-[#009DE0] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#0082ba] transition-colors"
+          >
+            <Flag className="h-4 w-4" />
+            Report a Gap
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
