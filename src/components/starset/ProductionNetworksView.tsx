@@ -86,7 +86,7 @@ const SEED_FUTURE_NETWORKS: FutureNetwork[] = [
     states: [],
     notes: 'Next-generation Aetna MRF format. Evaluate for enhanced rate data and methodology improvements over current Aetna ingestion.',
     mrfUrl: '',
-    status: 'Evaluating',
+    status: 'Pipeline',
     addedBy: 'Tanner Johnson',
     addedDate: '2026-07-17',
   },
