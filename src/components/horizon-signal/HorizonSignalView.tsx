@@ -17,6 +17,44 @@ export interface HorizonDigest {
   is_current: boolean;
 }
 
+// ─── Hardcoded fallback (used when Supabase table not yet provisioned) ────────
+
+const FALLBACK_DIGESTS: HorizonDigest[] = [
+  {
+    id: 'fallback-archive-1',
+    published_at: '2026-06-05',
+    is_current: false,
+    body: [
+      'The most significant development this week is the escalating federal antitrust pressure on hospital payer contracts. The DOJ\'s Antitrust Division sued OhioHealth on February 20 and NewYork-Presbyterian on March 26, both accused of using market dominance to lock insurers into contracts that shield them from price competition — preventing payers from offering plans that steer patients toward lower-cost alternatives. A third system, Advocate Health in Charlotte, is reportedly under active DOJ investigation. The FTC has launched a dedicated healthcare task force in parallel, and nearly two dozen states now have their own active investigations into hospital contracting practices.',
+      'Health system consolidation is accelerating sharply in 2026, with 48 transactions announced through late April — a 30% increase over the same period last year. Most activity is concentrated in physician group acquisitions (21 deals), particularly in orthopedics, internal medicine, and gastroenterology. The headline system-level merger is Englewood Health combining with RWJBarnabas Health to form one of New Jersey\'s largest systems. Sanford Health and North Memorial Health separately announced plans to combine, extending Sanford\'s regional reach into the Twin Cities market.',
+      'On the regulatory front, CMS\'s CY2026 OPPS/ASC Final Rule delivered the most significant hospital price transparency updates since the original rule took effect, with enforcement of the new machine-readable file standards beginning April 1, 2026. Key changes tighten data quality requirements, standardize field formats, and expand the scope of required service-line disclosures. Meanwhile, the ACA marketplace is in flux: enhanced premium tax credits expired at the start of 2026, Aetna has exited major individual markets including Florida, and several other carriers are contracting their geographic footprints.',
+    ],
+    articles: [
+      { title: 'DOJ Hospital Antitrust Crackdown 2026', outlet: 'Healthcare Finance Innovations', url: 'https://www.hfi.consulting/articles/g5e4amtl643x9aojon6bhct1ktptvb', date: '2026-04-01' },
+      { title: 'Q1 2026 Health Insurance Payer-Provider Dispute Update', outlet: 'FTI Communications', url: 'https://fticommunications.com/q1-2026-health-insurance-payer-provider-dispute-update/', date: '2026-04-15' },
+      { title: 'Health System M&A 2026 Round-Up', outlet: 'Levin Associates', url: 'https://healthcare.levinassociates.com/2026/04/27/health-system-ma-2026-round-up/', date: '2026-04-27' },
+      { title: 'Hospital and Health System M&A Activity Ramps Up in Q1 2026', outlet: 'Kaufman Hall', url: 'https://www.kaufmanhall.com/insights/research-report/ma-quarterly-activity-report-q1-2026', date: '2026-04-10' },
+    ],
+  },
+  {
+    id: 'fallback-current-1',
+    published_at: '2026-06-16',
+    is_current: true,
+    body: [
+      'The DOJ Antitrust Division has now filed two civil lawsuits against major health systems in 2026 — OhioHealth (February 20) and NewYork-Presbyterian (March 26) — and Acting Assistant Attorney General Omeed Assefi has publicly stated the department holds a "zero-tolerance policy" against anticompetitive payer contracting. Both suits target the same structural mechanism: "all-or-nothing" inclusion requirements and most-favored-tier clauses that prevent payers from building narrow or tiered network products. The NYP complaint goes further, alleging the system explicitly prohibited payers from offering lower copays when members chose lower-cost rival hospitals.',
+      'The most significant structural development in health system consolidation since our last edition is the announced combination of Allina Health and Sutter Health — a proposed $26 billion nonprofit merger that would create one of the largest health systems in the country by revenue, extending Sutter\'s California footprint into Allina\'s Upper Midwest markets including the Twin Cities. The deal was announced May 21 and is now in regulatory review. Separately, Ascension cleared FTC review on June 8 to acquire AmSurg\'s ambulatory surgery center portfolio, adding significant ASC capacity to its post-acute network.',
+      'CMS\'s revised machine-readable file standards have been in mandatory enforcement since April 1, 2026. The most consequential change — requiring hospitals to disclose actual allowed amounts rather than estimated figures — is now 2.5 months into enforcement. Early compliance monitoring indicates significant variability: hospitals in competitive urban markets are updating files with greater fidelity, while rural and critical access hospitals show higher rates of continued estimation or missing data fields.',
+    ],
+    articles: [
+      { title: 'DOJ Continues Scrutiny of Health System Contracting in Second 2026 Antitrust Case', outlet: 'Morgan Lewis', url: 'https://www.morganlewis.com/pubs/2026/03/doj-continues-scrutiny-of-health-system-contracting-in-second-2026-antitrust-case', date: '2026-03-31' },
+      { title: 'DOJ Prioritizes Antitrust Enforcement Against Large Health Systems', outlet: 'Arnold & Porter', url: 'https://www.arnoldporter.com/en/perspectives/advisories/2026/04/doj-prioritizes-antitrust-enforcement-against-large-health-systems', date: '2026-04-01' },
+      { title: 'Allina Health to Join Sutter Health in $26B Proposed Merger', outlet: 'Fierce Healthcare', url: 'https://www.fiercehealthcare.com/providers/allina-health-join-sutter-health-26b-proposed-merger', date: '2026-05-21' },
+      { title: 'Ascension Clears FTC Hurdles to Acquire AmSurg Ambulatory Surgery Centers', outlet: 'Healthcare Finance News', url: 'https://www.healthcarefinancenews.com/topic/mergers-acquisitions', date: '2026-06-08' },
+      { title: 'Hospital Price Transparency — CY 2026 Enforcement', outlet: 'CMS.gov', url: 'https://www.cms.gov/priorities/key-initiatives/hospital-price-transparency', date: '2026-04-01' },
+    ],
+  },
+];
+
 // ─── Data fetch ───────────────────────────────────────────────────────────────
 
 async function fetchDigests(): Promise<HorizonDigest[]> {
@@ -24,7 +62,11 @@ async function fetchDigests(): Promise<HorizonDigest[]> {
     .from('horizon_signal_digests')
     .select('*')
     .order('published_at', { ascending: false });
-  if (error) throw error;
+  if (error) {
+    // Table not yet provisioned — return hardcoded fallback
+    console.warn('horizon_signal_digests fetch failed, using fallback:', error.message);
+    return FALLBACK_DIGESTS;
+  }
   return (data ?? []) as HorizonDigest[];
 }
 
