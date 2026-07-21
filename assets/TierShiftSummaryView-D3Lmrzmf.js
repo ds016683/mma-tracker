@@ -1,0 +1,1 @@
+import{j as r}from"./index-CRgCGhJZ.js";function m(){return r.jsx("div",{className:"flex h-screen flex-col",children:r.jsx("iframe",{src:"/mma-tracker/tier-shift-summary.html",className:"flex-1 w-full border-0",title:"Tier Shift Summary — V8 to V9"})})}export{m as TierShiftSummaryView};

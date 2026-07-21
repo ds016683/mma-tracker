@@ -1,0 +1,1 @@
+import{j as e}from"./index-CRgCGhJZ.js";function t(){return e.jsx("div",{style:{width:"100%",height:"calc(100vh - 56px)",display:"flex",flexDirection:"column"},children:e.jsx("iframe",{src:"/mma-tracker/pipeline-lineage.html",style:{flex:1,border:"none",width:"100%"},title:"Pipeline Lineage Reporting"})})}export{t as HospitalMrfPipelineView};
