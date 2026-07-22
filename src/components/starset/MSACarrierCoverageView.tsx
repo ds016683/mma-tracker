@@ -337,10 +337,14 @@ export function MSACarrierCoverageView() {
 
   useEffect(() => {
     async function loadData() {
+      // SOURCE TABLE: ccm_msa (NOT msa_carrier_coverage)
+      // msa_carrier_coverage has state=NULL for all rows — state filter never populates.
+      // ccm_msa is the complete v9 table with state, seg_pop, and all quality columns populated.
+      // DO NOT change this back to msa_carrier_coverage.
       const { data, error: sbError } = await supabase
-        .from('msa_carrier_coverage')
+        .from('ccm_msa')
         .select('*')
-        .limit(50000);
+        .limit(55000);
       if (sbError) {
         setError(sbError.message);
       } else {
