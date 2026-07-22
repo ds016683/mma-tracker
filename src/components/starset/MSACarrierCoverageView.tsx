@@ -63,6 +63,18 @@ function OOABadge() {
   );
 }
 
+// ─── State derivation ────────────────────────────────────────────────────────
+// msa_carrier_coverage.state is NULL for all rows. MSA names reliably embed
+// the state abbreviation(s) after the last comma: "Springfield, MA" → "MA",
+// "Boston-Cambridge-Newton, MA-NH" → "MA" (first state wins),
+// "Providence-Warwick, RI-MA" → "RI" (first state wins).
+// Non-metropolitan areas like "SD NONMETROPOLITAN AREA" won't match — they
+// get an empty string and are excluded from state filtering (correct).
+function deriveStateFromMsaName(name: string): string {
+  const match = name.match(/,\s*([A-Z]{2})(?:[^A-Z]|$)/);
+  return match ? match[1] : '';
+}
+
 // ─── Metric selection ────────────────────────────────────────────────────────
 
 type Metric = 'gy' | 'cb';
@@ -337,12 +349,22 @@ export function MSACarrierCoverageView() {
 
   useEffect(() => {
     async function loadData() {
-      // SOURCE TABLE: ccm_msa (NOT msa_carrier_coverage)
-      // msa_carrier_coverage has state=NULL for all rows — state filter never populates.
-      // ccm_msa is the complete v9 table with state, seg_pop, and all quality columns populated.
-      // DO NOT change this back to msa_carrier_coverage.
+      // SOURCE TABLE: msa_carrier_coverage
+      //
+      // ccm_msa was the intended v9 replacement but is only a PARTIAL load:
+      // - covers 33 of 51 states
+      // - missing MSAs within covered states (e.g. Springfield MA, Worcester MA,
+      //   Providence RI-MA, Vineyard Haven MA are absent)
+      //
+      // msa_carrier_coverage has complete MSA coverage (all 47,904 rows) but
+      // the `state` column is NULL for every row, which broke the state filter.
+      //
+      // FIX: use msa_carrier_coverage for complete data, and derive state
+      // inline from msa_name (names embed state abbrs: "Springfield, MA",
+      // "Boston-Cambridge-Newton, MA-NH", "Worcester, MA-CT").
+      // This is the authoritative fix until ccm_msa is fully reloaded.
       const { data, error: sbError } = await supabase
-        .from('ccm_msa')
+        .from('msa_carrier_coverage')
         .select('*')
         .limit(55000);
       if (sbError) {
@@ -354,7 +376,10 @@ export function MSACarrierCoverageView() {
           msa_name:  String(r.msa_name ?? ''),
           carrier:   String(r.carrier ?? ''),
           bucket:    String(r.bucket ?? '') as BucketKey,
-          state:     r.state != null ? String(r.state) : '',
+          // state is NULL in this table — derive from msa_name.
+          // MSA names embed the primary state: "Springfield, MA" → "MA",
+          // "Boston-Cambridge-Newton, MA-NH" → "MA", "Providence-Warwick, RI-MA" → "RI".
+          state:     r.state != null ? String(r.state) : deriveStateFromMsaName(String(r.msa_name ?? '')),
           seg_pop:   r.seg_pop != null ? Number(r.seg_pop) : null,
           total_pop: r.total_pop != null ? Number(r.total_pop) : 0,
           ooa:       Number(r.ooa ?? 0) === 1,
