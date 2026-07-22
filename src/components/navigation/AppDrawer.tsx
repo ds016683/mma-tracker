@@ -132,6 +132,23 @@ export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
     return initial;
   });
 
+  // When role loads (async DB fetch), isPrivileged may flip null → true.
+  // Re-open any groups whose defaultOpen=true that were hidden/collapsed
+  // because isPrivileged was false at mount time.
+  useEffect(() => {
+    if (isPrivileged) {
+      setOpenGroups(prev => {
+        const updated = { ...prev };
+        NAV_GROUPS.forEach(g => {
+          if (g.defaultOpen && !(updated[g.label])) {
+            updated[g.label] = true;
+          }
+        });
+        return updated;
+      });
+    }
+  }, [isPrivileged]);
+
   useEffect(() => {
     const onResize = () => {
       const desktop = window.innerWidth >= 1024;
