@@ -363,10 +363,23 @@ export function MSACarrierCoverageView() {
       // inline from msa_name (names embed state abbrs: "Springfield, MA",
       // "Boston-Cambridge-Newton, MA-NH", "Worcester, MA-CT").
       // This is the authoritative fix until ccm_msa is fully reloaded.
-      const { data, error: sbError } = await supabase
-        .from('msa_carrier_coverage')
-        .select('*')
-        .limit(55000);
+      // PostgREST caps single requests at 1000 rows. Paginate to get all 47,904 rows.
+      const PAGE = 1000;
+      let allRows: Record<string, unknown>[] = [];
+      let from = 0;
+      let sbError: { message: string } | null = null;
+      for (;;) {
+        const { data: batch, error: pageErr } = await supabase
+          .from('msa_carrier_coverage')
+          .select('*')
+          .range(from, from + PAGE - 1);
+        if (pageErr) { sbError = pageErr; break; }
+        if (!batch || batch.length === 0) break;
+        allRows = allRows.concat(batch as Record<string, unknown>[]);
+        if (batch.length < PAGE) break;
+        from += PAGE;
+      }
+      const data = sbError ? null : allRows;
       if (sbError) {
         setError(sbError.message);
       } else {
