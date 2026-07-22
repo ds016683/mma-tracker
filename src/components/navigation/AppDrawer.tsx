@@ -36,8 +36,6 @@ export type AppView =
   | 'coverage-map'
   | 'user-management';
 
-const PRIVILEGED_EMAILS = ['david.smith@thirdhorizon.com', 'tanner@thirdhorizon.com'];
-
 interface NavItem {
   id: AppView;
   label: string;
@@ -112,11 +110,13 @@ interface AppDrawerProps {
 }
 
 export function AppDrawer({ activeView, onViewChange }: AppDrawerProps) {
-  const { signOut, user } = useAuth();
+  const { signOut, role } = useAuth();
   const [open, setOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
-  const isPrivileged = PRIVILEGED_EMAILS.includes(user?.email ?? '');
+  // Privileged = full nav access (ths_user or mma_analytics).
+  // mma_regional gets Region Engagement only — locked sidebar, no expand.
+  const isPrivileged = role === 'ths_user' || role === 'mma_analytics';
   const REGION_ENGAGEMENT_LABEL = 'Region Engagement';
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
