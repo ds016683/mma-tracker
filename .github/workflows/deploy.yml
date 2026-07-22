@@ -22,19 +22,21 @@ jobs:
           version: latest
 
       - name: Apply migrations & deploy functions
+        continue-on-error: true   # migration failures must NOT block frontend deploy
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: hpqvaaujwwozkcgnwvnc
         run: |
-          # Apply pending migrations
-          supabase db push --db-url "$SUPABASE_DB_URL"
-          # Deploy edge functions
+          set -e
+          echo "--- Applying DB migrations ---"
+          supabase db push --db-url "$SUPABASE_DB_URL" && echo "Migrations OK" || { echo "::warning::Migration push failed (non-blocking)"; exit 0; }
+          echo "--- Deploying edge functions ---"
           supabase functions deploy request-account --project-ref $SUPABASE_PROJECT_REF
           supabase functions deploy approve-account-request --project-ref $SUPABASE_PROJECT_REF
           supabase functions deploy send-invitation --project-ref $SUPABASE_PROJECT_REF
           supabase functions deploy accept-invitation --project-ref $SUPABASE_PROJECT_REF
-          # Set function secrets
+          echo "--- Setting function secrets ---"
           supabase secrets set RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} SITE_URL=${{ secrets.VITE_SITE_URL }} --project-ref $SUPABASE_PROJECT_REF
 
   deploy-frontend:

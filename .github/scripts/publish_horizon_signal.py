@@ -82,16 +82,31 @@ def generate_digest() -> dict:
             text_content += block.text
 
     print(f"Raw response: {len(text_content)} chars")
+    print(f"Raw preview: {repr(text_content[:200])}")
 
-    # Strip accidental markdown fences
+    # Robust JSON extraction — handles:
+    #   • bare JSON (ideal)
+    #   • prose + ```json ... ``` fence
+    #   • prose + bare ``` ... ``` fence
+    #   • JSON embedded anywhere in the response
+    import re
     cleaned = text_content.strip()
-    if cleaned.startswith("```"):
-        parts = cleaned.split("```")
-        cleaned = parts[1] if len(parts) > 1 else cleaned
-        if cleaned.startswith("json"):
-            cleaned = cleaned[4:]
-    cleaned = cleaned.strip()
 
+    # 1. Try fenced block first (```json ... ``` or ``` ... ```)
+    fence_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', cleaned)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+        print("Extracted from fenced block")
+    else:
+        # 2. Extract the outermost JSON object/array
+        obj_match = re.search(r'(\{[\s\S]*\})', cleaned)
+        if obj_match:
+            cleaned = obj_match.group(1).strip()
+            print("Extracted JSON object via regex")
+        else:
+            print(f"WARNING: no JSON structure found in response")
+
+    print(f"Cleaned JSON preview: {repr(cleaned[:200])}")
     digest = json.loads(cleaned)
 
     assert "body" in digest and isinstance(digest["body"], list) and len(digest["body"]) >= 2, \
